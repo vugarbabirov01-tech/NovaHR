@@ -45,22 +45,21 @@ interface EmployeeListClientProps {
   masterData: WizardMasterData
 }
 
-type WizardState = { mode: "create" } | { mode: "edit"; employeeId: string } | null
-
 export function EmployeeListClient({ employees, masterData }: EmployeeListClientProps) {
   const t = useTranslations("Employees.list")
   const router = useRouter()
   const [view, setView] = usePersistedState<EmployeeView>("employees-view", "list")
   const [filters, setFilters] = useState<EmployeeFilters>(defaultEmployeeFilters)
 
-  // Add/Edit Employee is one wizard opened as a drawer, reused from both the
-  // card view's quick actions and the table view's row actions — not two
-  // separate flows and not a dedicated /employees/new or /employees/[id]/edit
-  // route. Editing needs the employee's full EmployeeProfile (personal,
-  // labourLaw, payroll, documents...), which this page only ever fetches as
-  // the slim EmployeeListItem summary, so it's loaded on demand the moment
-  // Edit is chosen.
-  const [wizardState, setWizardState] = useState<WizardState>(null)
+  // Edit Employee reuses the exact same EmployeeWizard component as Create
+  // (/employees/new, a full page — long-form data entry earns the full
+  // content area), just hosted in a Sheet instead, since edits are shorter
+  // interruptions that benefit from staying in list context. Editing needs
+  // the employee's full EmployeeProfile (personal, labourLaw, payroll,
+  // documents...), which this page only ever fetches as the slim
+  // EmployeeListItem summary, so it's loaded on demand the moment Edit is
+  // chosen.
+  const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null)
   const [editingProfile, setEditingProfile] = useState<EmployeeProfile | null>(null)
   const [, startProfileFetch] = useTransition()
 
@@ -75,14 +74,9 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
     setView(nextView)
   }
 
-  function handleAddEmployee() {
-    setEditingProfile(null)
-    setWizardState({ mode: "create" })
-  }
-
   function handleEditEmployee(employee: { id: string; fullName: string }) {
     setEditingProfile(null)
-    setWizardState({ mode: "edit", employeeId: employee.id })
+    setEditingEmployeeId(employee.id)
     startProfileFetch(async () => {
       const profile = await getEmployeeProfileAction(employee.id)
       setEditingProfile(profile)
@@ -91,7 +85,7 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
 
   function handleWizardOpenChange(open: boolean) {
     if (!open) {
-      setWizardState(null)
+      setEditingEmployeeId(null)
       setEditingProfile(null)
     }
   }
@@ -197,10 +191,10 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button size="sm" onClick={handleAddEmployee}>
+          <Link href="/employees/new" className={cn(buttonVariants({ size: "sm" }))}>
             <Plus className="size-3.5" strokeWidth={1.75} />
             {t("addEmployee")}
-          </Button>
+          </Link>
         </div>
       </div>
 
@@ -224,12 +218,11 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
         />
       )}
 
-      {wizardState ? (
+      {editingEmployeeId ? (
         <EmployeeWizardModal
-          open={wizardState !== null}
+          open={editingEmployeeId !== null}
           onOpenChange={handleWizardOpenChange}
-          mode={wizardState.mode}
-          employeeId={wizardState.mode === "edit" ? wizardState.employeeId : undefined}
+          employeeId={editingEmployeeId}
           editingProfile={editingProfile}
           masterData={masterData}
           onSuccess={handleWizardSuccess}

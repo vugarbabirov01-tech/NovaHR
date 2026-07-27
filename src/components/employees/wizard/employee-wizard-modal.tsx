@@ -17,38 +17,31 @@ import type { EmployeeProfile } from "@/types/employee-profile"
 interface EmployeeWizardModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  mode: "create" | "edit"
-  employeeId?: string
+  employeeId: string
   /** Full profile for the employee being edited — null while it's loading. */
-  editingProfile?: EmployeeProfile | null
+  editingProfile: EmployeeProfile | null
   masterData: WizardMasterData
   onSuccess: () => void
 }
 
 /**
- * The single reusable shell for both Create and Edit — one EmployeeWizard
- * instance, opened as a drawer instead of a dedicated route, so Employee
- * List, Employee Card, and (later) Employee Profile can all trigger the
- * exact same flow. `key` forces a fresh EmployeeWizard mount whenever the
- * target changes (switching from editing one employee to another, or from
- * edit to create), since EmployeeWizard seeds its form state once from
- * `initialData` at mount and never again.
+ * Edit Employee only — Create restored to its own full page at
+ * /employees/new (long-form data entry deserves the full content area, not
+ * a side drawer). This is the one presentation container for editing:
+ * reuses the exact same EmployeeWizard component the full-page Create flow
+ * does, just hosted in a Sheet instead of a page, since edits are shorter,
+ * more frequent interruptions that benefit from staying in list context.
  */
 export function EmployeeWizardModal({
   open,
   onOpenChange,
-  mode,
   employeeId,
   editingProfile,
   masterData,
   onSuccess,
 }: EmployeeWizardModalProps) {
   const t = useTranslations("Employees.wizard")
-  const isLoadingEditData = mode === "edit" && !editingProfile
-
-  function handleSuccess() {
-    onSuccess()
-  }
+  const isLoadingEditData = !editingProfile
 
   function handleClose() {
     onOpenChange(false)
@@ -58,10 +51,8 @@ export function EmployeeWizardModal({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full gap-0 overflow-y-auto sm:max-w-3xl">
         <SheetHeader className="border-b border-border">
-          <SheetTitle>{mode === "edit" ? t("editTitle") : t("title")}</SheetTitle>
-          <SheetDescription>
-            {mode === "edit" ? t("editDescription") : t("description")}
-          </SheetDescription>
+          <SheetTitle>{t("editTitle")}</SheetTitle>
+          <SheetDescription>{t("editDescription")}</SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto p-4">
           {isLoadingEditData ? (
@@ -70,16 +61,12 @@ export function EmployeeWizardModal({
             </div>
           ) : (
             <EmployeeWizard
-              key={mode === "edit" ? employeeId : "create"}
-              mode={mode}
+              key={employeeId}
+              mode="edit"
               employeeId={employeeId}
-              initialData={
-                mode === "edit" && editingProfile
-                  ? profileToWizardData(editingProfile, masterData)
-                  : undefined
-              }
+              initialData={profileToWizardData(editingProfile, masterData)}
               masterData={masterData}
-              onSuccess={handleSuccess}
+              onSuccess={onSuccess}
               onClose={handleClose}
             />
           )}
