@@ -1,5 +1,5 @@
 import { validateWizardStep, type WizardValidationMessages } from "@/lib/employee-wizard-validation"
-import { generateNextEmployeeNumber, isEmployeeNumberTaken } from "@/lib/employees"
+import { generateNextEmployeeNumber } from "@/lib/employees"
 import { defaultWizardData, type EmployeeWizardData } from "@/types/employee-wizard"
 import { CUSTOM_WORK_SCHEDULE_ID, type WizardMasterData } from "@/lib/employee-wizard-mapper"
 import { mapRawRow } from "@/lib/employee-import/row-mapper"
@@ -49,6 +49,7 @@ export function validateImportRows(
     finOccurrences.set(mapped.finCode, (finOccurrences.get(mapped.finCode) ?? 0) + 1)
   }
 
+  const existingNumberSet = new Set(existingEmployeeNumbers)
   const employeeNumberPool = new Set(existingEmployeeNumbers)
   const seenEmployeeNumbersInFile = new Set<string>()
   const results: ImportRow[] = []
@@ -122,15 +123,19 @@ export function validateImportRows(
     // value (we can't know which is authoritative); a match against the
     // live directory is not an error, it's the idempotency path: the row
     // is skipped at import time rather than creating a duplicate employee.
+    const finCode = mapped.finCode
+    const finIsDuplicateInFile = Boolean(finCode && (finOccurrences.get(finCode) ?? 0) > 1)
+    const finMatchesExistingEmployee = Boolean(finCode && existingFins.has(finCode))
+
     if (mapped.finCode) {
-      if ((finOccurrences.get(mapped.finCode) ?? 0) > 1) {
+      if (finIsDuplicateInFile) {
         messages.push({
           code: "DUPLICATE_FIN_IN_FILE",
           severity: "error",
           field: "finCode",
           message: `FIN "${mapped.finCode}" appears more than once in this file.`,
         })
-      } else if (existingFins.has(mapped.finCode)) {
+      } else if (finMatchesExistingEmployee) {
         messages.push({
           code: "DUPLICATE_FIN_EXISTING",
           severity: "warning",
@@ -142,7 +147,12 @@ export function validateImportRows(
 
     // Employee Number — same generate-or-validate rule as Create/Edit,
     // with the pool growing as each row in the file is assigned one so
-    // two rows in the same file can never collide.
+    // two rows in the same file can never collide. When the row's own FIN
+    // already matches an existing employee, the row is going to be skipped
+    // regardless (FIN is the idempotency key) — so a match against the
+    // EXISTING directory here isn't a real conflict, just that employee's
+    // own number coming back around on a re-import/re-export, and flagging
+    // it as an error would be pure noise. In-file duplicates still matter.
     let employeeNumber = mapped.employeeNumber
     if (!employeeNumber) {
       employeeNumber = generateNextEmployeeNumber(Array.from(employeeNumberPool))
@@ -159,7 +169,7 @@ export function validateImportRows(
         field: "employeeNumber",
         message: `Employee Number "${employeeNumber}" appears more than once in this file.`,
       })
-    } else if (isEmployeeNumberTaken(employeeNumber, Array.from(employeeNumberPool))) {
+    } else if (!finMatchesExistingEmployee && existingNumberSet.has(employeeNumber)) {
       messages.push({
         code: "DUPLICATE_EMPLOYEE_NUMBER_EXISTING",
         severity: "error",

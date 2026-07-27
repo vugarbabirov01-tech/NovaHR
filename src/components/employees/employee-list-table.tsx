@@ -69,6 +69,7 @@ import type { EmployeeListItem } from "@/types/employee-profile"
 interface EmployeeListTableProps {
   data: EmployeeListItem[]
   onEditEmployee?: (employee: { id: string; fullName: string }) => void
+  onSelectionChange?: (ids: string[]) => void
 }
 
 const groupColumnIds: Record<Exclude<EmployeeGroupBy, "none">, string> = {
@@ -77,7 +78,7 @@ const groupColumnIds: Record<Exclude<EmployeeGroupBy, "none">, string> = {
   manager: "managerName",
 }
 
-export function EmployeeListTable({ data, onEditEmployee }: EmployeeListTableProps) {
+export function EmployeeListTable({ data, onEditEmployee, onSelectionChange }: EmployeeListTableProps) {
   const t = useTranslations("Employees.table")
   const tType = useTranslations("EmploymentType")
   const tCommon = useTranslations("Employees.card")
@@ -129,12 +130,18 @@ export function EmployeeListTable({ data, onEditEmployee }: EmployeeListTablePro
           />
         ),
         cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(value === true)}
-            onClick={(event) => event.stopPropagation()}
-            aria-label="Select row"
-          />
+          // Base UI's Checkbox doesn't reliably stop its own click from
+          // bubbling to the row's onClick (confirmed: clicking it navigated
+          // to the profile page instead of toggling selection) — containing
+          // it in a plain div and stopping propagation there, ahead of
+          // whatever Base UI does internally, is the robust fix.
+          <div onClick={(event) => event.stopPropagation()}>
+            <Checkbox
+              checked={row.getIsSelected()}
+              onCheckedChange={(value) => row.toggleSelected(value === true)}
+              aria-label="Select row"
+            />
+          </div>
         ),
         enableSorting: false,
         enableHiding: false,
@@ -265,6 +272,18 @@ export function EmployeeListTable({ data, onEditEmployee }: EmployeeListTablePro
     getExpandedRowModel: getExpandedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   })
+
+  // rowSelection is keyed by row index (no getRowId configured), so it's
+  // resolved back to real employee ids here rather than exposing the raw
+  // index-based state to the parent — Export Selected only ever needs ids.
+  useEffect(() => {
+    if (!onSelectionChange) return
+    const ids = Object.keys(rowSelection)
+      .filter((index) => rowSelection[index])
+      .map((index) => data[Number(index)]?.id)
+      .filter((id): id is string => Boolean(id))
+    onSelectionChange(ids)
+  }, [rowSelection, data, onSelectionChange])
 
   // TanStack's built-in autoResetPageIndex fires synchronously during the
   // table's initial construction (before this component finishes mounting),

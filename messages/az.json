@@ -362,7 +362,7 @@
       "allManagers": "Bütün Rəhbərlər",
       "clearFilters": "Filtrləri Təmizlə",
       "export": "İxrac Et",
-      "exportExcel": "Excel-ə İxrac Et",
+      "exportExcel": "Əməkdaşları İxrac Et…",
       "exportPdf": "PDF-ə İxrac Et",
       "print": "Çap Et",
       "importEmployees": "Əməkdaşları İdxal Et",
@@ -855,6 +855,24 @@
         "downloadReport": "İdxal Hesabatını Yüklə",
         "backToEmployees": "Əməkdaşlara Qayıt"
       }
+    },
+    "export": {
+      "title": "Əməkdaşları İxrac Et",
+      "description": "Sütun sırası və başlıqları İdxal şablonu ilə tam uyğundur — fayl Excel-də redaktə edilib yenidən uyğunlaşdırma olmadan idxal edilə bilər.",
+      "scopeLabel": "Hansı əməkdaşlar?",
+      "scopeAll": "Bütün Əməkdaşlar ({count})",
+      "scopeFiltered": "Filtrlənmiş Əməkdaşlar ({count})",
+      "scopeSelected": "Seçilmiş Əməkdaşlar ({count})",
+      "formatLabel": "Format",
+      "formatExcel": "Excel (.xlsx)",
+      "formatCsv": "CSV",
+      "typeLabel": "İxrac Növü",
+      "typeImportTemplate": "İdxal Şablonu",
+      "typeImportTemplateHint": "Tam uyğundur — Excel-də redaktə edib yenidən uyğunlaşdırma olmadan idxal edin.",
+      "typeFullReport": "Tam Əməkdaş Hesabatı",
+      "typeFullReportHint": "İdxal zamanı oxunmayacaq əlavə hesabat sütunları (status, yaş, staj və s.) əlavə edir.",
+      "cancel": "Ləğv Et",
+      "exportButton": "İxrac Et"
     }
   }
 }

@@ -362,7 +362,7 @@
       "allManagers": "Все руководители",
       "clearFilters": "Сбросить фильтры",
       "export": "Экспорт",
-      "exportExcel": "Экспорт в Excel",
+      "exportExcel": "Экспорт сотрудников…",
       "exportPdf": "Экспорт в PDF",
       "print": "Печать",
       "importEmployees": "Импорт сотрудников",
@@ -855,6 +855,24 @@
         "downloadReport": "Скачать отчёт об импорте",
         "backToEmployees": "Вернуться к сотрудникам"
       }
+    },
+    "export": {
+      "title": "Экспорт сотрудников",
+      "description": "Порядок столбцов и заголовки точно соответствуют шаблону импорта — файл можно отредактировать в Excel и импортировать обратно без повторного сопоставления.",
+      "scopeLabel": "Каких сотрудников?",
+      "scopeAll": "Все сотрудники ({count})",
+      "scopeFiltered": "Отфильтрованные сотрудники ({count})",
+      "scopeSelected": "Выбранные сотрудники ({count})",
+      "formatLabel": "Формат",
+      "formatExcel": "Excel (.xlsx)",
+      "formatCsv": "CSV",
+      "typeLabel": "Тип экспорта",
+      "typeImportTemplate": "Шаблон импорта",
+      "typeImportTemplateHint": "Полностью совместим — отредактируйте в Excel и импортируйте обратно без сопоставления.",
+      "typeFullReport": "Полный отчёт по сотруднику",
+      "typeFullReportHint": "Добавляет отчётные столбцы (статус, возраст, стаж и т.д.), которые импорт не считывает обратно.",
+      "cancel": "Отмена",
+      "exportButton": "Экспорт"
     }
   }
 }

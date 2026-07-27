@@ -4,7 +4,6 @@ import { useMemo, useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
 import {
   Download,
-  FileSpreadsheet,
   FileText,
   Printer,
   Plus,
@@ -27,9 +26,10 @@ import { EmployeeFiltersPanel } from "@/components/employees/employee-filters-pa
 import { EmployeeListTable } from "@/components/employees/employee-list-table"
 import { ViewToggle } from "@/components/employees/view-toggle"
 import { EmployeeWizardModal } from "@/components/employees/wizard/employee-wizard-modal"
+import { ExportEmployeesDialog } from "@/components/employees/export/export-employees-dialog"
 import { getEmployeeProfileAction } from "@/app/[locale]/(app)/employees/actions"
 import { usePersistedState } from "@/hooks/use-persisted-state"
-import { exportEmployeesToCsv, getFullName } from "@/lib/employees"
+import { getFullName } from "@/lib/employees"
 import { cn } from "@/lib/utils"
 import type { WizardMasterData } from "@/lib/employee-wizard-mapper"
 import {
@@ -63,6 +63,17 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
   const [wizardState, setWizardState] = useState<WizardState>(null)
   const [editingProfile, setEditingProfile] = useState<EmployeeProfile | null>(null)
   const [, startProfileFetch] = useTransition()
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
+
+  function handleViewChange(nextView: EmployeeView) {
+    // Selection only exists in the table view's checkboxes — switching away
+    // from it unmounts that state, so keeping stale ids around here would
+    // make "Export Selected" lie about what's actually selected.
+    if (nextView !== "list") setSelectedIds([])
+    setView(nextView)
+  }
 
   function handleAddEmployee() {
     setEditingProfile(null)
@@ -160,7 +171,7 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <ViewToggle value={view} onChange={setView} />
+          <ViewToggle value={view} onChange={handleViewChange} />
           <div className="mx-1 hidden h-6 w-px bg-border sm:block" />
           <Link href="/employees/import" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
             <Upload className="size-3.5" strokeWidth={1.75} />
@@ -172,10 +183,8 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
               {t("export")}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => exportEmployeesToCsv(filtered, "employees.csv")}
-              >
-                <FileSpreadsheet className="size-4" strokeWidth={1.75} />
+              <DropdownMenuItem onClick={() => setIsExportDialogOpen(true)}>
+                <Download className="size-4" strokeWidth={1.75} />
                 {t("exportExcel")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => window.print()}>
@@ -208,7 +217,11 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
           ))}
         </div>
       ) : (
-        <EmployeeListTable data={filtered} onEditEmployee={handleEditEmployee} />
+        <EmployeeListTable
+          data={filtered}
+          onEditEmployee={handleEditEmployee}
+          onSelectionChange={setSelectedIds}
+        />
       )}
 
       {wizardState ? (
@@ -222,6 +235,14 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
           onSuccess={handleWizardSuccess}
         />
       ) : null}
+
+      <ExportEmployeesDialog
+        open={isExportDialogOpen}
+        onOpenChange={setIsExportDialogOpen}
+        allIds={employees.map((employee) => employee.id)}
+        filteredIds={filtered.map((employee) => employee.id)}
+        selectedIds={selectedIds}
+      />
     </div>
   )
 }

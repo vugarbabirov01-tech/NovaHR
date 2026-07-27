@@ -362,7 +362,7 @@
       "allManagers": "All Managers",
       "clearFilters": "Clear Filters",
       "export": "Export",
-      "exportExcel": "Export Excel",
+      "exportExcel": "Export Employees…",
       "exportPdf": "Export PDF",
       "print": "Print",
       "importEmployees": "Import Employees",
@@ -855,6 +855,24 @@
         "downloadReport": "Download Import Report",
         "backToEmployees": "Back to Employees"
       }
+    },
+    "export": {
+      "title": "Export Employees",
+      "description": "Column order and headers exactly match the Import template, so the file can be edited and re-imported without remapping.",
+      "scopeLabel": "Which employees?",
+      "scopeAll": "All Employees ({count})",
+      "scopeFiltered": "Filtered Employees ({count})",
+      "scopeSelected": "Selected Employees ({count})",
+      "formatLabel": "Format",
+      "formatExcel": "Excel (.xlsx)",
+      "formatCsv": "CSV",
+      "typeLabel": "Export Type",
+      "typeImportTemplate": "Import Template",
+      "typeImportTemplateHint": "Round-trip compatible — edit in Excel and re-import with no remapping.",
+      "typeFullReport": "Full Employee Report",
+      "typeFullReportHint": "Adds reporting columns (status, age, tenure, etc.) that Import will not read back.",
+      "cancel": "Cancel",
+      "exportButton": "Export"
     }
   }
 }
