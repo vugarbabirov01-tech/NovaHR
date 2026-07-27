@@ -1,0 +1,112 @@
+// Nova HRMS — Administration (Master Data) schema.
+//
+// SQLite is the local development datasource. To move to PostgreSQL later
+// (Supabase, Neon, self-hosted), change `provider` below to "postgresql",
+// point DATABASE_URL at the Postgres connection string, and run
+// `prisma migrate dev` — no application code needs to change, since every
+// consumer goes through the repository layer in src/repositories/.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  branches Branch[]
+
+  @@map("companies")
+}
+
+model Branch {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+  @@map("branches")
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  positions Position[]
+
+  @@map("departments")
+}
+
+model Position {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  title       String
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  @@index([departmentId])
+  @@map("positions")
+}
+
+model Grade {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("grades")
+}
+
+model WorkSchedule {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  label       String
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("work_schedules")
+}
+
+model EmploymentType {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("employment_types")
+}

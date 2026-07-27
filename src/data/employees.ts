@@ -1,0 +1,91 @@
+import type { Employee, UpcomingBirthday } from "@/types/employee"
+
+export const recentEmployees: Employee[] = [
+  {
+    id: "EMP-1042",
+    name: "Ava Whitfield",
+    email: "ava.whitfield@company.com",
+    role: "Senior Product Designer",
+    department: "Design",
+    status: "active",
+    joinedAt: "2026-07-21",
+    location: "London, UK",
+  },
+  {
+    id: "EMP-1041",
+    name: "Marcus Chen",
+    email: "marcus.chen@company.com",
+    role: "Backend Engineer",
+    department: "Engineering",
+    status: "active",
+    joinedAt: "2026-07-18",
+    location: "Singapore",
+  },
+  {
+    id: "EMP-1040",
+    name: "Priya Nair",
+    email: "priya.nair@company.com",
+    role: "Talent Acquisition Lead",
+    department: "Human Resources",
+    status: "on-leave",
+    joinedAt: "2026-07-14",
+    location: "Bengaluru, IN",
+  },
+  {
+    id: "EMP-1039",
+    name: "Daniel Kowalski",
+    email: "daniel.kowalski@company.com",
+    role: "Financial Analyst",
+    department: "Finance",
+    status: "active",
+    joinedAt: "2026-07-09",
+    location: "Warsaw, PL",
+  },
+  {
+    id: "EMP-1038",
+    name: "Sofia Marchetti",
+    email: "sofia.marchetti@company.com",
+    role: "Account Executive",
+    department: "Sales",
+    status: "active",
+    joinedAt: "2026-07-05",
+    location: "Milan, IT",
+  },
+  {
+    id: "EMP-1037",
+    name: "Ethan Brooks",
+    email: "ethan.brooks@company.com",
+    role: "DevOps Engineer",
+    department: "Engineering",
+    status: "inactive",
+    joinedAt: "2026-06-29",
+    location: "Austin, US",
+  },
+]
+
+export const upcomingBirthdays: UpcomingBirthday[] = [
+  {
+    id: "EMP-0871",
+    name: "Liam Foster",
+    department: "Engineering",
+    date: "2026-07-24",
+  },
+  {
+    id: "EMP-0522",
+    name: "Noor Haddad",
+    department: "Marketing",
+    date: "2026-07-26",
+  },
+  {
+    id: "EMP-0193",
+    name: "Grace Lindqvist",
+    department: "Finance",
+    date: "2026-07-29",
+  },
+  {
+    id: "EMP-0764",
+    name: "Kenji Watanabe",
+    department: "Design",
+    date: "2026-08-02",
+  },
+]
