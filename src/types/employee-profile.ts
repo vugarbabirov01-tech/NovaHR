@@ -94,6 +94,7 @@ export interface EmployeeListItem {
   finCode: string
   firstName: string
   lastName: string
+  dateOfBirth: string
   photoUrl?: string
   email: string
   phone: string
@@ -412,6 +413,7 @@ export function toListItem(profile: EmployeeProfile): EmployeeListItem {
     finCode: profile.personal.finCode,
     firstName: profile.personal.firstName,
     lastName: profile.personal.lastName,
+    dateOfBirth: profile.personal.dateOfBirth,
     photoUrl: profile.personal.photoUrl,
     email: profile.personal.email,
     phone: profile.personal.phone,

@@ -375,6 +375,7 @@
     },
     "card": {
       "hireDate": "İşə Qəbul Tarixi",
+      "age": "Yaş",
       "manager": "Rəhbər",
       "viewProfile": "Profilə Bax",
       "quickActions": "Sürətli əməliyyatlar",
