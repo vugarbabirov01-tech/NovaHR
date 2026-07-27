@@ -167,3 +167,102 @@ export function wizardDataToProfile(data: EmployeeWizardData, masterData: Wizard
     quickStats: { tenureYears: 0, directReports: 0, completedTrainings: 0, openTasks: 0 },
   }
 }
+
+/**
+ * The reverse of wizardDataToProfile — pre-fills the wizard's form state
+ * from an existing EmployeeProfile so the same wizard can be reused for
+ * editing. Personal/Labour Law/Payroll map back 1:1 (the wizard covers
+ * every field in those sections). Department/Position/Company/Branch/Work
+ * Schedule are the one lossy spot: EmployeeProfile.employment only stores
+ * their display name/title/label, not the id it came from, so the id has
+ * to be recovered by matching that text against the current master-data
+ * snapshot (position additionally scoped by the resolved department,
+ * branch by the resolved company). If a match isn't found — the
+ * department/position/branch/etc. was renamed or archived since this
+ * employee was hired — the field comes back empty rather than guessing,
+ * and a work schedule with no matching label is treated as a custom one.
+ */
+export function profileToWizardData(
+  profile: EmployeeProfile,
+  masterData: WizardMasterData
+): EmployeeWizardData {
+  const department = masterData.departments.find((d) => d.name === profile.employment.department)
+  const position = masterData.positions.find(
+    (p) => p.title === profile.employment.position && (!department || p.departmentId === department.id)
+  )
+  const company = masterData.companies.find((c) => c.name === profile.employment.company)
+  const branch = masterData.branches.find(
+    (b) => b.name === profile.employment.branch && (!company || b.companyId === company.id)
+  )
+  const schedule = masterData.workSchedules.find((s) => s.label === profile.employment.workSchedule)
+
+  return {
+    photoUrl: profile.personal.photoUrl ?? "",
+    firstName: profile.personal.firstName,
+    lastName: profile.personal.lastName,
+    fatherName: profile.personal.fatherName ?? "",
+    gender: profile.personal.gender,
+    dateOfBirth: profile.personal.dateOfBirth,
+    nationality: profile.personal.nationality,
+    maritalStatus: profile.personal.maritalStatus,
+    finCode: profile.personal.finCode,
+    nationalId: profile.personal.nationalId,
+    idIssuingAuthority: profile.personal.idIssuingAuthority ?? "",
+    idIssueDate: profile.personal.idIssueDate ?? "",
+    idExpiryDate: profile.personal.idExpiryDate ?? "",
+    passportNumber: profile.personal.passportNumber,
+    address: profile.personal.address,
+    phone: profile.personal.phone,
+    email: profile.personal.email,
+    emergencyContactName: profile.personal.emergencyContactName,
+    emergencyContactPhone: profile.personal.emergencyContactPhone,
+    emergencyContactRelation: profile.personal.emergencyContactRelation,
+
+    employeeNumber: profile.employment.employeeNumber,
+    hireDate: profile.employment.hireDate,
+    probationEndDate: profile.employment.probationEndDate ?? "",
+    employmentType: profile.employment.employmentType,
+    contractType: profile.employment.contractType,
+    departmentId: department?.id ?? "",
+    positionId: position?.id ?? "",
+    companyId: company?.id ?? "",
+    branchId: branch?.id ?? "",
+    managerId: profile.employment.managerId ?? "",
+    scheduleId: schedule ? schedule.id : profile.employment.workSchedule ? CUSTOM_WORK_SCHEDULE_ID : "",
+    customWorkScheduleLabel: schedule ? "" : profile.employment.workSchedule,
+    workLocationType: profile.employment.workLocationType,
+    workLocation: profile.employment.workLocation,
+
+    isPregnant: profile.labourLaw.isPregnant,
+    isSingleParent: profile.labourLaw.isSingleParent,
+    isAdoptiveParent: profile.labourLaw.isAdoptiveParent,
+    children: profile.labourLaw.children,
+    hasDisability: profile.labourLaw.hasDisability,
+    disabilityGroup: profile.labourLaw.disabilityGroup ?? "",
+    disabilityCause: profile.labourLaw.disabilityCause ?? "",
+    disabilityCertificateExpiryDate: profile.labourLaw.disabilityCertificateExpiryDate ?? "",
+    veteranStatus: profile.labourLaw.veteranStatus ?? "",
+    stateDecorationName: profile.labourLaw.stateDecorationName ?? "",
+    professionalCategory: profile.labourLaw.professionalCategory ?? "",
+    hazardousWork: profile.labourLaw.hazardousWork,
+    undergroundWork: profile.labourLaw.undergroundWork,
+    nightShiftWork: profile.labourLaw.nightShiftWork,
+    isShiftWork: profile.labourLaw.isShiftWork,
+    workingConditionsNotes: profile.labourLaw.workingConditionsNotes ?? "",
+    previousWorkExperience: profile.labourLaw.previousWorkExperience,
+    hasCollectiveAgreementLeave: profile.labourLaw.hasCollectiveAgreementLeave,
+    collectiveAgreementLeaveDays: profile.labourLaw.collectiveAgreementLeaveDays ?? 0,
+    companyAdditionalLeaveDays: profile.labourLaw.companyAdditionalLeaveDays,
+    manualLeaveAdjustmentDays: profile.labourLaw.manualLeaveAdjustmentDays ?? 0,
+    labourLawNotes: profile.labourLaw.notes ?? "",
+
+    bankName: profile.payroll.bankName,
+    bankAccountNumber: profile.payroll.bankAccountNumber,
+    baseSalary: profile.payroll.baseSalary,
+    currency: profile.payroll.currency,
+    bonus: profile.payroll.bonus,
+    compensationNotes: profile.payroll.compensationNotes ?? "",
+
+    documents: profile.documents.map((doc) => ({ id: doc.id, name: doc.name, category: doc.category })),
+  }
+}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
+import { useMemo, useRef, useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
 import {
   Download,
@@ -12,8 +12,8 @@ import {
   Users,
 } from "lucide-react"
 
-import { Link } from "@/i18n/navigation"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { useRouter } from "@/i18n/navigation"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,26 +26,73 @@ import { EmployeeCard } from "@/components/employees/employee-card"
 import { EmployeeFiltersPanel } from "@/components/employees/employee-filters-panel"
 import { EmployeeListTable } from "@/components/employees/employee-list-table"
 import { ViewToggle } from "@/components/employees/view-toggle"
+import { EmployeeWizardModal } from "@/components/employees/wizard/employee-wizard-modal"
+import { getEmployeeProfileAction } from "@/app/[locale]/(app)/employees/actions"
 import { usePersistedState } from "@/hooks/use-persisted-state"
 import { exportEmployeesToCsv, getFullName } from "@/lib/employees"
-import { cn } from "@/lib/utils"
+import type { WizardMasterData } from "@/lib/employee-wizard-mapper"
 import {
   ALL_VALUE,
   defaultEmployeeFilters,
   type EmployeeFilters,
   type EmployeeView,
 } from "@/types/employee-filters"
-import type { EmployeeListItem } from "@/types/employee-profile"
+import type { EmployeeListItem, EmployeeProfile } from "@/types/employee-profile"
 
 interface EmployeeListClientProps {
   employees: EmployeeListItem[]
+  masterData: WizardMasterData
 }
 
-export function EmployeeListClient({ employees }: EmployeeListClientProps) {
+type WizardState = { mode: "create" } | { mode: "edit"; employeeId: string } | null
+
+export function EmployeeListClient({ employees, masterData }: EmployeeListClientProps) {
   const t = useTranslations("Employees.list")
+  const router = useRouter()
   const [view, setView] = usePersistedState<EmployeeView>("employees-view", "list")
   const [filters, setFilters] = useState<EmployeeFilters>(defaultEmployeeFilters)
   const importInputRef = useRef<HTMLInputElement>(null)
+
+  // Add/Edit Employee is one wizard opened as a drawer, reused from both the
+  // card view's quick actions and the table view's row actions — not two
+  // separate flows and not a dedicated /employees/new or /employees/[id]/edit
+  // route. Editing needs the employee's full EmployeeProfile (personal,
+  // labourLaw, payroll, documents...), which this page only ever fetches as
+  // the slim EmployeeListItem summary, so it's loaded on demand the moment
+  // Edit is chosen.
+  const [wizardState, setWizardState] = useState<WizardState>(null)
+  const [editingProfile, setEditingProfile] = useState<EmployeeProfile | null>(null)
+  const [, startProfileFetch] = useTransition()
+
+  function handleAddEmployee() {
+    setEditingProfile(null)
+    setWizardState({ mode: "create" })
+  }
+
+  function handleEditEmployee(employee: { id: string; fullName: string }) {
+    setEditingProfile(null)
+    setWizardState({ mode: "edit", employeeId: employee.id })
+    startProfileFetch(async () => {
+      const profile = await getEmployeeProfileAction(employee.id)
+      setEditingProfile(profile)
+    })
+  }
+
+  function handleWizardOpenChange(open: boolean) {
+    if (!open) {
+      setWizardState(null)
+      setEditingProfile(null)
+    }
+  }
+
+  function handleWizardSuccess() {
+    // The wizard's own success screen stays open (inside the drawer) so HR
+    // can still choose "View Profile" — this only makes sure the list
+    // behind it is already showing the new/updated record by the time they
+    // close it, since Server Actions revalidate the cache but this page
+    // itself doesn't re-fetch until told to.
+    router.refresh()
+  }
 
   const managerNames = useMemo(
     () =>
@@ -150,10 +197,10 @@ export function EmployeeListClient({ employees }: EmployeeListClientProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Link href="/employees/new" className={cn(buttonVariants({ size: "sm" }))}>
+          <Button size="sm" onClick={handleAddEmployee}>
             <Plus className="size-3.5" strokeWidth={1.75} />
             {t("addEmployee")}
-          </Link>
+          </Button>
         </div>
       </div>
 
@@ -166,12 +213,24 @@ export function EmployeeListClient({ employees }: EmployeeListClientProps) {
       ) : view === "card" ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((employee) => (
-            <EmployeeCard key={employee.id} employee={employee} />
+            <EmployeeCard key={employee.id} employee={employee} onEditEmployee={handleEditEmployee} />
           ))}
         </div>
       ) : (
-        <EmployeeListTable data={filtered} />
+        <EmployeeListTable data={filtered} onEditEmployee={handleEditEmployee} />
       )}
+
+      {wizardState ? (
+        <EmployeeWizardModal
+          open={wizardState !== null}
+          onOpenChange={handleWizardOpenChange}
+          mode={wizardState.mode}
+          employeeId={wizardState.mode === "edit" ? wizardState.employeeId : undefined}
+          editingProfile={editingProfile}
+          masterData={masterData}
+          onSuccess={handleWizardSuccess}
+        />
+      ) : null}
     </div>
   )
 }

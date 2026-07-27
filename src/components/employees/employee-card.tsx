@@ -20,9 +20,10 @@ import type { EmployeeListItem } from "@/types/employee-profile"
 
 interface EmployeeCardProps {
   employee: EmployeeListItem
+  onEditEmployee?: (employee: { id: string; fullName: string }) => void
 }
 
-export function EmployeeCard({ employee }: EmployeeCardProps) {
+export function EmployeeCard({ employee, onEditEmployee }: EmployeeCardProps) {
   const t = useTranslations("Employees.card")
   const tTable = useTranslations("Employees.table")
   const fullName = getFullName(employee)
@@ -30,7 +31,10 @@ export function EmployeeCard({ employee }: EmployeeCardProps) {
   return (
     <Card className="group relative transition-all hover:-translate-y-0.5 hover:shadow-md">
       <div className="absolute top-2 right-2 z-10">
-        <EmployeeQuickActions employee={{ id: employee.id, fullName }} />
+        <EmployeeQuickActions
+          employee={{ id: employee.id, fullName }}
+          onEditEmployee={onEditEmployee}
+        />
       </div>
 
       <CardContent className="flex flex-col gap-3 pt-1">

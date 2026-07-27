@@ -685,6 +685,8 @@
     "wizard": {
       "title": "Əməkdaş Əlavə Et",
       "description": "Yeni Əməkdaş Master Qeydi yaradın.",
+      "editTitle": "Əməkdaşı Redaktə Et",
+      "editDescription": "Bu əməkdaşın Master Qeydini yeniləyin.",
       "steps": {
         "personal": "Şəxsi Məlumatlar",
         "employment": "Məşğulluq",
@@ -697,12 +699,16 @@
       "next": "Növbəti",
       "saveDraft": "Qaralama Kimi Saxla",
       "submit": "Əməkdaş Yarat",
+      "submitEdit": "Dəyişiklikləri Yadda Saxla",
       "viewProfile": "Profilə Bax",
       "stepIndicator": "Addım {current} / {total}",
       "reviewTitle": "Yoxla və Təsdiqlə",
       "reviewDescription": "Əməkdaş qeydini yaratmazdan əvvəl bütün məlumatları yoxlayın.",
+      "reviewDescriptionEdit": "Dəyişiklikləri yadda saxlamazdan əvvəl bütün məlumatları yoxlayın.",
       "successTitle": "Əməkdaş qeydi yaradıldı",
       "successDescription": "Əməkdaş saxlanıldı və artıq Əməkdaşlar siyahısında görünür.",
+      "successTitleEdit": "Əməkdaş qeydi yeniləndi",
+      "successDescriptionEdit": "Dəyişikliklər yadda saxlanıldı.",
       "required": "Tələb olunur",
       "optional": "İstəyə bağlı",
       "photo": {

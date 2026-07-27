@@ -22,7 +22,7 @@ import {
   validateWizardStep,
   type WizardValidationErrors,
 } from "@/lib/employee-wizard-validation"
-import { createEmployeeAction } from "@/app/[locale]/(app)/employees/actions"
+import { createEmployeeAction, updateEmployeeAction } from "@/app/[locale]/(app)/employees/actions"
 import { wizardDataToProfile, type WizardMasterData } from "@/lib/employee-wizard-mapper"
 import { defaultWizardData, type EmployeeWizardData } from "@/types/employee-wizard"
 
@@ -30,13 +30,25 @@ const stepKeys = ["personal", "employment", "labourLaw", "payroll", "documents",
 
 interface EmployeeWizardProps {
   masterData: WizardMasterData
+  mode?: "create" | "edit"
+  employeeId?: string
+  initialData?: EmployeeWizardData
+  onSuccess?: (id: string) => void
+  onClose?: () => void
 }
 
-export function EmployeeWizard({ masterData: initialMasterData }: EmployeeWizardProps) {
+export function EmployeeWizard({
+  masterData: initialMasterData,
+  mode = "create",
+  employeeId,
+  initialData,
+  onSuccess,
+  onClose,
+}: EmployeeWizardProps) {
   const t = useTranslations("Employees.wizard")
   const tProfile = useTranslations("Employees.profile")
   const [stepIndex, setStepIndex] = useState(0)
-  const [data, setData] = useState<EmployeeWizardData>(defaultWizardData)
+  const [data, setData] = useState<EmployeeWizardData>(initialData ?? defaultWizardData)
   const [errors, setErrors] = useState<WizardValidationErrors>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [newEmployeeId, setNewEmployeeId] = useState<string | null>(null)
@@ -127,9 +139,13 @@ export function EmployeeWizard({ masterData: initialMasterData }: EmployeeWizard
     setSubmitError(null)
     startTransition(async () => {
       const profile = wizardDataToProfile(data, masterData)
-      const result = await createEmployeeAction(profile)
+      const result =
+        mode === "edit" && employeeId
+          ? await updateEmployeeAction(employeeId, profile)
+          : await createEmployeeAction(profile)
       if (result.success && result.id) {
         setNewEmployeeId(result.id)
+        onSuccess?.(result.id)
       } else if (result.error === "duplicate-id" || result.error === "duplicate-employee-number") {
         setErrors({ employeeNumber: t("validation.duplicateEmployeeNumber") })
         setSubmitError(t("validation.duplicateEmployeeNumber"))
@@ -148,13 +164,21 @@ export function EmployeeWizard({ masterData: initialMasterData }: EmployeeWizard
             <CheckCircle2 className="size-6 text-status-good" strokeWidth={1.75} />
           </div>
           <h2 className="font-heading text-lg font-semibold text-foreground">
-            {t("successTitle")}
+            {mode === "edit" ? t("successTitleEdit") : t("successTitle")}
           </h2>
-          <p className="max-w-sm text-sm text-muted-foreground">{t("successDescription")}</p>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            {mode === "edit" ? t("successDescriptionEdit") : t("successDescription")}
+          </p>
           <div className="mt-2 flex items-center gap-2">
-            <Link href="/employees" className={cn(buttonVariants({ variant: "outline" }))}>
-              {tProfile("backToList")}
-            </Link>
+            {onClose ? (
+              <Button variant="outline" onClick={onClose}>
+                {tProfile("backToList")}
+              </Button>
+            ) : (
+              <Link href="/employees" className={cn(buttonVariants({ variant: "outline" }))}>
+                {tProfile("backToList")}
+              </Link>
+            )}
             <Link href={`/employees/${newEmployeeId}`} className={cn(buttonVariants())}>
               {t("viewProfile")}
             </Link>
@@ -202,7 +226,7 @@ export function EmployeeWizard({ masterData: initialMasterData }: EmployeeWizard
           {stepIndex === 2 ? <LabourLawStep data={data} onChange={patch} /> : null}
           {stepIndex === 3 ? <PayrollStep data={data} onChange={patch} errors={errors} /> : null}
           {stepIndex === 4 ? <DocumentsStep data={data} onChange={patch} /> : null}
-          {stepIndex === 5 ? <ReviewStep data={data} masterData={masterData} /> : null}
+          {stepIndex === 5 ? <ReviewStep data={data} masterData={masterData} mode={mode} /> : null}
         </CardContent>
       </Card>
 
@@ -215,7 +239,7 @@ export function EmployeeWizard({ masterData: initialMasterData }: EmployeeWizard
         {isLastStep ? (
           <Button onClick={handleSubmit} disabled={isPending}>
             {isPending ? <Loader2 className="size-4 animate-spin" strokeWidth={1.75} /> : null}
-            {t("submit")}
+            {mode === "edit" ? t("submitEdit") : t("submit")}
           </Button>
         ) : (
           <Button onClick={handleNext} disabled={isPending}>

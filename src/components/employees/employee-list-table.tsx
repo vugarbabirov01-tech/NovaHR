@@ -68,6 +68,7 @@ import type { EmployeeListItem } from "@/types/employee-profile"
 
 interface EmployeeListTableProps {
   data: EmployeeListItem[]
+  onEditEmployee?: (employee: { id: string; fullName: string }) => void
 }
 
 const groupColumnIds: Record<Exclude<EmployeeGroupBy, "none">, string> = {
@@ -76,7 +77,7 @@ const groupColumnIds: Record<Exclude<EmployeeGroupBy, "none">, string> = {
   manager: "managerName",
 }
 
-export function EmployeeListTable({ data }: EmployeeListTableProps) {
+export function EmployeeListTable({ data, onEditEmployee }: EmployeeListTableProps) {
   const t = useTranslations("Employees.table")
   const tType = useTranslations("EmploymentType")
   const tCommon = useTranslations("Employees.card")
@@ -230,7 +231,12 @@ export function EmployeeListTable({ data }: EmployeeListTableProps) {
                 <Users className="size-4" strokeWidth={1.75} />
                 {t("viewProfile")}
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onEditEmployee?.({ id: row.original.id, fullName: getFullName(row.original) })
+                }}
+              >
                 <UserCog className="size-4" strokeWidth={1.75} />
                 {t("editEmployee")}
               </DropdownMenuItem>
@@ -239,7 +245,7 @@ export function EmployeeListTable({ data }: EmployeeListTableProps) {
         ),
       },
     ],
-    [t, tType, tCommon]
+    [t, tType, tCommon, onEditEmployee]
   )
 
   const table = useReactTable({

@@ -685,6 +685,8 @@
     "wizard": {
       "title": "Add Employee",
       "description": "Create a new Employee Master Record.",
+      "editTitle": "Edit Employee",
+      "editDescription": "Update this employee's Master Record.",
       "steps": {
         "personal": "Personal Information",
         "employment": "Employment",
@@ -697,12 +699,16 @@
       "next": "Next",
       "saveDraft": "Save Draft",
       "submit": "Create Employee",
+      "submitEdit": "Save Changes",
       "viewProfile": "View Profile",
       "stepIndicator": "Step {current} of {total}",
       "reviewTitle": "Review & Confirm",
       "reviewDescription": "Review all information before creating the employee record.",
+      "reviewDescriptionEdit": "Review all information before saving your changes.",
       "successTitle": "Employee record created",
       "successDescription": "The employee has been saved and now appears in the Employees list.",
+      "successTitleEdit": "Employee record updated",
+      "successDescriptionEdit": "The changes have been saved.",
       "required": "Required",
       "optional": "Optional",
       "photo": {

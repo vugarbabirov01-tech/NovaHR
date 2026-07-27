@@ -23,6 +23,7 @@ import type { WorkExperienceDuration } from "@/types/employee-profile"
 interface StepProps {
   data: EmployeeWizardData
   masterData: WizardMasterData
+  mode?: "create" | "edit"
 }
 
 /** Read-only display only — never stored. */
@@ -30,7 +31,7 @@ function formatDuration(duration: WorkExperienceDuration, t: (key: string) => st
   return `${duration.years} ${t("durationYears")} ${duration.months} ${t("durationMonths")} ${duration.days} ${t("durationDays")}`
 }
 
-export function ReviewStep({ data, masterData }: StepProps) {
+export function ReviewStep({ data, masterData, mode = "create" }: StepProps) {
   const t = useTranslations("Employees.wizard")
   const tTabs = useTranslations("Employees.profile.tabs")
   const tPersonal = useTranslations("Employees.profile.personal")
@@ -60,7 +61,9 @@ export function ReviewStep({ data, masterData }: StepProps) {
         <h3 className="font-heading text-base font-semibold text-foreground">
           {t("reviewTitle")}
         </h3>
-        <p className="text-sm text-muted-foreground">{t("reviewDescription")}</p>
+        <p className="text-sm text-muted-foreground">
+          {mode === "edit" ? t("reviewDescriptionEdit") : t("reviewDescription")}
+        </p>
       </div>
 
       <Card>

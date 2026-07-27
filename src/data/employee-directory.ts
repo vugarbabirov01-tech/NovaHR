@@ -146,7 +146,7 @@ function history(...events: EmploymentHistoryEvent[]): EmploymentHistoryEvent[] 
   return events
 }
 
-export const employeeDirectory: EmployeeProfile[] = [
+const seedEmployeeDirectory: EmployeeProfile[] = [
   {
     id: "EMP-1042",
     employmentStatus: "active",
@@ -1216,6 +1216,28 @@ export const employeeDirectory: EmployeeProfile[] = [
   },
 ]
 
+/**
+ * Next.js's dev server (Turbopack) can re-instantiate this module in a
+ * different execution context than the one a Server Action just mutated it
+ * in — the same reason src/lib/prisma.ts pins its client to `globalThis`
+ * instead of a plain module-level const. A plain `export const
+ * employeeDirectory = [...]` would silently reset to the seed data on the
+ * next request whenever that happens, even though the mutation itself
+ * (addEmployeeProfile/updateEmployeeProfile) succeeded. Pinning the array
+ * to `globalThis` the same way makes every execution context share the
+ * one array instance for the lifetime of the dev server process.
+ */
+const globalForEmployeeDirectory = globalThis as unknown as {
+  employeeDirectory?: EmployeeProfile[]
+}
+
+export const employeeDirectory: EmployeeProfile[] =
+  globalForEmployeeDirectory.employeeDirectory ?? seedEmployeeDirectory
+
+if (process.env.NODE_ENV !== "production") {
+  globalForEmployeeDirectory.employeeDirectory = employeeDirectory
+}
+
 export function getEmployeeById(id: string): EmployeeProfile | undefined {
   return employeeDirectory.find((employee) => employee.id === id)
 }
@@ -1231,4 +1253,16 @@ export function isEmployeeIdTaken(id: string): boolean {
  */
 export function addEmployeeProfile(profile: EmployeeProfile): void {
   employeeDirectory.unshift(profile)
+}
+
+/**
+ * Replaces an existing profile in-place, preserving its position in the
+ * directory. Stands in for a database update the same way addEmployeeProfile
+ * stands in for an insert.
+ */
+export function updateEmployeeProfile(id: string, profile: EmployeeProfile): void {
+  const index = employeeDirectory.findIndex((employee) => employee.id === id)
+  if (index !== -1) {
+    employeeDirectory[index] = profile
+  }
 }
