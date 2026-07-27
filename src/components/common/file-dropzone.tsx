@@ -10,9 +10,10 @@ interface FileDropzoneProps {
   hint: string
   onFiles?: (files: File[]) => void
   className?: string
+  accept?: string
 }
 
-export function FileDropzone({ label, hint, onFiles, className }: FileDropzoneProps) {
+export function FileDropzone({ label, hint, onFiles, className, accept }: FileDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -54,6 +55,7 @@ export function FileDropzone({ label, hint, onFiles, className }: FileDropzonePr
         ref={inputRef}
         type="file"
         multiple
+        accept={accept}
         className="hidden"
         onChange={(event) => handleFiles(event.target.files)}
       />

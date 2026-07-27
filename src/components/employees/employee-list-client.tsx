@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef, useState, useTransition } from "react"
+import { useMemo, useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
 import {
   Download,
@@ -12,8 +12,8 @@ import {
   Users,
 } from "lucide-react"
 
-import { useRouter } from "@/i18n/navigation"
-import { Button } from "@/components/ui/button"
+import { Link, useRouter } from "@/i18n/navigation"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +30,7 @@ import { EmployeeWizardModal } from "@/components/employees/wizard/employee-wiza
 import { getEmployeeProfileAction } from "@/app/[locale]/(app)/employees/actions"
 import { usePersistedState } from "@/hooks/use-persisted-state"
 import { exportEmployeesToCsv, getFullName } from "@/lib/employees"
+import { cn } from "@/lib/utils"
 import type { WizardMasterData } from "@/lib/employee-wizard-mapper"
 import {
   ALL_VALUE,
@@ -51,7 +52,6 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
   const router = useRouter()
   const [view, setView] = usePersistedState<EmployeeView>("employees-view", "list")
   const [filters, setFilters] = useState<EmployeeFilters>(defaultEmployeeFilters)
-  const importInputRef = useRef<HTMLInputElement>(null)
 
   // Add/Edit Employee is one wizard opened as a drawer, reused from both the
   // card view's quick actions and the table view's row actions — not two
@@ -162,19 +162,10 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
         <div className="flex flex-wrap items-center gap-2">
           <ViewToggle value={view} onChange={setView} />
           <div className="mx-1 hidden h-6 w-px bg-border sm:block" />
-          <input
-            ref={importInputRef}
-            type="file"
-            accept=".csv,.xlsx"
-            className="hidden"
-            onChange={(event) => {
-              event.target.value = ""
-            }}
-          />
-          <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()}>
+          <Link href="/employees/import" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
             <Upload className="size-3.5" strokeWidth={1.75} />
             {t("importEmployees")}
-          </Button>
+          </Link>
           <DropdownMenu>
             <DropdownMenuTrigger render={<Button variant="outline" size="sm" />}>
               <Download className="size-3.5" strokeWidth={1.75} />

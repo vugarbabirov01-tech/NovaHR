@@ -1246,6 +1246,12 @@ export function isEmployeeIdTaken(id: string): boolean {
   return employeeDirectory.some((employee) => employee.id === id)
 }
 
+/** Used by Employee Import for FIN-based idempotency — never by Create/Edit. */
+export function isFinTaken(finCode: string): boolean {
+  const normalized = finCode.trim().toUpperCase()
+  return employeeDirectory.some((employee) => employee.personal.finCode.trim().toUpperCase() === normalized)
+}
+
 /**
  * Adds a newly created profile to the in-memory directory. This stands in
  * for a database insert — swapping it for a real PostgreSQL write later
