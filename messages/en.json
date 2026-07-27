@@ -375,7 +375,6 @@
     },
     "card": {
       "hireDate": "Hire Date",
-      "age": "Age",
       "manager": "Manager",
       "viewProfile": "View Profile",
       "quickActions": "Quick actions",
