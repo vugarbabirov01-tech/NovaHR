@@ -108,6 +108,8 @@ export interface EmployeeListItem {
   employmentType: EmploymentType
   employmentStatus: EmploymentStatus
   hireDate: string
+  baseSalary: number
+  currency: string
 }
 
 // ---------------------------------------------------------------------------
@@ -427,5 +429,7 @@ export function toListItem(profile: EmployeeProfile): EmployeeListItem {
     employmentType: profile.employment.employmentType,
     employmentStatus: profile.employmentStatus,
     hireDate: profile.employment.hireDate,
+    baseSalary: profile.payroll.baseSalary,
+    currency: profile.payroll.currency,
   }
 }

@@ -376,6 +376,8 @@
     "card": {
       "hireDate": "Hire Date",
       "manager": "Manager",
+      "age": "Age",
+      "salary": "Salary",
       "viewProfile": "View Profile",
       "quickActions": "Quick actions",
       "noManager": "No manager assigned"

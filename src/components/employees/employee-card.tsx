@@ -54,9 +54,7 @@ export function EmployeeCard({ employee, onEditEmployee }: EmployeeCardProps) {
             </span>
             <span className="truncate text-sm text-muted-foreground">{employee.position}</span>
             <EmploymentStatusBadge status={employee.employmentStatus} />
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {calculateAgeFromDateOfBirth(employee.dateOfBirth)} yaş
-            </span>
+            <span className="text-xs text-muted-foreground tabular-nums">{employee.finCode}</span>
           </div>
         </Link>
 
@@ -77,6 +75,18 @@ export function EmployeeCard({ employee, onEditEmployee }: EmployeeCardProps) {
             <span className="text-muted-foreground">{t("manager")}</span>
             <span className="truncate font-medium text-foreground">
               {employee.managerName ?? t("noManager")}
+            </span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-muted-foreground">{t("age")}</span>
+            <span className="font-medium text-foreground tabular-nums">
+              {calculateAgeFromDateOfBirth(employee.dateOfBirth)} yaş
+            </span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-muted-foreground">{t("salary")}</span>
+            <span className="truncate font-medium text-foreground tabular-nums">
+              {employee.baseSalary} {employee.currency}
             </span>
           </div>
         </div>

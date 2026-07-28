@@ -376,6 +376,8 @@
     "card": {
       "hireDate": "İşə Qəbul Tarixi",
       "manager": "Rəhbər",
+      "age": "Yaş",
+      "salary": "Əmək haqqı",
       "viewProfile": "Profilə Bax",
       "quickActions": "Sürətli əməliyyatlar",
       "noManager": "Rəhbər təyin edilməyib"
