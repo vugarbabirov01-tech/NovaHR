@@ -7,6 +7,7 @@ import type {
 } from "@/types/employee-profile"
 import type { EmployeeWizardData } from "@/types/employee-wizard"
 import type { ColumnMapping, ImportRowMessage, ImportableField, RawImportRow } from "@/lib/employee-import/types"
+import { ImportValidationMessages } from "@/lib/employee-import/validation-messages"
 
 function normalizeKey(text: string): string {
   return text.trim().toLowerCase().replace(/[\s_-]+/g, "")
@@ -140,8 +141,8 @@ export function mapRawRow(row: RawImportRow, columnMapping: ColumnMapping[]): Ma
       messages.push({
         code: "VALUE_NORMALIZED",
         severity: "info",
-        field: field as ImportableField,
-        message: `"${original}" was normalized to "${value}".`,
+        field,
+        message: ImportValidationMessages.valueNormalized(field, original, value),
       })
     }
     return value
@@ -196,7 +197,7 @@ export function mapRawRow(row: RawImportRow, columnMapping: ColumnMapping[]): Ma
         code: "INVALID_DATE",
         severity: "error",
         field: "dateOfBirth",
-        message: `Date of Birth "${text.dateOfBirth}" could not be parsed.`,
+        message: ImportValidationMessages.invalidDate("dateOfBirth", text.dateOfBirth),
       })
     }
   }
@@ -210,7 +211,7 @@ export function mapRawRow(row: RawImportRow, columnMapping: ColumnMapping[]): Ma
         code: "INVALID_DATE",
         severity: "error",
         field: "hireDate",
-        message: `Hire Date "${text.hireDate}" could not be parsed.`,
+        message: ImportValidationMessages.invalidDate("hireDate", text.hireDate),
       })
     }
   }

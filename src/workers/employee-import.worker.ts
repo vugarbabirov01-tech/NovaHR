@@ -1,5 +1,6 @@
 import { parseWorkbook, extractSheetRows } from "@/lib/employee-import/file-parser"
 import { validateImportRows } from "@/lib/employee-import/row-validator"
+import { ImportValidationMessages } from "@/lib/employee-import/validation-messages"
 import type { ColumnMapping, RawImportRow } from "@/lib/employee-import/types"
 import type { WizardMasterData } from "@/lib/employee-wizard-mapper"
 
@@ -42,7 +43,7 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
     }
 
     if (message.type === "selectSheet") {
-      if (!currentWorkbook) throw new Error("No file has been parsed yet.")
+      if (!currentWorkbook) throw new Error(ImportValidationMessages.noFileParsedYet)
       const { headerColumns, rows } = extractSheetRows(currentWorkbook, message.sheetName)
       post({ type: "sheetExtracted", headerColumns, rows })
       return
@@ -61,7 +62,10 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
       return
     }
   } catch (error) {
-    post({ type: "error", message: error instanceof Error ? error.message : "Unknown worker error." })
+    post({
+      type: "error",
+      message: error instanceof Error ? error.message : ImportValidationMessages.unknownWorkerError,
+    })
   }
 }
 

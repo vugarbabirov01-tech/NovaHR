@@ -13,8 +13,14 @@ import {
 } from "@/lib/employee-import/master-data-resolver"
 import type { ImportRow, ImportRowMessage, ImportSeverity, RawImportRow } from "@/lib/employee-import/types"
 import type { ColumnMapping } from "@/lib/employee-import/types"
+import { ImportValidationMessages } from "@/lib/employee-import/validation-messages"
 
-const VALIDATION_MESSAGES: WizardValidationMessages = { required: "This field is required." }
+// validateWizardStep needs a "required" message, but the actual per-field
+// AZ text is built afterward from each error's field key (see the
+// REQUIRED_FIELD_MISSING loop below) — this placeholder is never shown to
+// a user, it only has to be a non-empty string so validateWizardStep
+// reports the field as invalid at all.
+const VALIDATION_MESSAGES: WizardValidationMessages = { required: "required" }
 
 const SEVERITY_RANK: Record<ImportSeverity, number> = { info: 0, warning: 1, error: 2 }
 
@@ -63,7 +69,7 @@ export function validateImportRows(
         code: "DEPARTMENT_NOT_FOUND",
         severity: "error",
         field: "department",
-        message: `Department "${mapped.department}" was not found.`,
+        message: ImportValidationMessages.departmentNotFound(mapped.department),
       })
     }
 
@@ -75,7 +81,7 @@ export function validateImportRows(
         code: "POSITION_NOT_FOUND",
         severity: "error",
         field: "position",
-        message: `Position "${mapped.position}" was not found${department ? " in this department" : ""}.`,
+        message: ImportValidationMessages.positionNotFound(mapped.position, Boolean(department)),
       })
     }
 
@@ -85,7 +91,7 @@ export function validateImportRows(
         code: "COMPANY_NOT_FOUND",
         severity: "error",
         field: "company",
-        message: `Company "${mapped.company}" was not found.`,
+        message: ImportValidationMessages.companyNotFound(mapped.company),
       })
     }
 
@@ -95,7 +101,7 @@ export function validateImportRows(
         code: "BRANCH_NOT_FOUND",
         severity: "error",
         field: "branch",
-        message: `Branch "${mapped.branch}" was not found${company ? " for this company" : ""}.`,
+        message: ImportValidationMessages.branchNotFound(mapped.branch, Boolean(company)),
       })
     }
 
@@ -105,7 +111,7 @@ export function validateImportRows(
         code: "MANAGER_NOT_FOUND",
         severity: "error",
         field: "manager",
-        message: `Manager "${mapped.manager}" was not found.`,
+        message: ImportValidationMessages.managerNotFound(mapped.manager),
       })
     }
 
@@ -115,7 +121,7 @@ export function validateImportRows(
         code: "WORK_SCHEDULE_CUSTOM",
         severity: "info",
         field: "workSchedule",
-        message: `Work Schedule "${mapped.workSchedule}" doesn't match a known schedule — kept as a custom label.`,
+        message: ImportValidationMessages.workScheduleCustom(mapped.workSchedule),
       })
     }
 
@@ -133,14 +139,14 @@ export function validateImportRows(
           code: "DUPLICATE_FIN_IN_FILE",
           severity: "error",
           field: "finCode",
-          message: `FIN "${mapped.finCode}" appears more than once in this file.`,
+          message: ImportValidationMessages.duplicateFinInFile(mapped.finCode),
         })
       } else if (finMatchesExistingEmployee) {
         messages.push({
           code: "DUPLICATE_FIN_EXISTING",
           severity: "warning",
           field: "finCode",
-          message: `An employee with FIN "${mapped.finCode}" already exists — this row will be skipped.`,
+          message: ImportValidationMessages.duplicateFinExisting(mapped.finCode),
         })
       }
     }
@@ -160,21 +166,21 @@ export function validateImportRows(
         code: "EMPLOYEE_NUMBER_GENERATED",
         severity: "info",
         field: "employeeNumber",
-        message: `Employee Number generated automatically: ${employeeNumber}.`,
+        message: ImportValidationMessages.employeeNumberGenerated(employeeNumber),
       })
     } else if (seenEmployeeNumbersInFile.has(employeeNumber)) {
       messages.push({
         code: "DUPLICATE_EMPLOYEE_NUMBER_IN_FILE",
         severity: "error",
         field: "employeeNumber",
-        message: `Employee Number "${employeeNumber}" appears more than once in this file.`,
+        message: ImportValidationMessages.duplicateEmployeeNumberInFile(employeeNumber),
       })
     } else if (!finMatchesExistingEmployee && existingNumberSet.has(employeeNumber)) {
       messages.push({
         code: "DUPLICATE_EMPLOYEE_NUMBER_EXISTING",
         severity: "error",
         field: "employeeNumber",
-        message: `Employee Number "${employeeNumber}" already exists.`,
+        message: ImportValidationMessages.duplicateEmployeeNumberExisting(employeeNumber),
       })
     }
     employeeNumberPool.add(employeeNumber)
@@ -195,12 +201,12 @@ export function validateImportRows(
 
     const personalErrors = validateWizardStep(0, wizardData, VALIDATION_MESSAGES)
     const employmentErrors = validateWizardStep(1, wizardData, VALIDATION_MESSAGES)
-    for (const [field, message] of Object.entries({ ...personalErrors, ...employmentErrors })) {
+    for (const field of Object.keys({ ...personalErrors, ...employmentErrors })) {
       messages.push({
         code: "REQUIRED_FIELD_MISSING",
         severity: "error",
         field: field as ImportRowMessage["field"],
-        message: `${field}: ${message}`,
+        message: ImportValidationMessages.requiredField(field),
       })
     }
 
