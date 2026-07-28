@@ -1,5 +1,6 @@
 "use client"
 
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { FileText } from "lucide-react"
 
@@ -25,7 +26,7 @@ export function DocumentsTab({ profile }: DocumentsTabProps) {
     {} as Record<DocumentCategory, typeof documents>
   )
 
-  const categories: DocumentCategory[] = [
+  const allCategories: DocumentCategory[] = [
     "national-id",
     "contract",
     "certificate",
@@ -35,19 +36,25 @@ export function DocumentsTab({ profile }: DocumentsTabProps) {
     "other",
   ]
 
+  // Employment Contract quick action deep-links here with ?category=contract
+  // so the tab opens scoped to just that category instead of the full list.
+  const searchParams = useSearchParams()
+  const requestedCategory = searchParams.get("category")
+  const isValidCategory = allCategories.includes(requestedCategory as DocumentCategory)
+  const categories = isValidCategory ? [requestedCategory as DocumentCategory] : allCategories
+  const visibleCategories = categories.filter((category) => grouped[category]?.length)
+
   return (
     <div className="flex flex-col gap-4">
       <FileDropzone label={t("uploadArea")} hint={t("uploadHint")} />
 
       <Card>
         <CardContent>
-          {documents.length === 0 ? (
+          {visibleCategories.length === 0 ? (
             <EmptyState icon={FileText} title={t("noDocuments")} />
           ) : (
             <div className="flex flex-col gap-5">
-              {categories
-                .filter((category) => grouped[category]?.length)
-                .map((category) => (
+              {visibleCategories.map((category) => (
                   <div key={category} className="flex flex-col gap-2">
                     <CardHeader className="p-0">
                       <CardTitle className="text-sm">{tCategories(category)}</CardTitle>

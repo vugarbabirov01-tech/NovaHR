@@ -8,6 +8,7 @@ export type EmploymentStatus =
   | "active"
   | "probation"
   | "on-leave"
+  | "business-trip"
   | "suspended"
   | "terminated"
   | "inactive"
@@ -395,6 +396,13 @@ export interface EmployeeQuickStats {
 export interface EmployeeProfile {
   id: string
   employmentStatus: EmploymentStatus
+  /**
+   * Reference only — every termination detail (date, reason, checklist,
+   * snapshots) lives in the Offboarding module's own OffboardingRecord
+   * (src/types/offboarding.ts), keyed by this id. Employee never stores
+   * termination data itself.
+   */
+  terminationRecordId?: string
   employment: EmployeeEmployment
   personal: EmployeePersonal
   labourLaw: EmployeeLabourLaw

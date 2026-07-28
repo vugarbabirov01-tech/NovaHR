@@ -1,10 +1,7 @@
-export const kpiStats = {
-  totalEmployees: { value: 1284, delta: 4.2 },
-  activeEmployees: { value: 1198, delta: 2.1 },
-  onLeave: { value: 37, delta: -6.4 },
-  newHires: { value: 26, delta: 12.8 },
-}
-
+// Historical monthly time series — kept as illustrative mock data since
+// there's no real per-month snapshot history to compute this from; the KPI
+// counts above it used to live here have moved to a live computation in
+// src/lib/dashboard-service.ts instead.
 export const headcountTrend = [
   { monthDate: "2026-02-01", headcount: 1142 },
   { monthDate: "2026-03-01", headcount: 1163 },

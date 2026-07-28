@@ -53,6 +53,7 @@ export const EMPLOYMENT_STATUS_LABELS: Record<EmploymentStatus, string> = {
   active: "Aktiv",
   probation: "Sınaq Müddətində",
   "on-leave": "Məzuniyyətdə",
+  "business-trip": "Ezamiyyətdə",
   suspended: "Dayandırılıb",
   terminated: "İşdən Çıxarılıb",
   inactive: "Qeyri-aktiv",

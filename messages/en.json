@@ -63,6 +63,7 @@
     "active": "Active",
     "probation": "Probation",
     "onLeave": "On Leave",
+    "businessTrip": "Business Trip",
     "suspended": "Suspended",
     "terminated": "Terminated",
     "inactive": "Inactive"
@@ -348,7 +349,6 @@
       "department": "Department",
       "position": "Position",
       "workLocation": "Work Location",
-      "employmentStatus": "Employment Status",
       "employmentType": "Employment Type",
       "branch": "Branch",
       "manager": "Manager",
@@ -356,10 +356,11 @@
       "allDepartments": "All Departments",
       "allPositions": "All Positions",
       "allWorkLocations": "All Work Locations",
-      "allStatuses": "All Statuses",
       "allTypes": "All Types",
       "allBranches": "All Branches",
       "allManagers": "All Managers",
+      "statusFilterDefault": "Active Employees",
+      "statusFilterAll": "All Employees",
       "clearFilters": "Clear Filters",
       "export": "Export",
       "exportExcel": "Export Employees…",
@@ -393,11 +394,7 @@
       "documents": "Documents",
       "printCard": "Print Employee Card",
       "dangerZone": "Danger Zone",
-      "terminateEmployment": "Terminate Employment",
-      "terminateConfirmTitle": "Terminate employment for {name}?",
-      "terminateConfirmDescription": "This starts the termination workflow for this employee and cannot be undone once processed. This is a placeholder — nothing has been changed yet.",
-      "terminateConfirmCancel": "Cancel",
-      "terminateConfirmAction": "Terminate Employment"
+      "terminateEmployment": "Terminate Employment"
     },
     "table": {
       "columnPhoto": "Photo",
@@ -416,8 +413,6 @@
       "bulkExport": "Export Selected",
       "bulkChangeStatus": "Change Status",
       "bulkDelete": "Delete Selected",
-      "viewProfile": "View Profile",
-      "editEmployee": "Edit",
       "rowsPerPage": "Rows per page",
       "pageOf": "Page {current} of {total}",
       "previous": "Previous",
@@ -463,6 +458,7 @@
       "employment": {
         "employeeNumber": "Employee Number",
         "employeeNumberHint": "Leave empty to generate automatically (EMP-000001, EMP-000002, ...).",
+        "employeeNumberLockedHint": "System-generated — this is the employee's permanent reference number and cannot be changed after creation.",
         "employeeNumberPlaceholder": "Leave empty to auto-generate",
         "hireDate": "Hire Date",
         "probationEndDate": "Probation End Date",
@@ -680,8 +676,118 @@
         "fieldChanged": "changed {field} from \"{oldValue}\" to \"{newValue}\"",
         "actions": {
           "recordCreated": "created this record",
-          "fieldUpdated": "updated a field"
+          "fieldUpdated": "updated a field",
+          "employeeTerminated": "terminated this employee's employment"
         }
+      }
+    },
+    "termination": {
+      "wizardTitle": "Terminate Employment",
+      "wizardDescription": "Runs the full offboarding workflow for this employee — nothing is changed until Finish.",
+      "steps": {
+        "info": "Termination Information",
+        "assets": "Asset Return",
+        "leave": "Leave Balance",
+        "payroll": "Final Payroll",
+        "checklist": "Checklist",
+        "review": "Review"
+      },
+      "stepIndicator": "Step {current} of {total}",
+      "back": "Back",
+      "next": "Next",
+      "finish": "Finish",
+      "close": "Close",
+      "successTitle": "Offboarding completed",
+      "successDescription": "The employee's status has been updated to Terminated and the offboarding record has been created.",
+      "validation": {
+        "required": "This field is required.",
+        "saveFailed": "Something went wrong — please try again."
+      },
+      "info": {
+        "title": "Termination Information",
+        "description": "The date, reason, and any relevant reference details for this termination.",
+        "terminationDate": "Termination Date",
+        "lastWorkingDay": "Last Working Day",
+        "reason": "Termination Reason",
+        "labourCodeArticle": "Labour Code Article",
+        "notes": "Notes"
+      },
+      "reasons": {
+        "resignation": "Resignation",
+        "employer-decision": "Employer Decision",
+        "mutual-agreement": "Mutual Agreement",
+        "end-of-contract": "End of Contract",
+        "retirement": "Retirement",
+        "death": "Death",
+        "other": "Other"
+      },
+      "assets": {
+        "title": "Asset Return",
+        "description": "Assigned assets, read from Asset Management — set each one's return status below.",
+        "loading": "Loading assigned assets…",
+        "noAssets": "No assigned assets.",
+        "returnedAssets": "Returned Assets",
+        "outstandingAssets": "Outstanding Assets"
+      },
+      "leave": {
+        "title": "Leave Balance",
+        "description": "Read-only, from the Leave module.",
+        "loading": "Loading leave balance…",
+        "unavailable": "Leave information unavailable.",
+        "annualLeaveEarned": "Annual Leave Earned",
+        "annualLeaveUsed": "Annual Leave Used",
+        "remainingLeave": "Remaining Leave",
+        "settlementMethod": "Settlement Method",
+        "settlementMethodUnavailable": "Not determined — pending Leave module integration",
+        "settlementMethods": {
+          "paid": "Paid",
+          "expired": "Expired",
+          "manual-decision": "Manual Decision"
+        },
+        "days": "{count} {count, plural, =1 {day} other {days}}"
+      },
+      "payroll": {
+        "title": "Final Payroll Summary",
+        "description": "Read from the Payroll module — this wizard never calculates payroll itself.",
+        "loading": "Loading payroll summary…",
+        "unavailable": "Final settlement will be calculated automatically after Payroll integration.",
+        "items": {
+          "baseSalary": "Base Salary",
+          "bonuses": "Bonuses",
+          "allowances": "Allowances",
+          "unusedLeaveCompensation": "Unused Leave Compensation",
+          "deductions": "Deductions",
+          "outstandingAssetDeductions": "Outstanding Asset Deductions",
+          "estimatedFinalPayment": "Estimated Final Payment"
+        }
+      },
+      "checklist": {
+        "title": "Offboarding Checklist",
+        "description": "Track what still needs to happen before offboarding is fully complete.",
+        "completionLabel": "Checklist completion",
+        "items": {
+          "companyPropertyReturned": "Company property returned",
+          "accessCardDisabled": "Access card disabled",
+          "companyEmailDisabled": "Company email disabled",
+          "hrmsAccountDisabled": "HRMS account disabled",
+          "exitInterviewCompleted": "Exit interview completed",
+          "documentsDelivered": "Documents delivered",
+          "finalSettlementApproved": "Final settlement approved"
+        }
+      },
+      "review": {
+        "title": "Review",
+        "description": "Confirm everything below before finishing offboarding.",
+        "employee": "Employee",
+        "department": "Department",
+        "position": "Position",
+        "terminationDate": "Termination Date",
+        "lastWorkingDay": "Last Working Day",
+        "reason": "Reason",
+        "outstandingAssets": "Outstanding Assets",
+        "leaveBalance": "Leave Balance",
+        "payrollSummary": "Payroll Summary",
+        "checklistCompletion": "Checklist Completion"
       }
     },
     "wizard": {
@@ -727,6 +833,7 @@
         "required": "This field is required.",
         "fixErrors": "Please fix the highlighted fields before continuing.",
         "duplicateEmployeeNumber": "This employee number already exists. Please use a different one.",
+        "duplicateFin": "This FIN code already belongs to another employee.",
         "saveFailed": "Something went wrong while saving. Please try again."
       },
       "quickCreate": {

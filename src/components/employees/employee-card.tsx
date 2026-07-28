@@ -30,7 +30,7 @@ export function EmployeeCard({ employee, onEditEmployee }: EmployeeCardProps) {
 
   return (
     <Card className="group relative transition-all hover:-translate-y-0.5 hover:shadow-md">
-      <div className="absolute top-2 right-2 z-10">
+      <div className="absolute top-2 right-2 z-10 print:hidden">
         <EmployeeQuickActions
           employee={{ id: employee.id, fullName }}
           onEditEmployee={onEditEmployee}

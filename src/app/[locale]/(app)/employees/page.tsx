@@ -10,7 +10,7 @@ import { findActivePositions } from "@/repositories/position-repository"
 import { findActiveCompanies } from "@/repositories/company-repository"
 import { findActiveBranches } from "@/repositories/branch-repository"
 import { findActiveWorkSchedules } from "@/repositories/work-schedule-repository"
-import { managerOptions } from "@/data/manager-directory"
+import { getManagerOptions } from "@/data/manager-directory"
 import type { WizardMasterData } from "@/lib/employee-wizard-mapper"
 
 type Props = {
@@ -50,7 +50,7 @@ export default async function EmployeesPage({ params }: Props) {
     companies: companies.map((c) => ({ id: c.id, name: c.name })),
     branches: branches.map((b) => ({ id: b.id, name: b.name, companyId: b.companyId })),
     workSchedules: workSchedules.map((s) => ({ id: s.id, label: s.label })),
-    managers: managerOptions.map((m) => ({ id: m.id, name: m.name })),
+    managers: getManagerOptions().map((m) => ({ id: m.id, name: m.name })),
   }
 
   return (

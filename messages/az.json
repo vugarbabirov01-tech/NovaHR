@@ -63,6 +63,7 @@
     "active": "Aktiv",
     "probation": "Sınaq müddəti",
     "onLeave": "Məzuniyyətdə",
+    "businessTrip": "Ezamiyyətdə",
     "suspended": "Dayandırılıb",
     "terminated": "İşdən çıxarılıb",
     "inactive": "Qeyri-aktiv"
@@ -348,7 +349,6 @@
       "department": "Şöbə",
       "position": "Vəzifə",
       "workLocation": "İş Yeri",
-      "employmentStatus": "Məşğulluq Statusu",
       "employmentType": "Məşğulluq Növü",
       "branch": "Filial",
       "manager": "Rəhbər",
@@ -356,10 +356,11 @@
       "allDepartments": "Bütün Şöbələr",
       "allPositions": "Bütün Vəzifələr",
       "allWorkLocations": "Bütün İş Yerləri",
-      "allStatuses": "Bütün Statuslar",
       "allTypes": "Bütün Növlər",
       "allBranches": "Bütün Filiallar",
       "allManagers": "Bütün Rəhbərlər",
+      "statusFilterDefault": "Aktiv Əməkdaşlar",
+      "statusFilterAll": "Bütün Əməkdaşlar",
       "clearFilters": "Filtrləri Təmizlə",
       "export": "İxrac Et",
       "exportExcel": "Əməkdaşları İxrac Et…",
@@ -393,11 +394,7 @@
       "documents": "Sənədlər",
       "printCard": "Əməkdaş Kartını Çap Et",
       "dangerZone": "Təhlükəli Zona",
-      "terminateEmployment": "İş Münasibətinə Xitam Ver",
-      "terminateConfirmTitle": "{name} üçün iş münasibətinə xitam verilsin?",
-      "terminateConfirmDescription": "Bu, əməkdaş üçün işdən çıxarılma prosesini başladır və emal edildikdən sonra geri qaytarıla bilməz. Bu, yalnız nümunədir — hələ heç bir dəyişiklik edilməyib.",
-      "terminateConfirmCancel": "Ləğv Et",
-      "terminateConfirmAction": "İş Münasibətinə Xitam Ver"
+      "terminateEmployment": "İş Münasibətinə Xitam Ver"
     },
     "table": {
       "columnPhoto": "Şəkil",
@@ -416,8 +413,6 @@
       "bulkExport": "Seçilənləri İxrac Et",
       "bulkChangeStatus": "Statusu Dəyiş",
       "bulkDelete": "Seçilənləri Sil",
-      "viewProfile": "Profilə Bax",
-      "editEmployee": "Redaktə Et",
       "rowsPerPage": "Səhifədəki sətir sayı",
       "pageOf": "Səhifə {current} / {total}",
       "previous": "Əvvəlki",
@@ -463,6 +458,7 @@
       "employment": {
         "employeeNumber": "Əməkdaş Nömrəsi",
         "employeeNumberHint": "Avtomatik yaradılması üçün boş buraxın (EMP-000001, EMP-000002, ...).",
+        "employeeNumberLockedHint": "Sistem tərəfindən yaradılıb — bu, əməkdaşın daimi istinad nömrəsidir və yaradıldıqdan sonra dəyişdirilə bilməz.",
         "employeeNumberPlaceholder": "Avtomatik yaradılması üçün boş buraxın",
         "hireDate": "İşə Qəbul Tarixi",
         "probationEndDate": "Sınaq Müddətinin Bitmə Tarixi",
@@ -680,8 +676,118 @@
         "fieldChanged": "{field} sahəsini \"{oldValue}\"-dan \"{newValue}\"-a dəyişdi",
         "actions": {
           "recordCreated": "bu qeydi yaratdı",
-          "fieldUpdated": "bir sahəni yenilədi"
+          "fieldUpdated": "bir sahəni yenilədi",
+          "employeeTerminated": "bu əməkdaşın iş münasibətinə xitam verdi"
         }
+      }
+    },
+    "termination": {
+      "wizardTitle": "İş Münasibətinə Xitam Ver",
+      "wizardDescription": "Bu əməkdaş üçün tam işdənçıxma prosesini işə salır — Bitir düyməsinə basılana qədər heç nə dəyişmir.",
+      "steps": {
+        "info": "Xitam Məlumatları",
+        "assets": "Əmlakın Qaytarılması",
+        "leave": "Məzuniyyət Balansı",
+        "payroll": "Yekun Əmək Haqqı",
+        "checklist": "Yoxlama Siyahısı",
+        "review": "Yoxlama"
+      },
+      "stepIndicator": "Addım {current} / {total}",
+      "back": "Geri",
+      "next": "Növbəti",
+      "finish": "Bitir",
+      "close": "Bağla",
+      "successTitle": "İşdənçıxma tamamlandı",
+      "successDescription": "Əməkdaşın statusu \"İşdən çıxarılıb\" olaraq yeniləndi və işdənçıxma qeydi yaradıldı.",
+      "validation": {
+        "required": "Bu sahə mütləqdir.",
+        "saveFailed": "Xəta baş verdi — zəhmət olmasa yenidən cəhd edin."
+      },
+      "info": {
+        "title": "Xitam Məlumatları",
+        "description": "Bu xitamla bağlı tarix, səbəb və digər müvafiq məlumatlar.",
+        "terminationDate": "Xitam Tarixi",
+        "lastWorkingDay": "Son İş Günü",
+        "reason": "Xitam Səbəbi",
+        "labourCodeArticle": "Əmək Məcəlləsinin Maddəsi",
+        "notes": "Qeydlər"
+      },
+      "reasons": {
+        "resignation": "İstefa",
+        "employer-decision": "İşəgötürənin Qərarı",
+        "mutual-agreement": "Qarşılıqlı Razılaşma",
+        "end-of-contract": "Müqavilənin Bitməsi",
+        "retirement": "Təqaüdə Çıxma",
+        "death": "Vəfat",
+        "other": "Digər"
+      },
+      "assets": {
+        "title": "Əmlakın Qaytarılması",
+        "description": "Aktiv İdarəetməsindən oxunan təhkim edilmiş əmlak — hər birinin qaytarılma statusunu aşağıda təyin edin.",
+        "loading": "Təhkim edilmiş əmlak yüklənir…",
+        "noAssets": "Təhkim edilmiş əmlak yoxdur.",
+        "returnedAssets": "Qaytarılan Əmlak",
+        "outstandingAssets": "Qaytarılmamış Əmlak"
+      },
+      "leave": {
+        "title": "Məzuniyyət Balansı",
+        "description": "Məzuniyyət modulundan, yalnız oxumaq üçün.",
+        "loading": "Məzuniyyət balansı yüklənir…",
+        "unavailable": "Məzuniyyət məlumatı əlçatan deyil.",
+        "annualLeaveEarned": "Qazanılmış İllik Məzuniyyət",
+        "annualLeaveUsed": "İstifadə Edilmiş İllik Məzuniyyət",
+        "remainingLeave": "Qalan Məzuniyyət",
+        "settlementMethod": "Ödəniş Metodu",
+        "settlementMethodUnavailable": "Müəyyən edilməyib — Məzuniyyət modulu inteqrasiyasını gözləyir",
+        "settlementMethods": {
+          "paid": "Ödənilib",
+          "expired": "Vaxtı Keçib",
+          "manual-decision": "Əl ilə Qərar"
+        },
+        "days": "{count} gün"
+      },
+      "payroll": {
+        "title": "Yekun Əmək Haqqı Xülasəsi",
+        "description": "Əmək Haqqı modulundan oxunur — bu sihirbaz heç vaxt əmək haqqını özü hesablamır.",
+        "loading": "Əmək haqqı xülasəsi yüklənir…",
+        "unavailable": "Yekun hesablaşma Əmək Haqqı inteqrasiyasından sonra avtomatik hesablanacaq.",
+        "items": {
+          "baseSalary": "Əsas Maaş",
+          "bonuses": "Bonuslar",
+          "allowances": "Əlavələr",
+          "unusedLeaveCompensation": "İstifadə Olunmamış Məzuniyyət Kompensasiyası",
+          "deductions": "Tutulmalar",
+          "outstandingAssetDeductions": "Qaytarılmamış Əmlak üzrə Tutulmalar",
+          "estimatedFinalPayment": "Təxmini Yekun Ödəniş"
+        }
+      },
+      "checklist": {
+        "title": "İşdənçıxma Yoxlama Siyahısı",
+        "description": "İşdənçıxma tam başa çatmazdan əvvəl hələ nə edilməli olduğunu izləyin.",
+        "completionLabel": "Yoxlama siyahısının tamamlanması",
+        "items": {
+          "companyPropertyReturned": "Şirkət əmlakı qaytarılıb",
+          "accessCardDisabled": "Giriş kartı deaktiv edilib",
+          "companyEmailDisabled": "Şirkət e-poçtu deaktiv edilib",
+          "hrmsAccountDisabled": "HRMS hesabı deaktiv edilib",
+          "exitInterviewCompleted": "Çıxış müsahibəsi keçirilib",
+          "documentsDelivered": "Sənədlər təhvil verilib",
+          "finalSettlementApproved": "Yekun hesablaşma təsdiqlənib"
+        }
+      },
+      "review": {
+        "title": "Yoxlama",
+        "description": "İşdənçıxmanı bitirmədən əvvəl aşağıdakıları təsdiqləyin.",
+        "employee": "Əməkdaş",
+        "department": "Şöbə",
+        "position": "Vəzifə",
+        "terminationDate": "Xitam Tarixi",
+        "lastWorkingDay": "Son İş Günü",
+        "reason": "Səbəb",
+        "outstandingAssets": "Qaytarılmamış Əmlak",
+        "leaveBalance": "Məzuniyyət Balansı",
+        "payrollSummary": "Əmək Haqqı Xülasəsi",
+        "checklistCompletion": "Yoxlama Siyahısının Tamamlanması"
       }
     },
     "wizard": {
@@ -727,6 +833,7 @@
         "required": "Bu sahə tələb olunur.",
         "fixErrors": "Zəhmət olmasa davam etmədən əvvəl işarələnmiş sahələri düzəldin.",
         "duplicateEmployeeNumber": "Bu əməkdaş nömrəsi artıq mövcuddur. Zəhmət olmasa başqa nömrə istifadə edin.",
+        "duplicateFin": "Bu FİN kodu artıq başqa bir əməkdaşa aiddir.",
         "saveFailed": "Saxlama zamanı xəta baş verdi. Zəhmət olmasa yenidən cəhd edin."
       },
       "quickCreate": {

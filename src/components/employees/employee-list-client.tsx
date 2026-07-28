@@ -19,6 +19,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { SearchInput } from "@/components/common/search-input"
 import { EmptyState } from "@/components/common/empty-state"
 import { EmployeeCard } from "@/components/employees/employee-card"
@@ -29,16 +36,28 @@ import { EmployeeWizardModal } from "@/components/employees/wizard/employee-wiza
 import { ExportEmployeesDialog } from "@/components/employees/export/export-employees-dialog"
 import { getEmployeeProfileAction } from "@/app/[locale]/(app)/employees/actions"
 import { usePersistedState } from "@/hooks/use-persisted-state"
-import { getFullName } from "@/lib/employees"
+import { getFullName, statusMessageKeys } from "@/lib/employees"
 import { cn } from "@/lib/utils"
 import type { WizardMasterData } from "@/lib/employee-wizard-mapper"
 import {
   ALL_VALUE,
+  DEFAULT_STATUS_FILTER,
+  DEFAULT_VISIBLE_STATUSES,
   defaultEmployeeFilters,
   type EmployeeFilters,
   type EmployeeView,
 } from "@/types/employee-filters"
-import type { EmployeeListItem, EmployeeProfile } from "@/types/employee-profile"
+import type { EmployeeListItem, EmployeeProfile, EmploymentStatus } from "@/types/employee-profile"
+
+const statusFilterOptions: EmploymentStatus[] = [
+  "active",
+  "probation",
+  "on-leave",
+  "business-trip",
+  "suspended",
+  "inactive",
+  "terminated",
+]
 
 interface EmployeeListClientProps {
   employees: EmployeeListItem[]
@@ -47,6 +66,7 @@ interface EmployeeListClientProps {
 
 export function EmployeeListClient({ employees, masterData }: EmployeeListClientProps) {
   const t = useTranslations("Employees.list")
+  const tStatus = useTranslations("Status")
   const router = useRouter()
   const [view, setView] = usePersistedState<EmployeeView>("employees-view", "list")
   const [filters, setFilters] = useState<EmployeeFilters>(defaultEmployeeFilters)
@@ -134,11 +154,17 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
       if (filters.manager !== ALL_VALUE && employee.managerName !== filters.manager) return false
       if (filters.employmentType !== ALL_VALUE && employee.employmentType !== filters.employmentType)
         return false
-      if (
+      // Terminated (and Suspended/Inactive) employees stay out of the
+      // default view — they only ever show up once a specific status or
+      // "All Employees" is explicitly chosen.
+      if (filters.employmentStatus === DEFAULT_STATUS_FILTER) {
+        if (!DEFAULT_VISIBLE_STATUSES.includes(employee.employmentStatus)) return false
+      } else if (
         filters.employmentStatus !== ALL_VALUE &&
         employee.employmentStatus !== filters.employmentStatus
-      )
+      ) {
         return false
+      }
       return true
     })
   }, [employees, filters])
@@ -153,6 +179,29 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
             value={filters.search}
             onChange={(event) => setFilters({ ...filters, search: event.target.value })}
           />
+          <Select
+            value={filters.employmentStatus}
+            onValueChange={(v) => setFilters({ ...filters, employmentStatus: v ?? DEFAULT_STATUS_FILTER })}
+          >
+            <SelectTrigger size="sm" className="w-44">
+              <SelectValue>
+                {(value: string) => {
+                  if (value === DEFAULT_STATUS_FILTER) return t("statusFilterDefault")
+                  if (value === ALL_VALUE) return t("statusFilterAll")
+                  return tStatus(statusMessageKeys[value as EmploymentStatus])
+                }}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={DEFAULT_STATUS_FILTER}>{t("statusFilterDefault")}</SelectItem>
+              {statusFilterOptions.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {tStatus(statusMessageKeys[status])}
+                </SelectItem>
+              ))}
+              <SelectItem value={ALL_VALUE}>{t("statusFilterAll")}</SelectItem>
+            </SelectContent>
+          </Select>
           <EmployeeFiltersPanel
             employees={employees}
             filters={filters}
@@ -207,7 +256,11 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
       ) : view === "card" ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((employee) => (
-            <EmployeeCard key={employee.id} employee={employee} onEditEmployee={handleEditEmployee} />
+            <EmployeeCard
+              key={employee.id}
+              employee={employee}
+              onEditEmployee={handleEditEmployee}
+            />
           ))}
         </div>
       ) : (

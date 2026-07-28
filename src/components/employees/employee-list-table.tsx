@@ -25,13 +25,12 @@ import {
   Columns3,
   Download,
   Layers,
-  MoreHorizontal,
   Trash2,
   UserCog,
   Users,
 } from "lucide-react"
 
-import { Link, useRouter } from "@/i18n/navigation"
+import { useRouter } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 import {
   Table,
@@ -55,13 +54,13 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { EmptyState } from "@/components/common/empty-state"
 import { EmploymentStatusBadge } from "@/components/employees/employment-status-badge"
+import { EmployeeQuickActions } from "@/components/employees/EmployeeQuickActions"
 import { employmentTypeMessageKeys, getFullName, getInitials } from "@/lib/employees"
 import type { EmployeeGroupBy } from "@/types/employee-filters"
 import type { EmployeeListItem } from "@/types/employee-profile"
@@ -78,7 +77,11 @@ const groupColumnIds: Record<Exclude<EmployeeGroupBy, "none">, string> = {
   manager: "managerName",
 }
 
-export function EmployeeListTable({ data, onEditEmployee, onSelectionChange }: EmployeeListTableProps) {
+export function EmployeeListTable({
+  data,
+  onEditEmployee,
+  onSelectionChange,
+}: EmployeeListTableProps) {
   const t = useTranslations("Employees.table")
   const tType = useTranslations("EmploymentType")
   const tCommon = useTranslations("Employees.card")
@@ -224,31 +227,16 @@ export function EmployeeListTable({ data, onEditEmployee, onSelectionChange }: E
         enableHiding: false,
         enableGrouping: false,
         cell: ({ row }) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={<Button variant="ghost" size="icon-sm" />}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <MoreHorizontal className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                render={<Link href={`/employees/${row.original.id}`} />}
-              >
-                <Users className="size-4" strokeWidth={1.75} />
-                {t("viewProfile")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(event) => {
-                  event.stopPropagation()
-                  onEditEmployee?.({ id: row.original.id, fullName: getFullName(row.original) })
-                }}
-              >
-                <UserCog className="size-4" strokeWidth={1.75} />
-                {t("editEmployee")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          // Reuses the exact same quick-actions menu the Card view already
+          // uses instead of a second, hand-duplicated View/Edit dropdown —
+          // this is also how List view gets Terminate Employment (and every
+          // other quick action), which its previous 2-item dropdown never had.
+          <div onClick={(event) => event.stopPropagation()}>
+            <EmployeeQuickActions
+              employee={{ id: row.original.id, fullName: getFullName(row.original) }}
+              onEditEmployee={onEditEmployee}
+            />
+          </div>
         ),
       },
     ],

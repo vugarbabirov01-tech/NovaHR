@@ -26,18 +26,9 @@ import {
   positions,
   workLocations,
 } from "@/data/employee-options"
-import { countBy, employmentTypeMessageKeys, statusMessageKeys } from "@/lib/employees"
+import { countBy, employmentTypeMessageKeys } from "@/lib/employees"
 import { ALL_VALUE, defaultEmployeeFilters, type EmployeeFilters } from "@/types/employee-filters"
-import type { EmployeeListItem, EmploymentStatus, EmploymentType } from "@/types/employee-profile"
-
-const employmentStatuses: EmploymentStatus[] = [
-  "active",
-  "probation",
-  "on-leave",
-  "suspended",
-  "terminated",
-  "inactive",
-]
+import type { EmployeeListItem, EmploymentType } from "@/types/employee-profile"
 
 const employmentTypes: EmploymentType[] = [
   "full-time",
@@ -62,7 +53,6 @@ export function EmployeeFiltersPanel({
   managerNames,
 }: EmployeeFiltersPanelProps) {
   const t = useTranslations("Employees.list")
-  const tStatus = useTranslations("Status")
   const tType = useTranslations("EmploymentType")
 
   const counts = useMemo(
@@ -74,21 +64,22 @@ export function EmployeeFiltersPanel({
       position: countBy(employees, (e) => e.position),
       manager: countBy(employees, (e) => e.managerName),
       employmentType: countBy(employees, (e) => e.employmentType),
-      employmentStatus: countBy(employees, (e) => e.employmentStatus),
     }),
     [employees]
   )
 
+  // employmentStatus is owned by the primary Status filter, not this
+  // popover — excluded from both the count and "Clear filters" below.
   const activeCount = (
     Object.entries(filters) as [keyof EmployeeFilters, string][]
-  ).filter(([key, value]) => key !== "search" && value !== ALL_VALUE).length
+  ).filter(([key, value]) => key !== "search" && key !== "employmentStatus" && value !== ALL_VALUE).length
 
   function set<K extends keyof EmployeeFilters>(key: K, value: string | null) {
     onChange({ ...filters, [key]: value ?? ALL_VALUE })
   }
 
   function clear() {
-    onChange({ ...defaultEmployeeFilters, search: filters.search })
+    onChange({ ...defaultEmployeeFilters, search: filters.search, employmentStatus: filters.employmentStatus })
   }
 
   return (
@@ -235,30 +226,6 @@ export function EmployeeFiltersPanel({
                 {employmentTypes.map((et) => (
                   <SelectItem key={et} value={et}>
                     {tType(employmentTypeMessageKeys[et])} ({counts.employmentType[et] ?? 0})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label={t("employmentStatus")}>
-            <Select
-              value={filters.employmentStatus}
-              onValueChange={(v) => set("employmentStatus", v)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue>
-                  {(value: string) =>
-                    value === ALL_VALUE
-                      ? t("allStatuses")
-                      : tStatus(statusMessageKeys[value as EmploymentStatus])
-                  }
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_VALUE}>{t("allStatuses")}</SelectItem>
-                {employmentStatuses.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {tStatus(statusMessageKeys[s])} ({counts.employmentStatus[s] ?? 0})
                   </SelectItem>
                 ))}
               </SelectContent>

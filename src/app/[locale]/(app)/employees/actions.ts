@@ -7,6 +7,7 @@ import {
   employeeDirectory,
   getEmployeeById,
   isEmployeeIdTaken,
+  isFinTaken,
   updateEmployeeProfile,
 } from "@/data/employee-directory"
 import { generateNextEmployeeNumber, isEmployeeNumberTaken } from "@/lib/employees"
@@ -22,13 +23,13 @@ import type { EmployeeProfile } from "@/types/employee-profile"
 export interface CreateEmployeeResult {
   success: boolean
   id?: string
-  error?: "duplicate-id" | "duplicate-employee-number" | "unknown"
+  error?: "duplicate-id" | "duplicate-employee-number" | "duplicate-fin" | "unknown"
 }
 
 export interface UpdateEmployeeResult {
   success: boolean
   id?: string
-  error?: "not-found" | "duplicate-employee-number" | "unknown"
+  error?: "not-found" | "duplicate-employee-number" | "duplicate-fin" | "unknown"
   /**
    * Every field the update actually changed, as an explicit { field,
    * oldValue, newValue } list — computed unconditionally so a future Audit
@@ -61,6 +62,10 @@ export async function createEmployeeAction(
   profile: EmployeeProfile
 ): Promise<CreateEmployeeResult> {
   try {
+    if (isFinTaken(profile.personal.finCode)) {
+      return { success: false, error: "duplicate-fin" }
+    }
+
     const existingEmployeeNumbers = employeeDirectory.map((employee) => employee.employment.employeeNumber)
     const manualEmployeeNumber = profile.employment.employeeNumber.trim()
 
@@ -135,25 +140,18 @@ export async function updateEmployeeAction(
       return { success: false, error: "not-found" }
     }
 
-    const otherEmployeeNumbers = employeeDirectory
-      .filter((employee) => employee.id !== originalId)
-      .map((employee) => employee.employment.employeeNumber)
-    const manualEmployeeNumber = draftProfile.employment.employeeNumber.trim()
-
-    let employeeNumber: string
-    if (manualEmployeeNumber) {
-      if (isEmployeeNumberTaken(manualEmployeeNumber, otherEmployeeNumbers)) {
-        return { success: false, error: "duplicate-employee-number" }
-      }
-      employeeNumber = manualEmployeeNumber
-    } else {
-      employeeNumber = generateNextEmployeeNumber(otherEmployeeNumbers)
+    if (isFinTaken(draftProfile.personal.finCode, originalId)) {
+      return { success: false, error: "duplicate-fin" }
     }
 
     const existingValues = extractEditableFields(existingProfile)
     const newValues = {
       ...extractEditableFields(draftProfile),
-      employeeNumber,
+      // Employee Number is the permanent reference number assigned at
+      // creation — the Edit wizard renders it read-only, and this is the
+      // server-side guarantee that it can never change regardless of what
+      // arrives in draftProfile.
+      employeeNumber: existingProfile.employment.employeeNumber,
       documents: mergeDocuments(existingProfile.documents, draftProfile.documents),
     }
     const changedFields = diffEmployeeFields(existingValues, newValues)

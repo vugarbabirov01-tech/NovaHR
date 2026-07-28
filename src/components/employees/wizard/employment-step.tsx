@@ -39,6 +39,7 @@ interface StepProps {
   onChange: (patch: Partial<EmployeeWizardData>) => void
   errors?: WizardValidationErrors
   masterData: WizardMasterData
+  mode?: "create" | "edit"
   onAddDepartment: (department: WizardMasterData["departments"][number]) => void
   onAddPosition: (position: WizardMasterData["positions"][number]) => void
   onAddCompany: (company: WizardMasterData["companies"][number]) => void
@@ -53,6 +54,7 @@ export function EmploymentStep({
   onChange,
   errors = {},
   masterData,
+  mode = "create",
   onAddDepartment,
   onAddPosition,
   onAddCompany,
@@ -173,13 +175,20 @@ export function EmploymentStep({
           label={t("employeeNumber")}
           htmlFor="employeeNumber"
           error={errors.employeeNumber}
-          hint={errors.employeeNumber ? undefined : t("employeeNumberHint")}
+          hint={
+            errors.employeeNumber
+              ? undefined
+              : mode === "edit"
+                ? t("employeeNumberLockedHint")
+                : t("employeeNumberHint")
+          }
         >
           <Input
             id="employeeNumber"
             value={data.employeeNumber}
             onChange={(e) => onChange({ employeeNumber: e.target.value })}
             placeholder={t("employeeNumberPlaceholder")}
+            disabled={mode === "edit"}
           />
         </Field>
         <Field label={t("hireDate")} htmlFor="hireDate" required error={errors.hireDate}>

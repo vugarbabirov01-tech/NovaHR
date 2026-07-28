@@ -12,12 +12,16 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-svh w-full">
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
-      <MobileSidebar open={mobileNavOpen} onOpenChange={setMobileNavOpen} />
+      <div className="print:hidden">
+        <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
+        <MobileSidebar open={mobileNavOpen} onOpenChange={setMobileNavOpen} />
+      </div>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <Header onOpenMobileNav={() => setMobileNavOpen(true)} />
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <div className="print:hidden">
+          <Header onOpenMobileNav={() => setMobileNavOpen(true)} />
+        </div>
+        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 print:p-0">{children}</main>
       </div>
     </div>
   )

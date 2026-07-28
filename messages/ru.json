@@ -63,6 +63,7 @@
     "active": "Активен",
     "probation": "Испытательный срок",
     "onLeave": "В отпуске",
+    "businessTrip": "В командировке",
     "suspended": "Приостановлен",
     "terminated": "Уволен",
     "inactive": "Неактивен"
@@ -348,7 +349,6 @@
       "department": "Отдел",
       "position": "Должность",
       "workLocation": "Место работы",
-      "employmentStatus": "Статус занятости",
       "employmentType": "Тип занятости",
       "branch": "Филиал",
       "manager": "Руководитель",
@@ -356,10 +356,11 @@
       "allDepartments": "Все отделы",
       "allPositions": "Все должности",
       "allWorkLocations": "Все места работы",
-      "allStatuses": "Все статусы",
       "allTypes": "Все типы",
       "allBranches": "Все филиалы",
       "allManagers": "Все руководители",
+      "statusFilterDefault": "Активные сотрудники",
+      "statusFilterAll": "Все сотрудники",
       "clearFilters": "Сбросить фильтры",
       "export": "Экспорт",
       "exportExcel": "Экспорт сотрудников…",
@@ -393,11 +394,7 @@
       "documents": "Документы",
       "printCard": "Печать карточки сотрудника",
       "dangerZone": "Опасная зона",
-      "terminateEmployment": "Уволить сотрудника",
-      "terminateConfirmTitle": "Уволить сотрудника {name}?",
-      "terminateConfirmDescription": "Это запустит процесс увольнения сотрудника, и после обработки его нельзя будет отменить. Это лишь заглушка — изменения ещё не внесены.",
-      "terminateConfirmCancel": "Отмена",
-      "terminateConfirmAction": "Уволить сотрудника"
+      "terminateEmployment": "Уволить сотрудника"
     },
     "table": {
       "columnPhoto": "Фото",
@@ -416,8 +413,6 @@
       "bulkExport": "Экспортировать выбранное",
       "bulkChangeStatus": "Изменить статус",
       "bulkDelete": "Удалить выбранное",
-      "viewProfile": "Открыть профиль",
-      "editEmployee": "Редактировать",
       "rowsPerPage": "Строк на странице",
       "pageOf": "Страница {current} из {total}",
       "previous": "Назад",
@@ -463,6 +458,7 @@
       "employment": {
         "employeeNumber": "Номер сотрудника",
         "employeeNumberHint": "Оставьте пустым для автоматической генерации (EMP-000001, EMP-000002, ...).",
+        "employeeNumberLockedHint": "Присваивается системой — это постоянный номер сотрудника, и он не может быть изменён после создания записи.",
         "employeeNumberPlaceholder": "Оставьте пустым для автогенерации",
         "hireDate": "Дата найма",
         "probationEndDate": "Дата окончания испытательного срока",
@@ -680,8 +676,118 @@
         "fieldChanged": "изменил(а) {field} с «{oldValue}» на «{newValue}»",
         "actions": {
           "recordCreated": "создал(а) эту запись",
-          "fieldUpdated": "обновил(а) поле"
+          "fieldUpdated": "обновил(а) поле",
+          "employeeTerminated": "уволил(а) этого сотрудника"
         }
+      }
+    },
+    "termination": {
+      "wizardTitle": "Увольнение сотрудника",
+      "wizardDescription": "Запускает полный процесс увольнения для этого сотрудника — ничего не меняется до нажатия «Завершить».",
+      "steps": {
+        "info": "Информация об увольнении",
+        "assets": "Возврат имущества",
+        "leave": "Остаток отпуска",
+        "payroll": "Итоговый расчёт",
+        "checklist": "Чек-лист",
+        "review": "Проверка"
+      },
+      "stepIndicator": "Шаг {current} из {total}",
+      "back": "Назад",
+      "next": "Далее",
+      "finish": "Завершить",
+      "close": "Закрыть",
+      "successTitle": "Увольнение завершено",
+      "successDescription": "Статус сотрудника обновлён на «Уволен», создана запись об увольнении.",
+      "validation": {
+        "required": "Это поле обязательно.",
+        "saveFailed": "Что-то пошло не так — попробуйте ещё раз."
+      },
+      "info": {
+        "title": "Информация об увольнении",
+        "description": "Дата, причина и другие детали, относящиеся к увольнению.",
+        "terminationDate": "Дата увольнения",
+        "lastWorkingDay": "Последний рабочий день",
+        "reason": "Причина увольнения",
+        "labourCodeArticle": "Статья Трудового кодекса",
+        "notes": "Примечания"
+      },
+      "reasons": {
+        "resignation": "Собственное желание",
+        "employer-decision": "Решение работодателя",
+        "mutual-agreement": "Соглашение сторон",
+        "end-of-contract": "Окончание срока договора",
+        "retirement": "Выход на пенсию",
+        "death": "Смерть",
+        "other": "Другое"
+      },
+      "assets": {
+        "title": "Возврат имущества",
+        "description": "Закреплённое имущество из модуля управления активами — укажите статус возврата для каждого.",
+        "loading": "Загрузка закреплённого имущества…",
+        "noAssets": "Закреплённого имущества нет.",
+        "returnedAssets": "Возвращено",
+        "outstandingAssets": "Не возвращено"
+      },
+      "leave": {
+        "title": "Остаток отпуска",
+        "description": "Только для чтения, из модуля отпусков.",
+        "loading": "Загрузка остатка отпуска…",
+        "unavailable": "Информация об отпуске недоступна.",
+        "annualLeaveEarned": "Начислено отпускных дней",
+        "annualLeaveUsed": "Использовано отпускных дней",
+        "remainingLeave": "Остаток отпуска",
+        "settlementMethod": "Способ расчёта",
+        "settlementMethodUnavailable": "Не определено — ожидает интеграции с модулем отпусков",
+        "settlementMethods": {
+          "paid": "Оплачено",
+          "expired": "Сгорело",
+          "manual-decision": "Решение вручную"
+        },
+        "days": "{count} дн."
+      },
+      "payroll": {
+        "title": "Итоговый расчёт по зарплате",
+        "description": "Данные из модуля расчёта зарплаты — этот мастер никогда не рассчитывает зарплату самостоятельно.",
+        "loading": "Загрузка итогового расчёта…",
+        "unavailable": "Итоговый расчёт будет доступен автоматически после интеграции с модулем расчёта зарплаты.",
+        "items": {
+          "baseSalary": "Оклад",
+          "bonuses": "Премии",
+          "allowances": "Надбавки",
+          "unusedLeaveCompensation": "Компенсация за неиспользованный отпуск",
+          "deductions": "Удержания",
+          "outstandingAssetDeductions": "Удержания за невозвращённое имущество",
+          "estimatedFinalPayment": "Ориентировочная итоговая выплата"
+        }
+      },
+      "checklist": {
+        "title": "Чек-лист увольнения",
+        "description": "Отслеживайте, что ещё нужно сделать до полного завершения увольнения.",
+        "completionLabel": "Выполнение чек-листа",
+        "items": {
+          "companyPropertyReturned": "Имущество компании возвращено",
+          "accessCardDisabled": "Пропуск деактивирован",
+          "companyEmailDisabled": "Корпоративная почта отключена",
+          "hrmsAccountDisabled": "Учётная запись HRMS отключена",
+          "exitInterviewCompleted": "Выходное интервью проведено",
+          "documentsDelivered": "Документы выданы",
+          "finalSettlementApproved": "Итоговый расчёт утверждён"
+        }
+      },
+      "review": {
+        "title": "Проверка",
+        "description": "Проверьте всё ниже перед завершением увольнения.",
+        "employee": "Сотрудник",
+        "department": "Отдел",
+        "position": "Должность",
+        "terminationDate": "Дата увольнения",
+        "lastWorkingDay": "Последний рабочий день",
+        "reason": "Причина",
+        "outstandingAssets": "Невозвращённое имущество",
+        "leaveBalance": "Остаток отпуска",
+        "payrollSummary": "Расчёт по зарплате",
+        "checklistCompletion": "Выполнение чек-листа"
       }
     },
     "wizard": {
@@ -727,6 +833,7 @@
         "required": "Это поле обязательно.",
         "fixErrors": "Пожалуйста, исправьте выделенные поля перед продолжением.",
         "duplicateEmployeeNumber": "Такой номер сотрудника уже существует. Выберите другой.",
+        "duplicateFin": "Этот ФИН-код уже принадлежит другому сотруднику.",
         "saveFailed": "Произошла ошибка при сохранении. Попробуйте ещё раз."
       },
       "quickCreate": {

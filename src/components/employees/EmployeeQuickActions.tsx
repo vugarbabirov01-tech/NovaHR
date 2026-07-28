@@ -33,15 +33,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { cn } from "@/lib/utils"
 
@@ -54,18 +45,13 @@ export interface EmployeeQuickActionsTarget {
   fullName: string
 }
 
-/**
- * Optional callbacks for the not-yet-implemented modules. Each is a no-op
- * placeholder until the corresponding module ships — wiring a real action
- * up later only means passing a handler here, the menu UI never changes.
- */
 export interface EmployeeQuickActionHandlers {
+  /**
+   * Edit Employee opens the shared EmployeeWizard (Sheet-hosted) owned by
+   * the caller — the same wizard component /employees/new uses — so state
+   * (editingEmployeeId, the fetched EmployeeProfile) has to live there.
+   */
   onEditEmployee?: (employee: EmployeeQuickActionsTarget) => void
-  onAssignLeave?: (employee: EmployeeQuickActionsTarget) => void
-  onEmploymentContract?: (employee: EmployeeQuickActionsTarget) => void
-  onPayroll?: (employee: EmployeeQuickActionsTarget) => void
-  onDocuments?: (employee: EmployeeQuickActionsTarget) => void
-  onTerminateEmployment?: (employee: EmployeeQuickActionsTarget) => void
 }
 
 interface EmployeeQuickActionsProps extends EmployeeQuickActionHandlers {
@@ -87,16 +73,10 @@ export function EmployeeQuickActions({
   align = "end",
   className,
   onEditEmployee,
-  onAssignLeave,
-  onEmploymentContract,
-  onPayroll,
-  onDocuments,
-  onTerminateEmployment,
 }: EmployeeQuickActionsProps) {
   const t = useTranslations("Employees.quickActions")
   const isMobile = useMediaQuery("(max-width: 767px)")
   const [menuOpen, setMenuOpen] = useState(false)
-  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const actions: QuickAction[] = [
     {
@@ -112,45 +92,47 @@ export function EmployeeQuickActions({
       onSelect: () => onEditEmployee?.(employee),
     },
     {
+      // No standalone Leave module exists yet, so this deep-links into the
+      // employee's own profile — Leave Information tab, the closest thing
+      // to a real, working Leave destination in the app today.
       key: "assignLeave",
       icon: CalendarDays,
       label: t("assignLeave"),
-      onSelect: () => onAssignLeave?.(employee),
+      href: `/employees/${employee.id}?tab=leave`,
     },
     {
+      // No standalone Contract module exists either. "contract" is already
+      // a real DocumentCategory, so this opens Documents scoped to it —
+      // the upload dropzone there doubles as the "create contract" action
+      // when none exists yet.
       key: "employmentContract",
       icon: FileText,
       label: t("employmentContract"),
-      onSelect: () => onEmploymentContract?.(employee),
+      href: `/employees/${employee.id}?tab=documents&category=contract`,
     },
     {
       key: "payroll",
       icon: Wallet,
       label: t("payroll"),
-      onSelect: () => onPayroll?.(employee),
+      href: `/employees/${employee.id}?tab=payroll`,
     },
     {
       key: "documents",
       icon: FolderOpen,
       label: t("documents"),
-      onSelect: () => onDocuments?.(employee),
+      href: `/employees/${employee.id}?tab=documents`,
     },
     {
+      // A dedicated route so only this employee's card ends up in the
+      // print target, not the whole grid — see /employees/[id]/print.
       key: "print",
       icon: Printer,
       label: t("printCard"),
-      onSelect: () => window.print(),
+      href: `/employees/${employee.id}/print`,
     },
   ]
 
-  function handleTerminateSelect() {
-    setConfirmOpen(true)
-  }
-
-  function handleTerminateConfirm() {
-    onTerminateEmployment?.(employee)
-    setConfirmOpen(false)
-  }
+  const terminationHref = `/employees/${employee.id}/termination`
 
   return (
     <>
@@ -179,10 +161,10 @@ export function EmployeeQuickActions({
             </div>
             <div className="px-2 pb-2">
               <SheetClose
+                nativeButton={false}
                 render={
-                  <button
-                    type="button"
-                    onClick={handleTerminateSelect}
+                  <Link
+                    href={terminationHref}
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-destructive outline-none hover:bg-destructive/10 focus-visible:bg-destructive/10"
                   />
                 }
@@ -217,30 +199,13 @@ export function EmployeeQuickActions({
             )}
             <DropdownMenuSeparator />
             <DropdownMenuLabel>{t("dangerZone")}</DropdownMenuLabel>
-            <DropdownMenuItem variant="destructive" onClick={handleTerminateSelect}>
+            <DropdownMenuItem variant="destructive" render={<Link href={terminationHref} />}>
               <UserX strokeWidth={1.75} />
               {t("terminateEmployment")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )}
-
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("terminateConfirmTitle", { name: employee.fullName })}</DialogTitle>
-            <DialogDescription>{t("terminateConfirmDescription")}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>
-              {t("terminateConfirmCancel")}
-            </DialogClose>
-            <Button variant="destructive" onClick={handleTerminateConfirm}>
-              {t("terminateConfirmAction")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   )
 }

@@ -150,6 +150,10 @@ export function EmployeeWizard({
         setErrors({ employeeNumber: t("validation.duplicateEmployeeNumber") })
         setSubmitError(t("validation.duplicateEmployeeNumber"))
         goToStep(1)
+      } else if (result.error === "duplicate-fin") {
+        setErrors({ finCode: t("validation.duplicateFin") })
+        setSubmitError(t("validation.duplicateFin"))
+        goToStep(0)
       } else {
         setSubmitError(t("validation.saveFailed"))
       }
@@ -216,6 +220,7 @@ export function EmployeeWizard({
               onChange={patch}
               errors={errors}
               masterData={masterData}
+              mode={mode}
               onAddDepartment={addDepartment}
               onAddPosition={addPosition}
               onAddCompany={addCompany}

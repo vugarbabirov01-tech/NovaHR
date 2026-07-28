@@ -1246,10 +1246,17 @@ export function isEmployeeIdTaken(id: string): boolean {
   return employeeDirectory.some((employee) => employee.id === id)
 }
 
-/** Used by Employee Import for FIN-based idempotency — never by Create/Edit. */
-export function isFinTaken(finCode: string): boolean {
+/**
+ * Used by Import for FIN-based idempotency, and by Create/Edit to enforce
+ * global FIN uniqueness. excludeId lets Edit ignore the employee's own
+ * current record — Import never passes it, since every imported row is a
+ * new employee.
+ */
+export function isFinTaken(finCode: string, excludeId?: string): boolean {
   const normalized = finCode.trim().toUpperCase()
-  return employeeDirectory.some((employee) => employee.personal.finCode.trim().toUpperCase() === normalized)
+  return employeeDirectory.some(
+    (employee) => employee.id !== excludeId && employee.personal.finCode.trim().toUpperCase() === normalized
+  )
 }
 
 /**

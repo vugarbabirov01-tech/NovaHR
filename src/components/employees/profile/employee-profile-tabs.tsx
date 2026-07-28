@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -34,11 +36,30 @@ const tabKeys = [
   "auditLog",
 ] as const
 
+type TabKey = (typeof tabKeys)[number]
+
+function isTabKey(value: string | null): value is TabKey {
+  return tabKeys.includes(value as TabKey)
+}
+
 export function EmployeeProfileTabs({ profile }: EmployeeProfileTabsProps) {
   const t = useTranslations("Employees.profile.tabs")
+  const searchParams = useSearchParams()
+  const requestedTab = searchParams.get("tab")
+
+  // Deep-linked from the Employee Card quick actions (?tab=payroll,
+  // ?tab=documents, ?tab=leave) — falls back to "overview" for a plain
+  // profile visit or an unrecognized value.
+  const [activeTab, setActiveTab] = useState<TabKey>(
+    isTabKey(requestedTab) ? requestedTab : "overview"
+  )
+
+  useEffect(() => {
+    if (isTabKey(requestedTab)) setActiveTab(requestedTab)
+  }, [requestedTab])
 
   return (
-    <Tabs defaultValue="overview">
+    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabKey)}>
       <div className="overflow-x-auto">
         <TabsList variant="line" className="w-max min-w-full justify-start border-b border-border">
           {tabKeys.map((key) => (
