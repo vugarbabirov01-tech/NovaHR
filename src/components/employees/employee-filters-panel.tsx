@@ -68,18 +68,26 @@ export function EmployeeFiltersPanel({
     [employees]
   )
 
-  // employmentStatus is owned by the primary Status filter, not this
-  // popover — excluded from both the count and "Clear filters" below.
+  // employmentStatus is owned by the primary Status filter and smartFilter
+  // by the Smart Filters panel, not this popover — excluded from both the
+  // count and "Clear filters" below.
   const activeCount = (
     Object.entries(filters) as [keyof EmployeeFilters, string][]
-  ).filter(([key, value]) => key !== "search" && key !== "employmentStatus" && value !== ALL_VALUE).length
+  ).filter(
+    ([key, value]) => key !== "search" && key !== "employmentStatus" && key !== "smartFilter" && value !== ALL_VALUE
+  ).length
 
   function set<K extends keyof EmployeeFilters>(key: K, value: string | null) {
     onChange({ ...filters, [key]: value ?? ALL_VALUE })
   }
 
   function clear() {
-    onChange({ ...defaultEmployeeFilters, search: filters.search, employmentStatus: filters.employmentStatus })
+    onChange({
+      ...defaultEmployeeFilters,
+      search: filters.search,
+      employmentStatus: filters.employmentStatus,
+      smartFilter: filters.smartFilter,
+    })
   }
 
   return (

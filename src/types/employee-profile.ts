@@ -109,6 +109,10 @@ export interface EmployeeListItem {
   employmentType: EmploymentType
   employmentStatus: EmploymentStatus
   hireDate: string
+  /** Surfaced at the list level solely for Smart Filters' "Probation Ending
+   * Soon" rule — otherwise unused here, same field employment.probationEndDate
+   * already carries on the full profile. */
+  probationEndDate?: string
   baseSalary: number
   currency: string
 }
@@ -434,6 +438,7 @@ export function toListItem(profile: EmployeeProfile): EmployeeListItem {
     workLocation: profile.employment.workLocation,
     managerId: profile.employment.managerId,
     managerName: profile.employment.managerName,
+    probationEndDate: profile.employment.probationEndDate,
     employmentType: profile.employment.employmentType,
     employmentStatus: profile.employmentStatus,
     hireDate: profile.employment.hireDate,

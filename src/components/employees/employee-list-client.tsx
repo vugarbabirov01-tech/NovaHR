@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState, useTransition } from "react"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import {
   Download,
@@ -30,6 +31,7 @@ import { SearchInput } from "@/components/common/search-input"
 import { EmptyState } from "@/components/common/empty-state"
 import { EmployeeCard } from "@/components/employees/employee-card"
 import { EmployeeFiltersPanel } from "@/components/employees/employee-filters-panel"
+import { EmployeeSmartFiltersPanel } from "@/components/employees/employee-smart-filters-panel"
 import { EmployeeListTable } from "@/components/employees/employee-list-table"
 import { ViewToggle } from "@/components/employees/view-toggle"
 import { EmployeeWizardModal } from "@/components/employees/wizard/employee-wizard-modal"
@@ -37,6 +39,7 @@ import { ExportEmployeesDialog } from "@/components/employees/export/export-empl
 import { getEmployeeProfileAction } from "@/app/[locale]/(app)/employees/actions"
 import { usePersistedState } from "@/hooks/use-persisted-state"
 import { getFullName, statusMessageKeys } from "@/lib/employees"
+import { computeSmartFilterMatches, getEmployeeSmartFilters } from "@/lib/employee-smart-filters"
 import { cn } from "@/lib/utils"
 import type { WizardMasterData } from "@/lib/employee-wizard-mapper"
 import {
@@ -68,8 +71,18 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
   const t = useTranslations("Employees.list")
   const tStatus = useTranslations("Status")
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [view, setView] = usePersistedState<EmployeeView>("employees-view", "list")
-  const [filters, setFilters] = useState<EmployeeFilters>(defaultEmployeeFilters)
+  // Smart Filter selection is the one filter dimension that deep-links —
+  // read once from ?smartFilter= on load, same idea as the Employee
+  // Profile's ?tab= deep link.
+  const [filters, setFilters] = useState<EmployeeFilters>(() => {
+    const smartFilterParam = searchParams.get("smartFilter")
+    const isValidSmartFilter = Boolean(
+      smartFilterParam && getEmployeeSmartFilters().some((filter) => filter.id === smartFilterParam)
+    )
+    return { ...defaultEmployeeFilters, smartFilter: isValidSmartFilter ? smartFilterParam! : "" }
+  })
 
   // Edit Employee reuses the exact same EmployeeWizard component as Create
   // (/employees/new, a full page — long-form data entry earns the full
@@ -92,6 +105,15 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
     // make "Export Selected" lie about what's actually selected.
     if (nextView !== "list") setSelectedIds([])
     setView(nextView)
+  }
+
+  function handleSmartFilterSelect(id: string) {
+    setFilters((prev) => ({ ...prev, smartFilter: id }))
+    const params = new URLSearchParams(searchParams.toString())
+    if (id) params.set("smartFilter", id)
+    else params.delete("smartFilter")
+    const query = params.toString()
+    router.replace(query ? `/employees?${query}` : "/employees", { scroll: false })
   }
 
   function handleEditEmployee(employee: { id: string; fullName: string }) {
@@ -127,10 +149,20 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
     [employees]
   )
 
+  // One pass over `employees` computes every Smart Filter's matches — only
+  // recomputed when the employee list itself changes, never on Search/
+  // Status/Advanced Filters keystrokes or Smart Filter selection.
+  const smartFilterMatches = useMemo(() => computeSmartFilterMatches(employees), [employees])
+  const selectedSmartFilterIds = useMemo(() => {
+    if (!filters.smartFilter) return null
+    return new Set(smartFilterMatches[filters.smartFilter]?.map((employee) => employee.id) ?? [])
+  }, [filters.smartFilter, smartFilterMatches])
+
   const filtered = useMemo(() => {
     const query = filters.search.trim().toLowerCase()
 
     return employees.filter((employee) => {
+      if (selectedSmartFilterIds && !selectedSmartFilterIds.has(employee.id)) return false
       if (query) {
         const haystack = [
           getFullName(employee),
@@ -167,7 +199,7 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
       }
       return true
     })
-  }, [employees, filters])
+  }, [employees, filters, selectedSmartFilterIds])
 
   return (
     <div className="flex flex-col gap-5">
@@ -246,6 +278,12 @@ export function EmployeeListClient({ employees, masterData }: EmployeeListClient
           </Link>
         </div>
       </div>
+
+      <EmployeeSmartFiltersPanel
+        employees={employees}
+        selectedId={filters.smartFilter}
+        onSelect={handleSmartFilterSelect}
+      />
 
       {filtered.length === 0 ? (
         <EmptyState

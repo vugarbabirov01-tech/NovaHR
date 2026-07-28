@@ -374,6 +374,47 @@
       "emptyTitle": "No employees found",
       "emptyDescription": "Try adjusting your search or filters."
     },
+    "smartFilters": {
+      "sectionTitle": "Smart Filters",
+      "sectionDescription": "Dynamic employee views generated automatically by business rules.",
+      "clear": "Clear",
+      "retirement": {
+        "title": "At Retirement Age",
+        "description": "Employees who have reached retirement age."
+      },
+      "retirementSoon": {
+        "title": "Retiring Within {months} Months",
+        "description": "Employees who will reach retirement age within the next {months} months."
+      },
+      "birthdaysThisMonth": {
+        "title": "Birthdays This Month",
+        "description": "Employees with a birthday this month."
+      },
+      "missingManager": {
+        "title": "No Manager Assigned",
+        "description": "Employees without a manager assigned."
+      },
+      "missingDepartment": {
+        "title": "No Department Assigned",
+        "description": "Employees without a department."
+      },
+      "missingPosition": {
+        "title": "No Position Assigned",
+        "description": "Employees without a position."
+      },
+      "longService": {
+        "title": "Long Service",
+        "description": "Employees with {years}+ years of service."
+      },
+      "recentlyHired": {
+        "title": "Recently Hired",
+        "description": "Employees hired within the last {days} days."
+      },
+      "probationEndingSoon": {
+        "title": "Probation Ending Soon",
+        "description": "Employees whose probation ends within {days} days."
+      }
+    },
     "card": {
       "hireDate": "Hire Date",
       "manager": "Manager",

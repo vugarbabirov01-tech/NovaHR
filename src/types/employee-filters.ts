@@ -10,6 +10,9 @@ export interface EmployeeFilters {
   manager: string
   employmentType: string
   employmentStatus: string
+  /** Active Smart Filter id (see employee-smart-filters.ts), or "" for none.
+   * Intersects with every filter above rather than replacing them. */
+  smartFilter: string
 }
 
 export const ALL_VALUE = "all"
@@ -35,6 +38,7 @@ export const defaultEmployeeFilters: EmployeeFilters = {
   manager: ALL_VALUE,
   employmentType: ALL_VALUE,
   employmentStatus: DEFAULT_STATUS_FILTER,
+  smartFilter: "",
 }
 
 export type EmployeeView = "card" | "list"

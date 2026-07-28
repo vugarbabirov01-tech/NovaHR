@@ -374,6 +374,47 @@
       "emptyTitle": "Əməkdaş tapılmadı",
       "emptyDescription": "Axtarış və ya filtrləri dəyişməyi cəhd edin."
     },
+    "smartFilters": {
+      "sectionTitle": "Ağıllı Filtrlər",
+      "sectionDescription": "Biznes qaydalarına əsasən avtomatik yaradılan dinamik əməkdaş siyahıları.",
+      "clear": "Təmizlə",
+      "retirement": {
+        "title": "Pensiya yaşına çatmış",
+        "description": "Pensiya yaşına çatmış əməkdaşlar."
+      },
+      "retirementSoon": {
+        "title": "Pensiyaya {months} ay qalıb",
+        "description": "Növbəti {months} ay ərzində pensiya yaşına çatacaq əməkdaşlar."
+      },
+      "birthdaysThisMonth": {
+        "title": "Ad günü bu ay",
+        "description": "Bu ay ad günü olan əməkdaşlar."
+      },
+      "missingManager": {
+        "title": "Rəhbəri olmayan",
+        "description": "Rəhbər təyin edilməmiş əməkdaşlar."
+      },
+      "missingDepartment": {
+        "title": "Şöbəsi olmayan",
+        "description": "Şöbə təyin edilməmiş əməkdaşlar."
+      },
+      "missingPosition": {
+        "title": "Vəzifəsi olmayan",
+        "description": "Vəzifə təyin edilməmiş əməkdaşlar."
+      },
+      "longService": {
+        "title": "Uzun iş stajı",
+        "description": "{years}+ il iş stajı olan əməkdaşlar."
+      },
+      "recentlyHired": {
+        "title": "Yeni işə qəbul olunanlar",
+        "description": "Son {days} gün ərzində işə qəbul edilmiş əməkdaşlar."
+      },
+      "probationEndingSoon": {
+        "title": "Sınaq müddəti bitir",
+        "description": "Sınaq müddəti növbəti {days} gün ərzində bitən əməkdaşlar."
+      }
+    },
     "card": {
       "hireDate": "İşə Qəbul Tarixi",
       "manager": "Rəhbər",
