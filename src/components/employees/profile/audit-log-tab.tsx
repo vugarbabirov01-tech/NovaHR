@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { History, PenLine, Sparkles } from "lucide-react"
+import { History, PenLine, Sparkles, UserX } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { EmptyState } from "@/components/common/empty-state"
@@ -19,7 +19,7 @@ export function AuditLogTab({ profile }: AuditLogTabProps) {
 
   const entries: TimelineEntry[] = auditLog.map((entry) => ({
     id: entry.id,
-    icon: entry.action === "record.created" ? Sparkles : PenLine,
+    icon: actionIcons[entry.action] ?? PenLine,
     title: entry.actor,
     description: describeAction(entry, tActions, t),
     meta: new Date(entry.timestamp).toLocaleString(),
@@ -42,9 +42,16 @@ export function AuditLogTab({ profile }: AuditLogTabProps) {
   )
 }
 
-const actionMessageKeys: Record<string, "recordCreated" | "fieldUpdated"> = {
+const actionMessageKeys: Record<string, "recordCreated" | "fieldUpdated" | "employeeTerminated"> = {
   "record.created": "recordCreated",
   "field.updated": "fieldUpdated",
+  "employee.terminated": "employeeTerminated",
+}
+
+const actionIcons: Record<string, typeof Sparkles> = {
+  "record.created": Sparkles,
+  "field.updated": PenLine,
+  "employee.terminated": UserX,
 }
 
 function describeAction(
