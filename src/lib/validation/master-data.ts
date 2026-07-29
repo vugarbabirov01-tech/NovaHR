@@ -31,6 +31,11 @@ export const workScheduleInputSchema = z.object({
   label: name,
   code,
   description,
+  scheduleType: z.enum(["WEEKLY", "ROTATING"]).optional(),
+  workingDays: z.string().trim().max(40).optional(),
+  rotationOnDays: z.number().int().positive().optional().nullable(),
+  rotationOffDays: z.number().int().positive().optional().nullable(),
+  rotationStartDate: z.coerce.date().optional().nullable(),
 })
 
 export const idSchema = z.string().trim().min(1, "Missing id.")

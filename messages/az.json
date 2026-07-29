@@ -86,6 +86,13 @@
     "departmentDescription": "Cari əməkdaş sayının bölgüsü",
     "employeesUnit": "əməkdaş"
   },
+  "LeaveSummary": {
+    "openingBalance": "Açılış Qalığı",
+    "carriedForward": "Növbəti İlə Keçən",
+    "taken": "İstifadə Olunmuş Məzuniyyət",
+    "remaining": "Qalan Balans",
+    "daysUnit": "gün"
+  },
   "RecentEmployees": {
     "title": "Son Əməkdaşlar",
     "description": "İş qüvvənizə ən son əlavələr",
@@ -375,44 +382,58 @@
       "emptyDescription": "Axtarış və ya filtrləri dəyişməyi cəhd edin."
     },
     "smartFilters": {
-      "sectionTitle": "Ağıllı Filtrlər",
-      "sectionDescription": "Biznes qaydalarına əsasən avtomatik yaradılan dinamik əməkdaş siyahıları.",
+      "sectionTitle": "HR Xəbərdarlıqları",
+      "sectionDescription": "Diqqət tələb edən əməkdaşlar avtomatik müəyyən edilir.",
       "clear": "Təmizlə",
+      "employeeCount": "{count, plural, =0 {0 əməkdaş} =1 {1 əməkdaş} other {# əməkdaş}}",
+      "viewAction": "Bax",
+      "summaryLabel": "Göstərilir:",
+      "summaryClear": "Filtri təmizlə",
+      "activeLabel": "Aktiv",
       "retirement": {
         "title": "Pensiya yaşına çatmış",
-        "description": "Pensiya yaşına çatmış əməkdaşlar."
+        "description": "Pensiya yaşına çatmış əməkdaşlar.",
+        "badge": "Pensiya"
       },
       "retirementSoon": {
         "title": "Pensiyaya {months} ay qalıb",
-        "description": "Növbəti {months} ay ərzində pensiya yaşına çatacaq əməkdaşlar."
+        "description": "Növbəti {months} ay ərzində pensiya yaşına çatacaq əməkdaşlar.",
+        "badge": "Pensiya"
       },
       "birthdaysThisMonth": {
         "title": "Ad günü bu ay",
-        "description": "Bu ay ad günü olan əməkdaşlar."
+        "description": "Bu ay ad günü olan əməkdaşlar.",
+        "badge": "Ad günü"
       },
       "missingManager": {
         "title": "Rəhbəri olmayan",
-        "description": "Rəhbər təyin edilməmiş əməkdaşlar."
+        "description": "Rəhbər təyin edilməmiş əməkdaşlar.",
+        "badge": "Rəhbəri yoxdur"
       },
       "missingDepartment": {
         "title": "Şöbəsi olmayan",
-        "description": "Şöbə təyin edilməmiş əməkdaşlar."
+        "description": "Şöbə təyin edilməmiş əməkdaşlar.",
+        "badge": "Şöbəsi yoxdur"
       },
       "missingPosition": {
         "title": "Vəzifəsi olmayan",
-        "description": "Vəzifə təyin edilməmiş əməkdaşlar."
+        "description": "Vəzifə təyin edilməmiş əməkdaşlar.",
+        "badge": "Vəzifəsi yoxdur"
       },
       "longService": {
         "title": "Uzun iş stajı",
-        "description": "{years}+ il iş stajı olan əməkdaşlar."
+        "description": "{years}+ il iş stajı olan əməkdaşlar.",
+        "badge": "Uzun staj"
       },
       "recentlyHired": {
         "title": "Yeni işə qəbul olunanlar",
-        "description": "Son {days} gün ərzində işə qəbul edilmiş əməkdaşlar."
+        "description": "Son {days} gün ərzində işə qəbul edilmiş əməkdaşlar.",
+        "badge": "Yeni işçi"
       },
       "probationEndingSoon": {
         "title": "Sınaq müddəti bitir",
-        "description": "Sınaq müddəti növbəti {days} gün ərzində bitən əməkdaşlar."
+        "description": "Sınaq müddəti növbəti {days} gün ərzində bitən əməkdaşlar.",
+        "badge": "Sınaq bitir"
       }
     },
     "card": {
@@ -630,17 +651,39 @@
         "none": "Yoxdur"
       },
       "leave": {
-        "annualLeave": "Əsas Məzuniyyət",
-        "additionalLeave": "Əlavə Məzuniyyət",
-        "usedLeave": "İstifadə Olunmuş Məzuniyyət",
-        "remainingLeave": "Qalan Məzuniyyət",
+        "openingBalance": "Açılış Qalığı",
+        "carriedForward": "Növbəti İlə Keçən",
+        "taken": "İstifadə Olunub",
+        "remaining": "Qalıq",
         "days": "{count} gün",
-        "leaveHistory": "Məzuniyyət Tarixçəsi",
-        "placeholderNotice": "Bu dəyərlər yalnız nümunədir. Gələcəkdə Əmək Hüququ məlumatları əsasında avtomatik hesablanacaq.",
-        "noHistory": "Hələ məzuniyyət qeydi yoxdur.",
-        "statusApproved": "Təsdiqlənib",
-        "statusPending": "Gözləmədə",
-        "statusRejected": "Rədd edilib"
+        "hours": "{count} saat",
+        "leaveHistory": "Əməliyyat Tarixçəsi",
+        "noHistory": "Hələ dəftər qeydi yoxdur.",
+        "noLeaveTypes": "Hələ məzuniyyət növü təyin edilməyib.",
+        "requestLeave": "Məzuniyyət Tələb Et",
+        "requestsTitle": "Məzuniyyət Tələbləri",
+        "noRequests": "Hələ məzuniyyət tələbi yoxdur.",
+        "entryTypes": {
+          "openingBalance": "Açılış Qalığı",
+          "importedBalance": "Köçürülmüş Qalıq",
+          "accrual": "Toplanma",
+          "carryForward": "Növbəti İlə Keçid",
+          "leaveTaken": "İstifadə Olunmuş Məzuniyyət",
+          "leaveCancelled": "Ləğv Edilmiş Məzuniyyət",
+          "manualAdjustment": "Əl ilə Düzəliş",
+          "expiry": "Vaxtın Bitməsi",
+          "settlement": "Hesablaşma",
+          "encashment": "Nağdlaşdırma"
+        },
+        "requestStatus": {
+          "draft": "Qaralama",
+          "submitted": "Göndərilib",
+          "pendingApproval": "Təsdiq Gözləyir",
+          "approved": "Təsdiqlənib",
+          "rejected": "Rədd Edilib",
+          "cancelled": "Ləğv Edilib",
+          "withdrawn": "Geri Çəkilib"
+        }
       },
       "payroll": {
         "bank": "Bank",
@@ -836,6 +879,9 @@
       "description": "Yeni Əməkdaş Master Qeydi yaradın.",
       "editTitle": "Əməkdaşı Redaktə Et",
       "editDescription": "Bu əməkdaşın Master Qeydini yeniləyin.",
+      "editLoadError": "Məlumatları yükləmək mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.",
+      "retry": "Yenidən cəhd et",
+      "close": "Bağla",
       "steps": {
         "personal": "Şəxsi Məlumatlar",
         "employment": "Məşğulluq",
@@ -1023,6 +1069,52 @@
       "typeFullReportHint": "İdxal zamanı oxunmayacaq əlavə hesabat sütunları (status, yaş, staj və s.) əlavə edir.",
       "cancel": "Ləğv Et",
       "exportButton": "İxrac Et"
+    },
+    "leaveRequest": {
+      "wizardTitle": "Məzuniyyət Tələb Et",
+      "wizardDescription": "Başlanğıc tarixini və gün sayını daxil edin — bitmə tarixi, işə qayıdış tarixi və qalıq avtomatik hesablanır.",
+      "steps": {
+        "details": "Məlumatlar",
+        "review": "Baxış və Təsdiq"
+      },
+      "stepIndicator": "Addım {current} / {total}",
+      "back": "Geri",
+      "next": "İrəli",
+      "submit": "Tələbi Göndər",
+      "close": "Bağla",
+      "successTitle": "Məzuniyyət tələbi göndərildi",
+      "successDescription": "Tələb artıq təsdiq gözləyir.",
+      "validation": {
+        "required": "Bu sahə mütləqdir."
+      },
+      "details": {
+        "leaveType": "Məzuniyyət Növü",
+        "startDate": "Başlanğıc Tarixi",
+        "numberOfDays": "Gün Sayı",
+        "reason": "Səbəb",
+        "reasonHint": "İstəyə bağlı — təsdiqləyənə görünür."
+      },
+      "review": {
+        "leaveType": "Məzuniyyət Növü",
+        "endDate": "Bitmə Tarixi",
+        "returnToWorkDate": "İşə Qayıdış",
+        "calendarDays": "Təqvim Günləri",
+        "holidaysInRange": "Aralıqdakı Bayramlar",
+        "noHolidays": "Yoxdur",
+        "startDateWarningTitle": "Başlanğıc tarixi qeyri-iş günündə düşür",
+        "startDateWarningHoliday": "Seçilmiş başlanğıc tarixi rəsmi bayram günüdür.",
+        "startDateWarningNonWorking": "Seçilmiş başlanğıc tarixi bu əməkdaşın iş qrafikinə görə iş günü deyil.",
+        "eligibilityWarningTitle": "Uyğunluq xəbərdarlığı",
+        "eligibilityWarning": "Bu əməkdaş illik məzuniyyətə {date} tarixindən etibarən uyğun olur ({count} gün qalıb). HR yenə də davam edə bilər.",
+        "balance": "Məzuniyyət Qalığı",
+        "balanceRemaining": "Bu tələbdən əvvəl {remaining} qalıb",
+        "balanceSufficient": "Bu tələb üçün qalıq kifayətdir.",
+        "balanceWarning": "Bu tələb əməkdaşın qalan balansını aşır. Yenə də göndərə bilərsiniz — baxış üçün işarələnəcək.",
+        "balanceBlocked": "Bu tələb əməkdaşın qalan balansını aşır və bu məzuniyyət növünün siyasətinə görə göndərilə bilməz.",
+        "attachment": "Məzuniyyət Ərizəsi (istəyə bağlı)",
+        "attachmentHint": "Əməkdaşın imzalanmış məzuniyyət ərizəsini yükləyin — PDF, JPG və ya PNG.",
+        "submitError": "Məzuniyyət tələbi göndərilə bilmədi. Zəhmət olmasa yenidən cəhd edin."
+      }
     }
   }
 }

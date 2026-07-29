@@ -1,8 +1,9 @@
 "use client"
 
-import { Loader2 } from "lucide-react"
+import { AlertCircle, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 
+import { Button } from "@/components/ui/button"
 import {
   Sheet,
   SheetContent,
@@ -20,7 +21,13 @@ interface EmployeeWizardModalProps {
   employeeId: string
   /** Full profile for the employee being edited — null while it's loading. */
   editingProfile: EmployeeProfile | null
-  masterData: WizardMasterData
+  /** Wizard master data (departments/positions/...) — fetched on demand the
+   * moment Edit is clicked, null while it's loading. */
+  masterData: WizardMasterData | null
+  /** Set when either the profile or the master-data fetch failed, so the
+   * modal never sits in the loading spinner forever. */
+  loadError: boolean
+  onRetry: () => void
   onSuccess: () => void
 }
 
@@ -38,10 +45,12 @@ export function EmployeeWizardModal({
   employeeId,
   editingProfile,
   masterData,
+  loadError,
+  onRetry,
   onSuccess,
 }: EmployeeWizardModalProps) {
   const t = useTranslations("Employees.wizard")
-  const isLoadingEditData = !editingProfile
+  const isLoadingEditData = !editingProfile || !masterData
 
   function handleClose() {
     onOpenChange(false)
@@ -55,7 +64,20 @@ export function EmployeeWizardModal({
           <SheetDescription>{t("editDescription")}</SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto p-4">
-          {isLoadingEditData ? (
+          {loadError ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
+              <AlertCircle className="size-6 text-destructive" strokeWidth={1.75} />
+              <p className="max-w-xs text-sm text-muted-foreground">{t("editLoadError")}</p>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handleClose}>
+                  {t("close")}
+                </Button>
+                <Button size="sm" onClick={onRetry}>
+                  {t("retry")}
+                </Button>
+              </div>
+            </div>
+          ) : isLoadingEditData ? (
             <div className="flex items-center justify-center py-24">
               <Loader2 className="size-6 animate-spin text-muted-foreground" strokeWidth={1.75} />
             </div>

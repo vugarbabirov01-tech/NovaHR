@@ -86,6 +86,13 @@
     "departmentDescription": "Current headcount distribution",
     "employeesUnit": "employees"
   },
+  "LeaveSummary": {
+    "openingBalance": "Opening Balance",
+    "carriedForward": "Carried Forward",
+    "taken": "Leave Taken",
+    "remaining": "Remaining Balance",
+    "daysUnit": "days"
+  },
   "RecentEmployees": {
     "title": "Recent Employees",
     "description": "Latest additions to your workforce",
@@ -375,44 +382,58 @@
       "emptyDescription": "Try adjusting your search or filters."
     },
     "smartFilters": {
-      "sectionTitle": "Smart Filters",
-      "sectionDescription": "Dynamic employee views generated automatically by business rules.",
+      "sectionTitle": "HR Alerts",
+      "sectionDescription": "Employees who need attention are identified automatically.",
       "clear": "Clear",
+      "employeeCount": "{count, plural, =0 {0 employees} =1 {1 employee} other {# employees}}",
+      "viewAction": "View",
+      "summaryLabel": "Showing:",
+      "summaryClear": "Clear filter",
+      "activeLabel": "Active",
       "retirement": {
         "title": "At Retirement Age",
-        "description": "Employees who have reached retirement age."
+        "description": "Employees who have reached retirement age.",
+        "badge": "Retirement"
       },
       "retirementSoon": {
         "title": "Retiring Within {months} Months",
-        "description": "Employees who will reach retirement age within the next {months} months."
+        "description": "Employees who will reach retirement age within the next {months} months.",
+        "badge": "Retirement"
       },
       "birthdaysThisMonth": {
         "title": "Birthdays This Month",
-        "description": "Employees with a birthday this month."
+        "description": "Employees with a birthday this month.",
+        "badge": "Birthday"
       },
       "missingManager": {
         "title": "No Manager Assigned",
-        "description": "Employees without a manager assigned."
+        "description": "Employees without a manager assigned.",
+        "badge": "No manager"
       },
       "missingDepartment": {
         "title": "No Department Assigned",
-        "description": "Employees without a department."
+        "description": "Employees without a department.",
+        "badge": "No department"
       },
       "missingPosition": {
         "title": "No Position Assigned",
-        "description": "Employees without a position."
+        "description": "Employees without a position.",
+        "badge": "No position"
       },
       "longService": {
         "title": "Long Service",
-        "description": "Employees with {years}+ years of service."
+        "description": "Employees with {years}+ years of service.",
+        "badge": "Long service"
       },
       "recentlyHired": {
         "title": "Recently Hired",
-        "description": "Employees hired within the last {days} days."
+        "description": "Employees hired within the last {days} days.",
+        "badge": "New hire"
       },
       "probationEndingSoon": {
         "title": "Probation Ending Soon",
-        "description": "Employees whose probation ends within {days} days."
+        "description": "Employees whose probation ends within {days} days.",
+        "badge": "Probation ending"
       }
     },
     "card": {
@@ -630,17 +651,39 @@
         "none": "None"
       },
       "leave": {
-        "annualLeave": "Annual Leave",
-        "additionalLeave": "Additional Leave",
-        "usedLeave": "Used Leave",
-        "remainingLeave": "Remaining Leave",
-        "days": "{count} days",
-        "leaveHistory": "Leave History",
-        "placeholderNotice": "These values are placeholders. They will be calculated automatically from Labour Law data in a future release.",
-        "noHistory": "No leave records yet.",
-        "statusApproved": "Approved",
-        "statusPending": "Pending",
-        "statusRejected": "Rejected"
+        "openingBalance": "Opening Balance",
+        "carriedForward": "Carried Forward",
+        "taken": "Taken",
+        "remaining": "Remaining",
+        "days": "{count} {count, plural, =1 {day} other {days}}",
+        "hours": "{count} {count, plural, =1 {hour} other {hours}}",
+        "leaveHistory": "Transaction History",
+        "noHistory": "No ledger entries yet.",
+        "noLeaveTypes": "No leave types configured yet.",
+        "requestLeave": "Request Leave",
+        "requestsTitle": "Leave Requests",
+        "noRequests": "No leave requests yet.",
+        "entryTypes": {
+          "openingBalance": "Opening Balance",
+          "importedBalance": "Imported Balance",
+          "accrual": "Accrual",
+          "carryForward": "Carry Forward",
+          "leaveTaken": "Leave Taken",
+          "leaveCancelled": "Leave Cancelled",
+          "manualAdjustment": "Manual Adjustment",
+          "expiry": "Expiry",
+          "settlement": "Settlement",
+          "encashment": "Encashment"
+        },
+        "requestStatus": {
+          "draft": "Draft",
+          "submitted": "Submitted",
+          "pendingApproval": "Pending Approval",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "cancelled": "Cancelled",
+          "withdrawn": "Withdrawn"
+        }
       },
       "payroll": {
         "bank": "Bank",
@@ -836,6 +879,9 @@
       "description": "Create a new Employee Master Record.",
       "editTitle": "Edit Employee",
       "editDescription": "Update this employee's Master Record.",
+      "editLoadError": "Couldn't load the data. Please try again.",
+      "retry": "Retry",
+      "close": "Close",
       "steps": {
         "personal": "Personal Information",
         "employment": "Employment",
@@ -1023,6 +1069,52 @@
       "typeFullReportHint": "Adds reporting columns (status, age, tenure, etc.) that Import will not read back.",
       "cancel": "Cancel",
       "exportButton": "Export"
+    },
+    "leaveRequest": {
+      "wizardTitle": "Request Leave",
+      "wizardDescription": "Enter the start date and number of days — the end date, return-to-work date, and balance are calculated automatically.",
+      "steps": {
+        "details": "Details",
+        "review": "Review & Submit"
+      },
+      "stepIndicator": "Step {current} of {total}",
+      "back": "Back",
+      "next": "Next",
+      "submit": "Submit Request",
+      "close": "Close",
+      "successTitle": "Leave request submitted",
+      "successDescription": "The request is now pending approval.",
+      "validation": {
+        "required": "This field is required."
+      },
+      "details": {
+        "leaveType": "Leave Type",
+        "startDate": "Start Date",
+        "numberOfDays": "Number of Days",
+        "reason": "Reason",
+        "reasonHint": "Optional — visible to the approver."
+      },
+      "review": {
+        "leaveType": "Leave Type",
+        "endDate": "End Date",
+        "returnToWorkDate": "Return to Work",
+        "calendarDays": "Calendar Days",
+        "holidaysInRange": "Holidays in Range",
+        "noHolidays": "None",
+        "startDateWarningTitle": "Start date falls on a non-working day",
+        "startDateWarningHoliday": "The selected start date is a public holiday.",
+        "startDateWarningNonWorking": "The selected start date is not a working day under this employee's schedule.",
+        "eligibilityWarningTitle": "Eligibility warning",
+        "eligibilityWarning": "This employee becomes eligible for annual leave on {date} ({count} {count, plural, =1 {day} other {days}} remaining). HR may still proceed.",
+        "balance": "Leave Balance",
+        "balanceRemaining": "{remaining} remaining before this request",
+        "balanceSufficient": "Sufficient balance for this request.",
+        "balanceWarning": "This request exceeds the employee's remaining balance. You may still submit — it will be flagged for review.",
+        "balanceBlocked": "This request exceeds the employee's remaining balance and cannot be submitted under this leave type's policy.",
+        "attachment": "Leave Application (optional)",
+        "attachmentHint": "Upload the employee's signed leave application — PDF, JPG, or PNG.",
+        "submitError": "Could not submit the leave request. Please try again."
+      }
     }
   }
 }

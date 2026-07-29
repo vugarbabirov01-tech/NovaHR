@@ -1,5 +1,7 @@
+import { Suspense } from "react"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
+import { Loader2 } from "lucide-react"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { ProfileHeader } from "@/components/employees/profile/profile-header"
@@ -35,7 +37,15 @@ export default async function EmployeeProfilePage({ params }: Props) {
   return (
     <div className="flex flex-col gap-6">
       <ProfileHeader profile={employee} />
-      <EmployeeProfileTabs profile={employee} />
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="size-6 animate-spin text-muted-foreground" strokeWidth={1.75} />
+          </div>
+        }
+      >
+        <EmployeeProfileTabs profile={employee} />
+      </Suspense>
     </div>
   )
 }

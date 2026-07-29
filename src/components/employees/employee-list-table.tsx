@@ -60,8 +60,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { EmptyState } from "@/components/common/empty-state"
 import { EmploymentStatusBadge } from "@/components/employees/employment-status-badge"
+import { SmartFilterBadge } from "@/components/employees/smart-filter-badge"
 import { EmployeeQuickActions } from "@/components/employees/EmployeeQuickActions"
 import { employmentTypeMessageKeys, getFullName, getInitials } from "@/lib/employees"
+import type { SmartFilterDefinition } from "@/lib/employee-smart-filters"
 import type { EmployeeGroupBy } from "@/types/employee-filters"
 import type { EmployeeListItem } from "@/types/employee-profile"
 
@@ -69,6 +71,9 @@ interface EmployeeListTableProps {
   data: EmployeeListItem[]
   onEditEmployee?: (employee: { id: string; fullName: string }) => void
   onSelectionChange?: (ids: string[]) => void
+  /** The currently-active HR Action Center card, if any — shown as a
+   * temporary badge above each row's name while it's active. */
+  activeSmartFilter?: SmartFilterDefinition | null
 }
 
 const groupColumnIds: Record<Exclude<EmployeeGroupBy, "none">, string> = {
@@ -81,6 +86,7 @@ export function EmployeeListTable({
   data,
   onEditEmployee,
   onSelectionChange,
+  activeSmartFilter,
 }: EmployeeListTableProps) {
   const t = useTranslations("Employees.table")
   const tType = useTranslations("EmploymentType")
@@ -162,7 +168,8 @@ export function EmployeeListTable({
                 {getInitials(row.original.firstName, row.original.lastName)}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
+            <div className="flex flex-col gap-0.5">
+              {activeSmartFilter ? <SmartFilterBadge filter={activeSmartFilter} /> : null}
               <span className="font-medium text-foreground">{getFullName(row.original)}</span>
               <span className="text-xs text-muted-foreground">{row.original.position}</span>
             </div>
@@ -240,7 +247,7 @@ export function EmployeeListTable({
         ),
       },
     ],
-    [t, tType, tCommon, onEditEmployee]
+    [t, tType, tCommon, onEditEmployee, activeSmartFilter]
   )
 
   const table = useReactTable({

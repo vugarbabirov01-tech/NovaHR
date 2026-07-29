@@ -14,16 +14,22 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { EmploymentStatusBadge } from "@/components/employees/employment-status-badge"
+import { SmartFilterBadge } from "@/components/employees/smart-filter-badge"
 import { EmployeeQuickActions } from "@/components/employees/EmployeeQuickActions"
 import { calculateAgeFromDateOfBirth, getFullName, getInitials } from "@/lib/employees"
+import type { SmartFilterDefinition } from "@/lib/employee-smart-filters"
 import type { EmployeeListItem } from "@/types/employee-profile"
 
 interface EmployeeCardProps {
   employee: EmployeeListItem
   onEditEmployee?: (employee: { id: string; fullName: string }) => void
+  /** The currently-active HR Action Center card, if any — shown as a
+   * temporary badge above the name. Not persisted anywhere; it only reflects
+   * why this employee is in the current, already-filtered result set. */
+  activeSmartFilter?: SmartFilterDefinition | null
 }
 
-export function EmployeeCard({ employee, onEditEmployee }: EmployeeCardProps) {
+export function EmployeeCard({ employee, onEditEmployee, activeSmartFilter }: EmployeeCardProps) {
   const t = useTranslations("Employees.card")
   const tTable = useTranslations("Employees.table")
   const fullName = getFullName(employee)
@@ -49,6 +55,7 @@ export function EmployeeCard({ employee, onEditEmployee }: EmployeeCardProps) {
             </AvatarFallback>
           </Avatar>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
+            {activeSmartFilter ? <SmartFilterBadge filter={activeSmartFilter} /> : null}
             <span className="truncate text-base font-semibold text-foreground group-hover:text-primary">
               {fullName}
             </span>

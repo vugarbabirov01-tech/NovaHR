@@ -102,6 +102,11 @@ export function WorkSchedulesPageClient({ initialSchedules }: WorkSchedulesPageC
             active: true,
             createdAt: now,
             updatedAt: now,
+            scheduleType: input.scheduleType ?? "WEEKLY",
+            workingDays: input.workingDays ?? "MON,TUE,WED,THU,FRI",
+            rotationOnDays: input.rotationOnDays ?? null,
+            rotationOffDays: input.rotationOffDays ?? null,
+            rotationStartDate: input.rotationStartDate ?? null,
           }
       dispatchOptimistic({ type: "upsert", schedule: optimisticSchedule })
 

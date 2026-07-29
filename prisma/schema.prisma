@@ -26,6 +26,13 @@ model Company {
 
   branches Branch[]
 
+  // Leave Management back-relations — nullable on the Leave side (null =
+  // applies globally / not company-scoped), so these arrays only ever hold
+  // the records explicitly scoped to this company.
+  leavePolicies LeavePolicy[]
+  leaveRequests LeaveRequest[]
+  holidays      Holiday[]
+
   @@map("companies")
 }
 
@@ -40,6 +47,11 @@ model Branch {
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
+
+  // Leave Management back-relations — same nullable-scoping note as Company.
+  leavePolicies LeavePolicy[]
+  leaveRequests LeaveRequest[]
+  holidays      Holiday[]
 
   @@index([companyId])
   @@map("branches")
@@ -96,6 +108,22 @@ model WorkSchedule {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  /// "WEEKLY" (workingDays applies) or "ROTATING" (rotationOnDays/
+  /// rotationOffDays/rotationStartDate applies). Leave Policy Resolution
+  /// Engine (src/lib/leave/leave-policy-resolution-service.ts) is the only
+  /// intended reader of these fields — never assume Mon-Fri elsewhere.
+  scheduleType String @default("WEEKLY")
+  /// Comma-separated weekday codes (MON,TUE,WED,THU,FRI,SAT,SUN) — which
+  /// days are working days. Used when scheduleType = "WEEKLY".
+  workingDays String @default("MON,TUE,WED,THU,FRI")
+  /// Consecutive working days per cycle. Used when scheduleType = "ROTATING".
+  rotationOnDays Int?
+  /// Consecutive off days per cycle. Used when scheduleType = "ROTATING".
+  rotationOffDays Int?
+  /// Anchor date the rotation cycle is calculated from. Used when
+  /// scheduleType = "ROTATING".
+  rotationStartDate DateTime?
+
   @@map("work_schedules")
 }
 
@@ -109,4 +137,327 @@ model EmploymentType {
   updatedAt   DateTime @updatedAt
 
   @@map("employment_types")
+}
+
+// ---------------------------------------------------------------------------
+// Leave Management — Phase 1 (Architecture & Foundation only)
+//
+// Ledger-based by design: no model or field here ever stores a "remaining
+// balance" — LeaveLedgerEntry rows (signed amount, one entryType per row) are
+// the only source of truth, and every balance is a SUM() projection computed
+// in application code (src/types/leave.ts's LeaveBalanceStatement), never
+// persisted. LeaveLedgerEntry is append-only on purpose: there is no update
+// path in the repository layer, only find/create — a correction is a new
+// reversing entry, never an edit, so history is always reconstructable.
+//
+// employeeId is a plain String on every model below, not a @relation — the
+// Employee module has no Prisma table yet (still src/data/employee-directory
+// .ts, in-memory). This mirrors how the rest of the codebase already treats
+// that boundary (e.g. EmployeeProfile.terminationRecordId is a bare
+// reference, not a live FK). When Employee migrates to Prisma, these become
+// real relations without changing any call site.
+// ---------------------------------------------------------------------------
+
+enum LeaveUnit {
+  DAYS
+  HOURS
+}
+
+enum LeaveEntryType {
+  OPENING_BALANCE
+  IMPORTED_BALANCE
+  ACCRUAL
+  CARRY_FORWARD
+  LEAVE_TAKEN
+  LEAVE_CANCELLED
+  MANUAL_ADJUSTMENT
+  EXPIRY
+  SETTLEMENT
+  ENCASHMENT
+}
+
+enum LeaveEntryReferenceType {
+  LEAVE_REQUEST
+  MANUAL
+  IMPORT
+  ACCRUAL_RUN
+  SYSTEM
+}
+
+// Deliberately not named "LeaveRequestStatus" — that name already exists as
+// a hand-written 3-state TS union in src/types/employee-profile.ts, used by
+// the placeholder LeaveTab. Naming this differently avoids the confusion of
+// two different-shaped things sharing a name, even though Prisma enums live
+// in a separate generated module.
+enum LeaveRequestLifecycleStatus {
+  DRAFT
+  SUBMITTED
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  CANCELLED
+  WITHDRAWN
+}
+
+enum LeaveApprovalDecision {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LeaveAccrualRunStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum LeaveAccrualMethod {
+  NONE
+  MONTHLY
+  ANNUAL
+  ANNIVERSARY
+}
+
+/// Catalog identity only (code/name/unit) — same shape as Department/Grade.
+/// Behavioral rules live on LeavePolicy, not here, so a leave type's
+/// identity never has to change just because its rules do.
+model LeaveType {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  name            String
+  description     String?
+  unit            LeaveUnit
+  isPaid          Boolean   @default(true)
+  requiresBalance Boolean   @default(true)
+  active          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  policies      LeavePolicy[]
+  requests      LeaveRequest[]
+  ledgerEntries LeaveLedgerEntry[]
+
+  @@map("leave_types")
+}
+
+/// The configurable rules for a LeaveType — versionable (effectiveFrom/To)
+/// and scopable per company/branch (both nullable; null = global default).
+/// Which policy applies to a given employee is resolution logic, not stored
+/// here — deferred to a future phase.
+model LeavePolicy {
+  id                       String              @id @default(cuid())
+  leaveTypeId              String
+  leaveType                LeaveType           @relation(fields: [leaveTypeId], references: [id])
+  companyId                String?
+  company                  Company?            @relation(fields: [companyId], references: [id])
+  branchId                 String?
+  branch                   Branch?             @relation(fields: [branchId], references: [id])
+  effectiveFrom            DateTime
+  effectiveTo              DateTime?
+  entitlementUnitsPerYear  Float?
+  accrualMethod            LeaveAccrualMethod  @default(NONE)
+  requiresApproval         Boolean             @default(true)
+  carryForwardAllowed      Boolean             @default(false)
+  carryForwardMaxUnits     Float?
+  carryForwardExpiryMonths Int?
+  encashmentAllowed        Boolean             @default(false)
+  /// "BLOCK" | "WARN" — whether a leave request exceeding the available
+  /// balance is rejected outright or merely flagged. Configured per policy,
+  /// never inferred from a leave type's name/code — an admin makes Annual
+  /// Leave BLOCK by configuring it that way, not because this engine treats
+  /// "Annual Leave" as special.
+  balanceValidationMode    String              @default("WARN")
+  active                   Boolean             @default(true)
+  createdAt                DateTime            @default(now())
+  updatedAt                DateTime            @updatedAt
+
+  accrualRuns LeaveAccrualRun[]
+
+  @@index([leaveTypeId])
+  @@index([companyId])
+  @@index([branchId])
+  @@map("leave_policies")
+}
+
+/// A leave request's lifecycle record. Phase 1 only reads these — no action
+/// exists yet that creates one in a non-DRAFT state, since submission and
+/// approval are explicitly out of scope for this phase.
+model LeaveRequest {
+  id              String                      @id @default(cuid())
+  employeeId      String
+  leaveTypeId     String
+  leaveType       LeaveType                   @relation(fields: [leaveTypeId], references: [id])
+  companyId       String?
+  company         Company?                    @relation(fields: [companyId], references: [id])
+  branchId        String?
+  branch          Branch?                     @relation(fields: [branchId], references: [id])
+  startDate       DateTime
+  endDate         DateTime
+  requestedUnits  Float
+  status          LeaveRequestLifecycleStatus @default(DRAFT)
+  reason          String?
+  submittedAt     DateTime?
+  decidedAt       DateTime?
+  decidedBy       String?
+  cancelledAt     DateTime?
+  cancelledBy     String?
+  cancelReason    String?
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+
+  approvals LeaveApproval[]
+
+  @@index([employeeId])
+  @@index([leaveTypeId])
+  @@map("leave_requests")
+}
+
+/// One row per decision. sequence exists so a future multi-step workflow
+/// engine can insert additional rows per request without a redesign — Phase
+/// 1 never writes more than one row per request, and nothing auto-transitions
+/// LeaveRequest.status based on this table yet.
+model LeaveApproval {
+  id                 String                 @id @default(cuid())
+  leaveRequestId     String
+  leaveRequest       LeaveRequest           @relation(fields: [leaveRequestId], references: [id])
+  sequence           Int                    @default(1)
+  approverEmployeeId String
+  decision           LeaveApprovalDecision  @default(PENDING)
+  decidedAt          DateTime?
+  comment            String?
+  createdAt          DateTime               @default(now())
+
+  @@index([leaveRequestId])
+  @@map("leave_approvals")
+}
+
+/// The ledger. Append-only — see file header. referenceType/referenceId is
+/// a soft polymorphic pointer (no relation, since it can point at four
+/// different tables), resolved by the reader knowing referenceType, the same
+/// way EmployeeProfile.terminationRecordId is a bare reference elsewhere in
+/// this codebase.
+model LeaveLedgerEntry {
+  id            String                   @id @default(cuid())
+  employeeId    String
+  leaveTypeId   String
+  leaveType     LeaveType                @relation(fields: [leaveTypeId], references: [id])
+  companyId     String?
+  entryType     LeaveEntryType
+  amount        Float
+  unit          LeaveUnit
+  effectiveDate DateTime
+  referenceType LeaveEntryReferenceType?
+  referenceId   String?
+  note          String?
+  createdBy     String
+  createdAt     DateTime                 @default(now())
+
+  @@index([employeeId, leaveTypeId])
+  @@index([referenceType, referenceId])
+  @@map("leave_ledger_entries")
+}
+
+/// The migration-batch entity — what makes Opening Balance a first-class,
+/// traceable concept rather than an untyped Manual Adjustment. Each row this
+/// produces is a LeaveLedgerEntry with entryType=IMPORTED_BALANCE and
+/// referenceType=IMPORT, referenceId=this import's id.
+model LeaveOpeningBalanceImport {
+  id           String   @id @default(cuid())
+  importedBy   String
+  importedAt   DateTime @default(now())
+  sourceSystem String?
+  effectiveDate DateTime
+  note         String?
+
+  @@map("leave_opening_balance_imports")
+}
+
+/// Execution-log placeholder — records that an accrual batch ran and how
+/// many ledger entries it produced. No accrual calculation exists yet; this
+/// table only gives Phase 2's engine somewhere to log to from day one.
+model LeaveAccrualRun {
+  id                  String                 @id @default(cuid())
+  leavePolicyId       String
+  leavePolicy         LeavePolicy            @relation(fields: [leavePolicyId], references: [id])
+  periodStart         DateTime
+  periodEnd           DateTime
+  status              LeaveAccrualRunStatus  @default(PENDING)
+  runAt               DateTime?
+  entriesCreatedCount Int                    @default(0)
+  createdAt           DateTime               @default(now())
+
+  @@index([leavePolicyId])
+  @@map("leave_accrual_runs")
+}
+
+/// Generic, per-entity audit trail — Leave has several aggregate roots
+/// (Type, Policy, Request, Ledger), unlike Employee/Offboarding which embed
+/// one auditLog on a single EmployeeProfile. entityType/entityId stand in
+/// for that embedding. Same field shape as EmployeeProfile's AuditLogEntry
+/// (actor/action/timestamp/field/oldValue/newValue) for consistency.
+model LeaveAuditLogEntry {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  action     String
+  actor      String
+  timestamp  DateTime @default(now())
+  field      String?
+  oldValue   String?
+  newValue   String?
+
+  @@index([entityType, entityId])
+  @@map("leave_audit_log_entries")
+}
+
+/// Calendar data only — no calendar UI/rendering logic here, just the facts
+/// a future Leave/Team/Holiday calendar screen would query.
+model Holiday {
+  id                String   @id @default(cuid())
+  name              String
+  date              DateTime
+  companyId         String?
+  company           Company? @relation(fields: [companyId], references: [id])
+  branchId          String?
+  branch            Branch?  @relation(fields: [branchId], references: [id])
+  recurringAnnually Boolean  @default(false)
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([branchId])
+  @@map("holidays")
+}
+
+// ---------------------------------------------------------------------------
+// Documents — a generic, cross-module attachment system. NOT owned by Leave
+// or any other single module: entityType/entityId is a plain polymorphic
+// reference (same pattern as LeaveAuditLogEntry's own entityType/entityId),
+// so any future module (Employee, Contract, Training, Payroll, Attendance,
+// Termination, Performance, ...) registers its own entityType string with
+// zero migration. This table stores metadata only — never file bytes.
+// storageKey is opaque here; only DocumentStorageProvider
+// (src/lib/integrations/document-storage-provider.ts) interprets it, so the
+// storage backend (local filesystem today, S3/MinIO/Azure Blob later) can
+// change without touching this model or any business logic that reads it.
+// ---------------------------------------------------------------------------
+
+model Document {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  category   String?
+  fileName   String
+  mimeType   String
+  fileSize   Int
+  storageKey String
+  uploadedBy String
+  uploadedAt DateTime @default(now())
+  /// Not enforced by this module — a future approval workflow can set this
+  /// to lock a document from replacement once its parent record is approved.
+  immutable  Boolean  @default(false)
+
+  @@index([entityType, entityId])
+  @@map("documents")
 }

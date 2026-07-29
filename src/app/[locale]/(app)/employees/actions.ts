@@ -18,6 +18,8 @@ import {
   mergeDocuments,
   type FieldChange,
 } from "@/lib/employee-edit-diff"
+import { getWizardMasterData } from "@/lib/wizard-master-data"
+import type { WizardMasterData } from "@/lib/employee-wizard-mapper"
 import type { EmployeeProfile } from "@/types/employee-profile"
 
 export interface CreateEmployeeResult {
@@ -116,6 +118,17 @@ export async function createEmployeeAction(
  */
 export async function getEmployeeProfileAction(id: string): Promise<EmployeeProfile | null> {
   return getEmployeeById(id) ?? null
+}
+
+/**
+ * The Wizard's master-data snapshot (departments/positions/companies/
+ * branches/work schedules/managers) — the Employees list only fetches this
+ * on demand, the moment Edit is actually clicked, instead of on every list
+ * page load (it's otherwise unused there). The Create page still fetches it
+ * directly server-side since it needs it up front for its own render.
+ */
+export async function getWizardMasterDataAction(): Promise<WizardMasterData> {
+  return getWizardMasterData()
 }
 
 /**

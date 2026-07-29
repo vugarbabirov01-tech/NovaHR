@@ -46,6 +46,9 @@ next-env.d.ts
 dev.db
 dev.db-journal
 
+# local document storage (LocalFileStorageProvider) — dev state, not source
+/storage/
+
 # local debug/screenshot artifacts
 debug-*.png
 wiz-*.png

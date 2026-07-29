@@ -1,3 +1,5 @@
+import { cache } from "react"
+
 import { findActiveDepartments } from "@/repositories/department-repository"
 import { findActivePositions } from "@/repositories/position-repository"
 import { findActiveCompanies } from "@/repositories/company-repository"
@@ -7,12 +9,13 @@ import { getManagerOptions } from "@/data/manager-directory"
 import type { WizardMasterData } from "@/lib/employee-wizard-mapper"
 
 /**
- * Shared server-side fetch for the wizard's master-data snapshot. New
- * module — employees/page.tsx keeps its own existing inline copy of this
- * same pattern untouched (not in scope to refactor here); this is used by
- * the new Import Wizard route and its Server Action.
+ * Shared server-side fetch for the wizard's master-data snapshot — used by
+ * the Create page, the Import Wizard, and the Employees list's on-demand
+ * Edit action. Wrapped in React's cache() so multiple call sites resolving
+ * within the same request/render (e.g. Create's page + metadata) share one
+ * set of repository queries instead of issuing them again each time.
  */
-export async function getWizardMasterData(): Promise<WizardMasterData> {
+export const getWizardMasterData = cache(async (): Promise<WizardMasterData> => {
   const [departments, positions, companies, branches, workSchedules] = await Promise.all([
     findActiveDepartments(),
     findActivePositions(),
@@ -29,4 +32,4 @@ export async function getWizardMasterData(): Promise<WizardMasterData> {
     workSchedules: workSchedules.map((s) => ({ id: s.id, label: s.label })),
     managers: getManagerOptions().map((m) => ({ id: m.id, name: m.name })),
   }
-}
+})

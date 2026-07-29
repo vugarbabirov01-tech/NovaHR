@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { PageTitle } from "@/components/common/page-title"
 import { KpiSection } from "@/components/dashboard/kpi-section"
+import { LeaveSummarySection } from "@/components/dashboard/leave-summary-section"
 import { HeadcountTrendChart } from "@/components/dashboard/headcount-trend-chart"
 import { DepartmentChart } from "@/components/dashboard/department-chart"
 import { RecentEmployees } from "@/components/dashboard/recent-employees"
@@ -34,6 +35,8 @@ export default async function DashboardPage({ params }: Props) {
       <PageTitle title={t("title")} description={t("description")} />
 
       <KpiSection />
+
+      <LeaveSummarySection />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="xl:col-span-2">

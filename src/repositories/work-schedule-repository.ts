@@ -7,6 +7,13 @@ export interface WorkScheduleInput {
   label: string
   code?: string
   description?: string
+  /** "WEEKLY" (default) or "ROTATING" — read by the Leave Policy Resolution
+   * Engine, not interpreted here. */
+  scheduleType?: string
+  workingDays?: string
+  rotationOnDays?: number | null
+  rotationOffDays?: number | null
+  rotationStartDate?: Date | null
 }
 
 async function generateUniqueCode(base: string): Promise<string> {
@@ -40,7 +47,16 @@ export function findWorkScheduleById(id: string): Promise<WorkScheduleModel | nu
 export async function createWorkSchedule(input: WorkScheduleInput): Promise<WorkScheduleModel> {
   const code = input.code?.trim() ? input.code.trim().toUpperCase() : await generateUniqueCode(input.label)
   return prisma.workSchedule.create({
-    data: { label: input.label, code, description: input.description || null },
+    data: {
+      label: input.label,
+      code,
+      description: input.description || null,
+      ...(input.scheduleType ? { scheduleType: input.scheduleType } : {}),
+      ...(input.workingDays ? { workingDays: input.workingDays } : {}),
+      rotationOnDays: input.rotationOnDays ?? null,
+      rotationOffDays: input.rotationOffDays ?? null,
+      rotationStartDate: input.rotationStartDate ?? null,
+    },
   })
 }
 
@@ -51,6 +67,11 @@ export async function updateWorkSchedule(id: string, input: WorkScheduleInput): 
       label: input.label,
       ...(input.code?.trim() ? { code: input.code.trim().toUpperCase() } : {}),
       description: input.description || null,
+      ...(input.scheduleType ? { scheduleType: input.scheduleType } : {}),
+      ...(input.workingDays ? { workingDays: input.workingDays } : {}),
+      rotationOnDays: input.rotationOnDays ?? null,
+      rotationOffDays: input.rotationOffDays ?? null,
+      rotationStartDate: input.rotationStartDate ?? null,
     },
   })
 }
