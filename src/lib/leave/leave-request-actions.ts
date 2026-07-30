@@ -4,6 +4,7 @@ import {
   createLeaveRequest,
   findLeaveRequestById,
   findLeaveRequestsByEmployee,
+  findAllLeaveRequests,
   type LeaveRequest,
 } from "@/repositories/leave-request-repository"
 import { evaluateLeaveRequest, type LeaveRequestEvaluation } from "@/lib/leave/leave-request-service"
@@ -26,6 +27,13 @@ export async function getLeaveRequestsForEmployeeAction(employeeId: string): Pro
 
 export async function getLeaveRequestByIdAction(id: string): Promise<LeaveRequest | null> {
   return findLeaveRequestById(id)
+}
+
+/** The HR-facing /leave dashboard's read — every request, every employee.
+ * Same repository, same LeaveRequest shape as the employee-scoped action
+ * above; only the query differs. */
+export async function getAllLeaveRequestsAction(): Promise<LeaveRequest[]> {
+  return findAllLeaveRequests()
 }
 
 export interface PreviewLeaveRequestResult {

@@ -25,6 +25,14 @@ export function findLeaveRequestsByEmployee(employeeId: string): Promise<LeaveRe
   return prisma.leaveRequest.findMany({ where: { employeeId }, orderBy: { createdAt: "desc" } })
 }
 
+/** Cross-employee — the HR-facing /leave dashboard's one read query.
+ * findLeaveRequestsByEmployee above stays employee-scoped for the
+ * Employee Profile tab; this is the org-wide counterpart over the same
+ * table, same shape, no separate model or logic. */
+export function findAllLeaveRequests(): Promise<LeaveRequestModel[]> {
+  return prisma.leaveRequest.findMany({ orderBy: { createdAt: "desc" } })
+}
+
 export function findLeaveRequestById(id: string): Promise<LeaveRequestModel | null> {
   return prisma.leaveRequest.findUnique({ where: { id } })
 }

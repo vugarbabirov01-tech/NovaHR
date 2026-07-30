@@ -151,6 +151,133 @@ async function main() {
     ].map((e) => prisma.employmentType.upsert({ where: { code: e.code }, update: {}, create: e }))
   )
 
+  // Leave Management — Phase 1-3B shipped the ledger/balance/policy-
+  // resolution engine and the request wizard, but never real starter
+  // LeaveTypes: with zero, the Employee Profile Leave tab's "Request Leave"
+  // button had nothing to let HR pick from and was correctly disabled; with
+  // only one (an earlier version of this seed), the dropdown couldn't
+  // demonstrate that it genuinely lists every active type rather than a
+  // single hardcoded choice. LeaveType.code is @unique, so each upserts the
+  // same way every other master-data row above does. name/description are
+  // Azerbaijani, matching this product's HR terminology — LeaveType.name
+  // has no i18n structure (one plain field, unlike every UI label, which
+  // goes through next-intl), so whatever language it's seeded in is what
+  // every locale sees in the dropdown/cards/table. Each `update` clause
+  // (unlike the empty `update: {}` used above for company/department/etc.)
+  // deliberately re-applies name/description on every run, so correcting a
+  // wording issue here and re-seeding always fixes an already-seeded row
+  // too, not just a fresh database.
+  //
+  // entitlementUnitsPerYear is left null for every type except Annual: it
+  // isn't read anywhere in application logic today (confirmed — Annual
+  // Leave's own entitlement is independently computed by the Labour Code
+  // engine in leave-policy-resolution-service.ts, not from this field), and
+  // the other five leave types don't have a rolling annual entitlement in
+  // the same sense to begin with (maternity/paternity/sick are
+  // case-by-case, statutorily-fixed or certificate-driven durations, not an
+  // annual allowance) — so a number here would be decorative at best,
+  // misleading at worst.
+  const leaveTypeDefinitions = [
+    {
+      code: "ANNUAL",
+      name: "Əmək Məzuniyyəti",
+      description:
+        "Qanunla nəzərdə tutulmuş illik ödənişli əmək məzuniyyəti (Azərbaycan Respublikasının Əmək Məcəlləsi, 112-120-ci maddələr).",
+      unit: "DAYS" as const,
+      isPaid: true,
+      requiresBalance: true,
+      entitlementUnitsPerYear: 21,
+    },
+    {
+      code: "UNPAID",
+      name: "Ödənişsiz Məzuniyyət",
+      description: "Əməkdaşın öz xahişi ilə verilən ödənişsiz məzuniyyət (Əmək Məcəlləsi, 128-ci maddə).",
+      unit: "DAYS" as const,
+      isPaid: false,
+      requiresBalance: false,
+      entitlementUnitsPerYear: null,
+    },
+    {
+      code: "STUDY",
+      name: "Təhsil Məzuniyyəti",
+      description: "Təhsil müəssisəsində oxuyan əməkdaşlar üçün nəzərdə tutulmuş məzuniyyət (Əmək Məcəlləsi, 130-cu maddə).",
+      unit: "DAYS" as const,
+      isPaid: true,
+      requiresBalance: true,
+      entitlementUnitsPerYear: null,
+    },
+    {
+      code: "MATERNITY",
+      name: "Analıq Məzuniyyəti",
+      description: "Hamiləlik və doğuşla əlaqədar məzuniyyət (Əmək Məcəlləsi, 125-ci maddə).",
+      unit: "DAYS" as const,
+      isPaid: true,
+      requiresBalance: false,
+      entitlementUnitsPerYear: null,
+    },
+    {
+      code: "PATERNITY",
+      name: "Atalıq Məzuniyyəti",
+      description: "Uşağın doğulması ilə əlaqədar ataya verilən qısamüddətli məzuniyyət.",
+      unit: "DAYS" as const,
+      isPaid: true,
+      requiresBalance: false,
+      entitlementUnitsPerYear: null,
+    },
+    {
+      code: "SICK",
+      name: "Xəstəlik Məzuniyyəti",
+      description: "Əmək qabiliyyətinin müvəqqəti itirilməsi ilə əlaqədar məzuniyyət (tibbi arayış əsasında).",
+      unit: "DAYS" as const,
+      isPaid: true,
+      requiresBalance: false,
+      entitlementUnitsPerYear: null,
+    },
+  ]
+
+  for (const def of leaveTypeDefinitions) {
+    const leaveType = await prisma.leaveType.upsert({
+      where: { code: def.code },
+      update: { name: def.name, description: def.description },
+      create: {
+        code: def.code,
+        name: def.name,
+        description: def.description,
+        unit: def.unit,
+        isPaid: def.isPaid,
+        requiresBalance: def.requiresBalance,
+      },
+    })
+
+    // LeavePolicy has no natural unique key (no code, no @@unique) to
+    // upsert against, unlike every model above — find-then-create is the
+    // correct idempotent equivalent here, not a workaround. companyId/
+    // branchId left null (global default), matching the nullable-scope
+    // convention every policy-resolution lookup in this codebase already
+    // expects. balanceValidationMode is left at the schema's own "WARN"
+    // default deliberately: with no opening balance imported yet, a
+    // BLOCK-mode policy would leave every employee's balance at zero and
+    // make the wizard's own Submit button unable to ever enable (see
+    // leave-request-wizard.tsx) — WARN lets HR see the (accurate, zero)
+    // balance without it being a wall.
+    const existingPolicy = await prisma.leavePolicy.findFirst({
+      where: { leaveTypeId: leaveType.id, companyId: null, branchId: null },
+    })
+    if (!existingPolicy) {
+      await prisma.leavePolicy.create({
+        data: {
+          leaveTypeId: leaveType.id,
+          effectiveFrom: new Date("2026-01-01"),
+          entitlementUnitsPerYear: def.entitlementUnitsPerYear,
+          requiresApproval: true,
+          carryForwardAllowed: false,
+          encashmentAllowed: false,
+          balanceValidationMode: "WARN",
+        },
+      })
+    }
+  }
+
   console.log("Seed complete.")
 }
 
