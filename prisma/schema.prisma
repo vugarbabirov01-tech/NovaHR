@@ -461,3 +461,387 @@ model Document {
   @@index([entityType, entityId])
   @@map("documents")
 }
+
+// ---------------------------------------------------------------------------
+// Approval Engine — Phase 4A (schema + repositories only, zero behavior)
+//
+// A single generic engine every future request-type (Leave, Overtime,
+// Expense, Business Trip, Asset, Training, Recruitment, Performance,
+// Promotion, Transfer, Termination, Salary Change, Disciplinary Action, ...)
+// reuses without this engine ever knowing any of those names. Same soft
+// polymorphic entityType/entityId pointer as Document/LeaveAuditLogEntry —
+// entityType is a plain String with NO master list anywhere in this file or
+// in src/lib/approval/: a module registers itself by simply calling the
+// public API with its own entityType string, never by editing engine
+// source. (Contrast with DocumentEntityType/LeaveAuditEntityType, which
+// *are* small const registries living next to their module — this engine
+// deliberately skips even that, since owning a registry of every consumer's
+// name would itself be a form of coupling to those consumers.)
+//
+// ApprovalApproverResolutionType stays a closed enum on purpose: its
+// members are structural org-chart concepts (a manager, a role, a
+// position, "the CEO"), not business rules — the same distinction this
+// schema already draws elsewhere between closed/structural enums
+// (LeaveEntryType) and open/business-vocabulary strings
+// (LeaveAuditLogEntry.action). CUSTOM_RULE + the opaque Json config on
+// ApprovalStepDefinition is the escape hatch a future module uses to plug
+// in a wholly new resolution strategy (e.g. "cost center owner") via a
+// runtime-registered resolver, without adding an enum value here.
+//
+// No @relation ever points from these models at LeaveRequest, Document, or
+// any other business-module table, and no existing model gains a back-
+// relation to these — that's what keeps this 100% additive and keeps
+// Leave/Document backward compatible. employeeId-shaped fields are plain
+// String throughout, mirroring LeaveRequest.employeeId and
+// Document.uploadedBy — Employee has no Prisma table yet either.
+// ---------------------------------------------------------------------------
+
+enum ApprovalWorkflowVersionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ApprovalApproverResolutionType {
+  SPECIFIC_EMPLOYEE
+  DIRECT_MANAGER
+  MANAGER_CHAIN_LEVEL
+  ROLE
+  POSITION
+  DEPARTMENT_HEAD
+  COMPANY_CEO
+  CUSTOM_RULE
+}
+
+enum ApprovalQuorumMode {
+  ANY_ONE
+  ALL
+  MAJORITY
+}
+
+enum ApprovalInstanceStatus {
+  DRAFT
+  PENDING
+  IN_REVIEW
+  APPROVED
+  PARTIALLY_APPROVED
+  REJECTED
+  RETURNED
+  CANCELLED
+  EXPIRED
+}
+
+enum ApprovalStepInstanceStatus {
+  PENDING
+  ACTIVE
+  APPROVED
+  REJECTED
+  RETURNED
+  SKIPPED
+  ESCALATED
+  EXPIRED
+}
+
+enum ApprovalDecision {
+  PENDING
+  APPROVED
+  REJECTED
+  RETURNED
+}
+
+enum ApprovalActionType {
+  CREATED
+  VIEWED
+  APPROVED
+  REJECTED
+  RETURNED
+  CANCELLED
+  DELEGATED
+  ESCALATED
+  REOPENED
+}
+
+enum ApprovalDelegationReason {
+  ON_LEAVE
+  INACTIVE
+  SUSPENDED
+  MANUAL
+}
+
+/// The "which workflow applies" matcher. Nullable scope fields follow the
+/// exact LeavePolicy pattern (null = global default, a specific scope wins)
+/// — same resolution order leave-request-service.ts already uses for
+/// balanceValidationMode. entityType is unconstrained on purpose (see file
+/// header) — this engine never enumerates which modules exist.
+model ApprovalWorkflowDefinition {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  name         String
+  description  String?
+  entityType   String
+  companyId    String?
+  branchId     String?
+  departmentId String?
+  /// Small serializable rule tree, e.g. {field:"amount", op:">", value:5000}.
+  /// Evaluated against ApprovalInstance.contextPayload by a later phase's
+  /// condition evaluator — never a hardcoded field name here.
+  conditionExpression Json?
+  /// Higher wins when multiple definitions match the same instance — same
+  /// idea as "company-specific overrides global".
+  priority     Int      @default(0)
+  /// True = exists only as a cloning source (e.g. a starter template for a
+  /// new company); a later phase's resolution service excludes templates
+  /// from auto-matching a real submission. Doesn't restrict cloning itself
+  /// — any definition, template or not, can be cloned.
+  isTemplate   Boolean  @default(false)
+  active       Boolean  @default(true)
+  createdBy    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  versions ApprovalWorkflowVersion[]
+
+  @@index([entityType])
+  @@index([companyId])
+  @@index([branchId])
+  @@index([departmentId])
+  @@map("approval_workflow_definitions")
+}
+
+/// Immutable once PUBLISHED — a request created today keeps referencing
+/// this exact version forever. Editing a published workflow means cloning
+/// into a new DRAFT version, never mutating this row's steps in place.
+model ApprovalWorkflowVersion {
+  id                   String                         @id @default(cuid())
+  workflowDefinitionId String
+  workflowDefinition   ApprovalWorkflowDefinition     @relation(fields: [workflowDefinitionId], references: [id])
+  version              Int
+  status               ApprovalWorkflowVersionStatus  @default(DRAFT)
+  defaultSlaHours      Int?
+  /// Opaque canvas state (viewport/zoom/pan) for a future visual Workflow
+  /// Builder — never read by any engine logic, same treatment as
+  /// Document.storageKey being opaque outside its storage provider.
+  canvasMetadata       Json?
+  publishedBy          String?
+  publishedAt          DateTime?
+  createdBy            String
+  createdAt            DateTime                       @default(now())
+
+  steps     ApprovalStepDefinition[]
+  instances ApprovalInstance[]
+
+  @@unique([workflowDefinitionId, version])
+  @@index([workflowDefinitionId])
+  @@map("approval_workflow_versions")
+}
+
+/// One row per parallel branch per stepOrder. Every row sharing a stepOrder
+/// runs concurrently and ALL must clear before stepOrder+1 activates —
+/// that's how "Finance AND HR" is expressed (two rows, same stepOrder,
+/// different branchKey). quorumMode governs how many *resolved* people
+/// within one branch must decide (a ROLE resolution can yield several).
+/// Normalized rather than a JSON graph specifically so a future visual
+/// Workflow Builder can CRUD individual steps on a DRAFT version without
+/// any schema change.
+model ApprovalStepDefinition {
+  id                       String                          @id @default(cuid())
+  workflowVersionId        String
+  workflowVersion          ApprovalWorkflowVersion         @relation(fields: [workflowVersionId], references: [id])
+  stepOrder                Int
+  branchKey                String                          @default("DEFAULT")
+  name                     String
+  approverResolutionType   ApprovalApproverResolutionType
+  /// Parameters for the resolution type — e.g. {role:"CEO"},
+  /// {level:2}, or {resolverKey:"cost-center-owner"} for CUSTOM_RULE.
+  approverResolutionConfig Json?
+  quorumMode               ApprovalQuorumMode              @default(ANY_ONE)
+  /// Null = step always included. Set = evaluated against the instance's
+  /// contextPayload at activation time — e.g. "Leave > 20 days -> CEO".
+  conditionExpression      Json?
+  /// If resolution yields zero eligible approvers: true = skip this
+  /// branch, false = fail-closed (a later phase escalates immediately).
+  skipIfNoApproverResolved Boolean                         @default(false)
+  /// True = this branch never blocks progress to the next stepOrder, even
+  /// while its decision is still PENDING (an advisory/CC-style step,
+  /// distinct from conditionExpression's data-driven inclusion). A later
+  /// phase's engine reads this; Phase 4B only persists it.
+  isOptional               Boolean                         @default(false)
+  slaHours                 Int?
+  /// Opaque canvas node metadata (position, color, notes) for a future
+  /// visual Workflow Builder — never read by any engine logic.
+  uiMetadata               Json?
+  createdAt                DateTime                        @default(now())
+
+  stepInstances ApprovalStepInstance[]
+
+  @@unique([workflowVersionId, stepOrder, branchKey])
+  @@index([workflowVersionId])
+  @@map("approval_step_definitions")
+}
+
+/// The runtime case — one per real-world request (one Leave Request's
+/// approval run, one Expense Request's, ...). entityType/entityId is a
+/// soft pointer only; this model has no idea what a LEAVE_REQUEST is.
+/// companyId/branchId/departmentId are denormalized copies of
+/// contextPayload's scoping keys purely so reporting/pending-approval
+/// queries at 100k+ employee scale stay index-only scans.
+model ApprovalInstance {
+  id                   String                    @id @default(cuid())
+  entityType           String
+  entityId             String
+  workflowDefinitionId String
+  workflowVersionId    String
+  workflowVersion      ApprovalWorkflowVersion    @relation(fields: [workflowVersionId], references: [id])
+  status               ApprovalInstanceStatus     @default(PENDING)
+  currentStepOrder     Int?
+  contextPayload       Json
+  companyId            String?
+  branchId             String?
+  departmentId         String?
+  /// "{entityType}::{entityId}" while status is non-terminal, null once
+  /// terminal — the @unique constraint below is what actually enforces
+  /// "one active instance per subject" at the database level (Phase 4C
+  /// fixed the earlier service-layer-only version of this invariant, which
+  /// couldn't close a create/create race between two concurrent
+  /// submissions). Maintained exclusively by the engine service, never set
+  /// directly by a repository caller.
+  activeKey            String?                    @unique
+  submittedBy          String
+  submittedAt          DateTime                   @default(now())
+  decidedAt            DateTime?
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+
+  stepInstances ApprovalStepInstance[]
+  actions       ApprovalAction[]
+
+  @@index([entityType, entityId])
+  @@index([companyId])
+  @@index([status])
+  @@map("approval_instances")
+}
+
+/// Runtime state of one branch. activatedAt/decidedAt/dueAt are what
+/// reporting and a later escalation sweep both read.
+model ApprovalStepInstance {
+  id                 String                      @id @default(cuid())
+  approvalInstanceId String
+  approvalInstance   ApprovalInstance            @relation(fields: [approvalInstanceId], references: [id])
+  stepDefinitionId   String
+  stepDefinition     ApprovalStepDefinition      @relation(fields: [stepDefinitionId], references: [id])
+  stepOrder          Int
+  branchKey          String
+  status             ApprovalStepInstanceStatus  @default(PENDING)
+  activatedAt        DateTime?
+  dueAt              DateTime?
+  decidedAt          DateTime?
+  escalationLevel    Int                         @default(0)
+  /// Why this branch is SKIPPED — open vocabulary (plain String, same
+  /// judgment already applied to LeaveAuditLogEntry.action), e.g.
+  /// "CONDITION_NOT_MET" | "NO_APPROVER_RESOLVED" | "INSTANCE_TERMINATED".
+  /// Null for every other status. This is what lets the engine tell
+  /// "excluded by data-driven condition" (normal) apart from "was supposed
+  /// to matter but couldn't" (drives PARTIALLY_APPROVED) apart from "its
+  /// parent instance ended before it could decide" (cancel/reject
+  /// force-termination) — three different facts that would otherwise all
+  /// collapse into the same SKIPPED status.
+  skipReason         String?
+  createdAt          DateTime                    @default(now())
+
+  approvers ApprovalStepApprover[]
+
+  @@index([approvalInstanceId])
+  @@index([status, dueAt])
+  @@map("approval_step_instances")
+}
+
+/// Resolved on activation (not at submission) — DIRECT_MANAGER etc. reflect
+/// who the manager IS right now, including any delegation active at that
+/// moment. This is what "my pending approvals" queries hit.
+model ApprovalStepApprover {
+  id                      String                @id @default(cuid())
+  approvalStepInstanceId  String
+  approvalStepInstance    ApprovalStepInstance  @relation(fields: [approvalStepInstanceId], references: [id])
+  approverEmployeeId      String
+  isDelegate              Boolean               @default(false)
+  delegatedFromEmployeeId String?
+  decision                ApprovalDecision      @default(PENDING)
+  decidedAt               DateTime?
+  comment                 String?
+  viewedAt                DateTime?
+  createdAt               DateTime              @default(now())
+
+  @@index([approverEmployeeId, decision])
+  @@index([approvalStepInstanceId])
+  @@map("approval_step_approvers")
+}
+
+/// The immutable audit trail for the engine's own lifecycle — append-only,
+/// no update path, same discipline as LeaveLedgerEntry/LeaveAuditLogEntry.
+/// Deliberately not shaped like LeaveAuditLogEntry's entityType/entityId
+/// pair: it always belongs to exactly one ApprovalInstance (which already
+/// carries entityType/entityId), so referencing approvalInstanceId
+/// directly avoids duplicating the polymorphic columns. This is the
+/// engine's own action log, not a substitute for a module's business audit
+/// trail (e.g. LeaveAuditLogEntry keeps recording Leave-specific facts
+/// like "leave_type.created" independently).
+model ApprovalAction {
+  id                     String              @id @default(cuid())
+  approvalInstanceId     String
+  approvalInstance       ApprovalInstance    @relation(fields: [approvalInstanceId], references: [id])
+  approvalStepInstanceId String?
+  actionType             ApprovalActionType
+  actorEmployeeId        String
+  comment                String?
+  metadata               Json?
+  createdAt              DateTime            @default(now())
+
+  @@index([approvalInstanceId])
+  @@index([actorEmployeeId])
+  @@map("approval_actions")
+}
+
+/// Who stands in for whom, when, and why. scopeEntityType is nullable and
+/// unconstrained (null = applies to every entity type) — same "no master
+/// list" reasoning as ApprovalInstance.entityType.
+model ApprovalDelegation {
+  id                  String                    @id @default(cuid())
+  delegatorEmployeeId String
+  delegateEmployeeId  String
+  reason              ApprovalDelegationReason
+  scopeEntityType     String?
+  startDate           DateTime
+  endDate             DateTime?
+  active              Boolean                   @default(true)
+  createdBy           String
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+
+  @@index([delegatorEmployeeId, active])
+  @@map("approval_delegations")
+}
+
+/// Authoring-side audit trail — who created/updated/published/cloned a
+/// workflow definition, version, or step graph. Deliberately the same
+/// entityType/entityId/action/actor shape as LeaveAuditLogEntry (this
+/// engine's master-data equivalent of Leave's own generic audit table),
+/// and deliberately a SEPARATE table from ApprovalAction: ApprovalAction
+/// is scoped to one ApprovalInstance's runtime lifecycle (its
+/// approvalInstanceId FK is NOT NULL), while authoring changes belong to
+/// the Definition/Version/Step aggregate cluster and have no instance to
+/// attach to. Append-only, same discipline as every other audit table in
+/// this codebase.
+model ApprovalWorkflowAuditLogEntry {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  action     String
+  actor      String
+  timestamp  DateTime @default(now())
+  field      String?
+  oldValue   String?
+  newValue   String?
+
+  @@index([entityType, entityId])
+  @@map("approval_workflow_audit_log_entries")
+}
