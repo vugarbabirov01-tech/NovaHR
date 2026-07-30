@@ -1,6 +1,6 @@
 "use client"
 
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -29,34 +29,48 @@ export function LeaveRequestDetailsStep({
   errors = {},
 }: LeaveRequestDetailsStepProps) {
   const t = useTranslations("Employees.leaveRequest.details")
-  const tCommon = useTranslations("Common")
+  const locale = useLocale()
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
       <Field label={t("leaveType")} htmlFor="leaveTypeId" required error={errors.leaveTypeId} className="sm:col-span-2">
         <EnumSelect
           id="leaveTypeId"
           value={data.leaveTypeId}
           onValueChange={(v) => onChange({ leaveTypeId: v })}
           options={leaveTypes.map((leaveType) => ({ value: leaveType.id, label: leaveType.name }))}
-          placeholder={tCommon("selectPlaceholder")}
+          placeholder={t("leaveTypePlaceholder")}
         />
       </Field>
       <Field label={t("startDate")} htmlFor="startDate" required error={errors.startDate}>
         <Input
           id="startDate"
           type="date"
+          lang={locale}
           value={data.startDate}
           onChange={(e) => onChange({ startDate: e.target.value })}
         />
       </Field>
-      <Field label={t("numberOfDays")} htmlFor="numberOfDays" required error={errors.numberOfDays}>
+      <Field
+        label={t("numberOfDays")}
+        htmlFor="numberOfDays"
+        required
+        error={errors.numberOfDays}
+        hint={t("numberOfDaysHint")}
+      >
         <Input
           id="numberOfDays"
           type="number"
+          inputMode="numeric"
           min="1"
           step="1"
           value={data.numberOfDays}
+          onKeyDown={(e) => {
+            // Blocks scientific-notation/sign/decimal characters a native
+            // number input otherwise still accepts by keystroke — "Gün
+            // sayı" is always a whole positive count of days.
+            if (["e", "E", "+", "-", "."].includes(e.key)) e.preventDefault()
+          }}
           onChange={(e) => onChange({ numberOfDays: e.target.value })}
         />
       </Field>

@@ -3,6 +3,7 @@ import { ArrowDownRight, ArrowUpRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
+import { InfoTooltip } from "@/components/common/info-tooltip"
 
 interface KpiCardProps {
   label: string
@@ -10,6 +11,11 @@ interface KpiCardProps {
   delta?: number
   deltaLabel?: string
   icon: LucideIcon
+  /** Optional short explanation shown via an info icon next to the label —
+   * for a metric that isn't self-evident at a glance (e.g. "Carried
+   * Forward"). Omit for self-explanatory metrics; existing callers that
+   * don't pass this render exactly as before. */
+  tooltip?: string
   className?: string
 }
 
@@ -19,6 +25,7 @@ export function KpiCard({
   delta,
   deltaLabel,
   icon: Icon,
+  tooltip,
   className,
 }: KpiCardProps) {
   const isPositive = (delta ?? 0) >= 0
@@ -27,7 +34,10 @@ export function KpiCard({
     <Card className={cn(className)}>
       <CardContent className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1.5">
-          <p className="text-sm text-muted-foreground">{label}</p>
+          <div className="flex items-center gap-1">
+            <p className="text-sm text-muted-foreground">{label}</p>
+            {tooltip ? <InfoTooltip content={tooltip} /> : null}
+          </div>
           <p className="font-heading text-2xl font-semibold tracking-tight text-foreground tabular-nums">
             {value}
           </p>

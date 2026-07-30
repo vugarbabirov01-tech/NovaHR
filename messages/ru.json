@@ -93,6 +93,21 @@
     "remaining": "Остаток баланса",
     "daysUnit": "дн."
   },
+  "Leave": {
+    "dashboard": {
+      "pendingApprovals": "Ожидают утверждения",
+      "table": {
+        "title": "Заявки на отпуск",
+        "employee": "Сотрудник",
+        "leaveType": "Тип отпуска",
+        "dates": "Даты",
+        "units": "Количество",
+        "status": "Статус",
+        "emptyTitle": "Заявок на отпуск пока нет",
+        "emptyDescription": "Заявки на отпуск, отправленные сотрудниками, будут отображаться здесь."
+      }
+    }
+  },
   "RecentEmployees": {
     "title": "Новые сотрудники",
     "description": "Последние пополнения вашего коллектива",
@@ -658,11 +673,18 @@
         "days": "{count} {count, plural, one {день} few {дня} many {дней} other {дней}}",
         "hours": "{count} {count, plural, one {час} few {часа} many {часов} other {часов}}",
         "leaveHistory": "История операций",
-        "noHistory": "Записей в реестре пока нет.",
-        "noLeaveTypes": "Виды отпусков ещё не настроены.",
+        "noHistory": "История операций пока пуста.",
+        "noLeaveTypes": "Виды отпусков не созданы.",
+        "noLeaveTypesDescription": "Обратитесь к администратору HR для создания видов отпусков.",
         "requestLeave": "Запросить отпуск",
         "requestsTitle": "Заявки на отпуск",
-        "noRequests": "Заявок на отпуск пока нет.",
+        "noRequests": "Заявки на отпуск пока не подавались.",
+        "tooltips": {
+          "openingBalance": "Баланс ежегодного отпуска сотрудника за {year} год.",
+          "carriedForward": "Неиспользованные дни отпуска, перенесённые с предыдущего рабочего года.",
+          "taken": "Дни отпуска, использованные в течение текущего рабочего года.",
+          "remaining": "Дни отпуска, доступные для использования на данный момент."
+        },
         "entryTypes": {
           "openingBalance": "Начальный остаток",
           "importedBalance": "Перенесённый остаток",
@@ -1089,16 +1111,24 @@
       },
       "details": {
         "leaveType": "Вид отпуска",
+        "leaveTypePlaceholder": "Выберите вид отпуска",
         "startDate": "Дата начала",
         "numberOfDays": "Количество дней",
-        "reason": "Причина",
+        "numberOfDaysHint": "Дата окончания будет рассчитана автоматически.",
+        "reason": "Комментарий",
         "reasonHint": "Необязательно — видно утверждающему."
       },
       "review": {
+        "generalInfoTitle": "Общая информация",
+        "balanceSectionTitle": "Баланс отпуска",
+        "warningsSectionTitle": "Предупреждения",
+        "documentsSectionTitle": "Документы",
         "leaveType": "Вид отпуска",
+        "startDate": "Дата начала",
         "endDate": "Дата окончания",
         "returnToWorkDate": "Выход на работу",
         "calendarDays": "Календарных дней",
+        "workingDays": "Рабочих дней",
         "holidaysInRange": "Праздники в периоде",
         "noHolidays": "Нет",
         "startDateWarningTitle": "Дата начала приходится на нерабочий день",

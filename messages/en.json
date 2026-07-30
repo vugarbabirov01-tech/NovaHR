@@ -93,6 +93,21 @@
     "remaining": "Remaining Balance",
     "daysUnit": "days"
   },
+  "Leave": {
+    "dashboard": {
+      "pendingApprovals": "Pending Approvals",
+      "table": {
+        "title": "Leave Requests",
+        "employee": "Employee",
+        "leaveType": "Leave Type",
+        "dates": "Dates",
+        "units": "Amount",
+        "status": "Status",
+        "emptyTitle": "No leave requests yet",
+        "emptyDescription": "Leave requests submitted by employees will appear here."
+      }
+    }
+  },
   "RecentEmployees": {
     "title": "Recent Employees",
     "description": "Latest additions to your workforce",
@@ -658,11 +673,18 @@
         "days": "{count} {count, plural, =1 {day} other {days}}",
         "hours": "{count} {count, plural, =1 {hour} other {hours}}",
         "leaveHistory": "Transaction History",
-        "noHistory": "No ledger entries yet.",
-        "noLeaveTypes": "No leave types configured yet.",
+        "noHistory": "No transaction history yet.",
+        "noLeaveTypes": "No leave types have been created.",
+        "noLeaveTypesDescription": "Contact your HR administrator to have leave types created.",
         "requestLeave": "Request Leave",
         "requestsTitle": "Leave Requests",
-        "noRequests": "No leave requests yet.",
+        "noRequests": "No leave requests have been submitted yet.",
+        "tooltips": {
+          "openingBalance": "The employee's annual leave balance for {year}.",
+          "carriedForward": "Unused leave days carried over from the previous work year.",
+          "taken": "Leave days used during the current work year.",
+          "remaining": "Leave days currently available to use."
+        },
         "entryTypes": {
           "openingBalance": "Opening Balance",
           "importedBalance": "Imported Balance",
@@ -1089,16 +1111,24 @@
       },
       "details": {
         "leaveType": "Leave Type",
+        "leaveTypePlaceholder": "Select a leave type",
         "startDate": "Start Date",
         "numberOfDays": "Number of Days",
-        "reason": "Reason",
+        "numberOfDaysHint": "The end date will be calculated automatically.",
+        "reason": "Comments",
         "reasonHint": "Optional — visible to the approver."
       },
       "review": {
+        "generalInfoTitle": "General Information",
+        "balanceSectionTitle": "Leave Balance",
+        "warningsSectionTitle": "Warnings",
+        "documentsSectionTitle": "Documents",
         "leaveType": "Leave Type",
+        "startDate": "Start Date",
         "endDate": "End Date",
         "returnToWorkDate": "Return to Work",
         "calendarDays": "Calendar Days",
+        "workingDays": "Working Days",
         "holidaysInRange": "Holidays in Range",
         "noHolidays": "None",
         "startDateWarningTitle": "Start date falls on a non-working day",

@@ -3,18 +3,23 @@
 import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { useTranslations } from "next-intl"
-import { CalendarClock, CalendarPlus, Loader2 } from "lucide-react"
+import { CalendarCheck, CalendarClock, CalendarMinus, CalendarPlus, Loader2 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { EmptyState } from "@/components/common/empty-state"
+import { KpiCard } from "@/components/common/kpi-card"
+import { LeaveRequestStatusBadge } from "@/components/leave/leave-request-status-badge"
 import {
   getActiveLeaveTypesAction,
   getEmployeeLeaveSummaryAction,
   getLeaveTransactionHistoryAction,
 } from "@/lib/leave/leave-balance-actions"
 import { getLeaveRequestsForEmployeeAction } from "@/lib/leave/leave-request-actions"
+import { formatLeaveUnitAmount } from "@/lib/leave/leave-unit-format"
+import { formatLeaveDate } from "@/lib/leave/leave-date-format"
 import type { LeaveBalanceStatement } from "@/types/leave"
 import type { LeaveType } from "@/repositories/leave-type-repository"
 import type { LeaveLedgerEntry } from "@/repositories/leave-ledger-repository"
@@ -23,26 +28,6 @@ import type { EmployeeProfile } from "@/types/employee-profile"
 
 interface LeaveTabProps {
   profile: EmployeeProfile
-}
-
-const requestStatusMessageKeys: Record<string, string> = {
-  DRAFT: "draft",
-  SUBMITTED: "submitted",
-  PENDING_APPROVAL: "pendingApproval",
-  APPROVED: "approved",
-  REJECTED: "rejected",
-  CANCELLED: "cancelled",
-  WITHDRAWN: "withdrawn",
-}
-
-const requestStatusBadgeVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  DRAFT: "outline",
-  SUBMITTED: "secondary",
-  PENDING_APPROVAL: "secondary",
-  APPROVED: "default",
-  REJECTED: "destructive",
-  CANCELLED: "outline",
-  WITHDRAWN: "outline",
 }
 
 // Same lazy-loading reasoning as EmployeeWizardModal — the wizard (and the
@@ -84,8 +69,11 @@ const entryTypeMessageKeys: Record<string, string> = {
  */
 export function LeaveTab({ profile }: LeaveTabProps) {
   const t = useTranslations("Employees.profile.leave")
+  const tTooltips = useTranslations("Employees.profile.leave.tooltips")
   const tEntryTypes = useTranslations("Employees.profile.leave.entryTypes")
-  const tRequestStatus = useTranslations("Employees.profile.leave.requestStatus")
+  const tCommon = useTranslations("Common")
+  const monthsShort = tCommon.raw("monthsShort") as string[]
+  const currentYear = new Date().getFullYear()
   const [isLoading, setIsLoading] = useState(true)
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([])
   const [summary, setSummary] = useState<LeaveBalanceStatement[]>([])
@@ -132,10 +120,6 @@ export function LeaveTab({ profile }: LeaveTabProps) {
 
   const leaveTypeById = new Map(leaveTypes.map((leaveType) => [leaveType.id, leaveType]))
 
-  function formatUnitAmount(value: number, unit: "DAYS" | "HOURS"): string {
-    return unit === "HOURS" ? t("hours", { count: value }) : t("days", { count: value })
-  }
-
   if (isLoading) {
     return (
       <Card>
@@ -149,16 +133,31 @@ export function LeaveTab({ profile }: LeaveTabProps) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-end">
-        <Button size="sm" onClick={() => setIsWizardOpen(true)} disabled={leaveTypes.length === 0}>
-          <CalendarPlus className="size-4" strokeWidth={1.75} />
-          {t("requestLeave")}
-        </Button>
+        {leaveTypes.length === 0 ? (
+          <Tooltip>
+            {/* The trigger is a span, not the button itself — a disabled
+             * native <button> doesn't reliably fire hover/focus events, so
+             * it can't host a tooltip on its own. */}
+            <TooltipTrigger render={<span tabIndex={0} className="inline-flex" />}>
+              <Button size="sm" disabled>
+                <CalendarPlus className="size-4" strokeWidth={1.75} />
+                {t("requestLeave")}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("noLeaveTypes")}</TooltipContent>
+          </Tooltip>
+        ) : (
+          <Button size="sm" onClick={() => setIsWizardOpen(true)}>
+            <CalendarPlus className="size-4" strokeWidth={1.75} />
+            {t("requestLeave")}
+          </Button>
+        )}
       </div>
 
       {leaveTypes.length === 0 ? (
         <Card>
           <CardContent>
-            <EmptyState icon={CalendarClock} title={t("noLeaveTypes")} />
+            <EmptyState icon={CalendarClock} title={t("noLeaveTypes")} description={t("noLeaveTypesDescription")} />
           </CardContent>
         </Card>
       ) : (
@@ -173,20 +172,34 @@ export function LeaveTab({ profile }: LeaveTabProps) {
                     {leaveType?.name ?? balance.leaveTypeId}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                  {[
-                    { label: t("openingBalance"), value: balance.opening },
-                    { label: t("carriedForward"), value: balance.carriedForward },
-                    { label: t("taken"), value: balance.taken },
-                    { label: t("remaining"), value: balance.remaining },
-                  ].map((item) => (
-                    <div key={item.label} className="flex flex-col gap-1">
-                      <p className="text-xs text-muted-foreground">{item.label}</p>
-                      <p className="font-heading text-lg font-semibold text-foreground tabular-nums">
-                        {formatUnitAmount(item.value, unit)}
-                      </p>
-                    </div>
-                  ))}
+                {/* Same KpiCard used on the Leave Dashboard (LeaveSummarySection)
+                 * — identical sizing, spacing, typography, icons, and
+                 * tooltips, per-leave-type instead of org-wide. */}
+                <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <KpiCard
+                    label={t("openingBalance")}
+                    tooltip={tTooltips("openingBalance", { year: currentYear })}
+                    value={formatLeaveUnitAmount(t, balance.opening, unit)}
+                    icon={CalendarPlus}
+                  />
+                  <KpiCard
+                    label={t("carriedForward")}
+                    tooltip={tTooltips("carriedForward")}
+                    value={formatLeaveUnitAmount(t, balance.carriedForward, unit)}
+                    icon={CalendarClock}
+                  />
+                  <KpiCard
+                    label={t("taken")}
+                    tooltip={tTooltips("taken")}
+                    value={formatLeaveUnitAmount(t, balance.taken, unit)}
+                    icon={CalendarMinus}
+                  />
+                  <KpiCard
+                    label={t("remaining")}
+                    tooltip={tTooltips("remaining")}
+                    value={formatLeaveUnitAmount(t, balance.remaining, unit)}
+                    icon={CalendarCheck}
+                  />
                 </CardContent>
               </Card>
             )
@@ -213,9 +226,7 @@ export function LeaveTab({ profile }: LeaveTabProps) {
                   >
                     <div className="flex flex-col gap-0.5">
                       <div className="flex items-center gap-2">
-                        <Badge variant={requestStatusBadgeVariant[request.status] ?? "outline"}>
-                          {tRequestStatus(requestStatusMessageKeys[request.status] ?? "pendingApproval")}
-                        </Badge>
+                        <LeaveRequestStatusBadge status={request.status} />
                         <span className="text-xs text-muted-foreground">
                           {leaveType?.name ?? request.leaveTypeId}
                         </span>
@@ -226,11 +237,10 @@ export function LeaveTab({ profile }: LeaveTabProps) {
                     </div>
                     <div className="flex flex-col items-end gap-0.5">
                       <span className="text-sm font-medium text-foreground tabular-nums">
-                        {formatUnitAmount(request.requestedUnits, unit)}
+                        {formatLeaveUnitAmount(t, request.requestedUnits, unit)}
                       </span>
                       <span className="text-xs text-muted-foreground tabular-nums">
-                        {new Date(request.startDate).toLocaleDateString()} –{" "}
-                        {new Date(request.endDate).toLocaleDateString()}
+                        {formatLeaveDate(request.startDate, monthsShort)} – {formatLeaveDate(request.endDate, monthsShort)}
                       </span>
                     </div>
                   </li>
@@ -269,10 +279,10 @@ export function LeaveTab({ profile }: LeaveTabProps) {
                   <div className="flex flex-col items-end gap-0.5">
                     <span className="text-sm font-medium text-foreground tabular-nums">
                       {entry.amount >= 0 ? "+" : ""}
-                      {formatUnitAmount(entry.amount, entry.unit)}
+                      {formatLeaveUnitAmount(t, entry.amount, entry.unit)}
                     </span>
                     <span className="text-xs text-muted-foreground tabular-nums">
-                      {new Date(entry.effectiveDate).toLocaleDateString()}
+                      {formatLeaveDate(entry.effectiveDate, monthsShort)}
                     </span>
                   </div>
                 </li>

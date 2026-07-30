@@ -87,11 +87,26 @@
     "employeesUnit": "əməkdaş"
   },
   "LeaveSummary": {
-    "openingBalance": "Açılış Qalığı",
-    "carriedForward": "Növbəti İlə Keçən",
-    "taken": "İstifadə Olunmuş Məzuniyyət",
-    "remaining": "Qalan Balans",
+    "openingBalance": "İlkin Qalıq",
+    "carriedForward": "Əvvəlki İldən Qalıq",
+    "taken": "İstifadə Edilib",
+    "remaining": "Cari Qalıq",
     "daysUnit": "gün"
+  },
+  "Leave": {
+    "dashboard": {
+      "pendingApprovals": "Təsdiq Gözləyən",
+      "table": {
+        "title": "Məzuniyyət Tələbləri",
+        "employee": "Əməkdaş",
+        "leaveType": "Məzuniyyət Növü",
+        "dates": "Tarixlər",
+        "units": "Miqdar",
+        "status": "Status",
+        "emptyTitle": "Hələ məzuniyyət tələbi yoxdur",
+        "emptyDescription": "Əməkdaşlar tərəfindən təqdim edilən məzuniyyət tələbləri burada görünəcək."
+      }
+    }
   },
   "RecentEmployees": {
     "title": "Son Əməkdaşlar",
@@ -651,23 +666,30 @@
         "none": "Yoxdur"
       },
       "leave": {
-        "openingBalance": "Açılış Qalığı",
-        "carriedForward": "Növbəti İlə Keçən",
-        "taken": "İstifadə Olunub",
-        "remaining": "Qalıq",
+        "openingBalance": "İlkin Qalıq",
+        "carriedForward": "Əvvəlki İldən Qalıq",
+        "taken": "İstifadə Edilib",
+        "remaining": "Cari Qalıq",
         "days": "{count} gün",
         "hours": "{count} saat",
         "leaveHistory": "Əməliyyat Tarixçəsi",
-        "noHistory": "Hələ dəftər qeydi yoxdur.",
-        "noLeaveTypes": "Hələ məzuniyyət növü təyin edilməyib.",
+        "noHistory": "Hələ əməliyyat tarixçəsi yoxdur.",
+        "noLeaveTypes": "Məzuniyyət növü yaradılmayıb.",
+        "noLeaveTypesDescription": "Məzuniyyət növlərini yaratmaq üçün HR administratoru ilə əlaqə saxlayın.",
         "requestLeave": "Məzuniyyət Tələb Et",
         "requestsTitle": "Məzuniyyət Tələbləri",
-        "noRequests": "Hələ məzuniyyət tələbi yoxdur.",
+        "noRequests": "Hələ heç bir məzuniyyət tələbi təqdim edilməyib.",
+        "tooltips": {
+          "openingBalance": "{year}-ci il üzrə əməkdaşın illik məzuniyyət balansı.",
+          "carriedForward": "Ötən iş ilindən istifadə olunmayaraq növbəti ilə keçirilmiş məzuniyyət günləri.",
+          "taken": "Cari iş ili ərzində istifadə edilmiş məzuniyyət günləri.",
+          "remaining": "Hazırda istifadə oluna bilən məzuniyyət günləri."
+        },
         "entryTypes": {
-          "openingBalance": "Açılış Qalığı",
+          "openingBalance": "İlkin Qalıq",
           "importedBalance": "Köçürülmüş Qalıq",
           "accrual": "Toplanma",
-          "carryForward": "Növbəti İlə Keçid",
+          "carryForward": "Əvvəlki İldən Qalıq",
           "leaveTaken": "İstifadə Olunmuş Məzuniyyət",
           "leaveCancelled": "Ləğv Edilmiş Məzuniyyət",
           "manualAdjustment": "Əl ilə Düzəliş",
@@ -678,7 +700,7 @@
         "requestStatus": {
           "draft": "Qaralama",
           "submitted": "Göndərilib",
-          "pendingApproval": "Təsdiq Gözləyir",
+          "pendingApproval": "Gözləmədə",
           "approved": "Təsdiqlənib",
           "rejected": "Rədd Edilib",
           "cancelled": "Ləğv Edilib",
@@ -1080,40 +1102,48 @@
       "stepIndicator": "Addım {current} / {total}",
       "back": "Geri",
       "next": "İrəli",
-      "submit": "Tələbi Göndər",
+      "submit": "Təqdim Et",
       "close": "Bağla",
-      "successTitle": "Məzuniyyət tələbi göndərildi",
-      "successDescription": "Tələb artıq təsdiq gözləyir.",
+      "successTitle": "Məzuniyyət tələbi təqdim edildi",
+      "successDescription": "Tələb artıq gözləmədədir.",
       "validation": {
         "required": "Bu sahə mütləqdir."
       },
       "details": {
         "leaveType": "Məzuniyyət Növü",
+        "leaveTypePlaceholder": "Məzuniyyət növünü seçin",
         "startDate": "Başlanğıc Tarixi",
         "numberOfDays": "Gün Sayı",
-        "reason": "Səbəb",
+        "numberOfDaysHint": "Bitmə tarixi avtomatik hesablanacaq.",
+        "reason": "Qeyd",
         "reasonHint": "İstəyə bağlı — təsdiqləyənə görünür."
       },
       "review": {
+        "generalInfoTitle": "Ümumi Məlumat",
+        "balanceSectionTitle": "Məzuniyyət Balansı",
+        "warningsSectionTitle": "Xəbərdarlıq",
+        "documentsSectionTitle": "Sənədlər",
         "leaveType": "Məzuniyyət Növü",
+        "startDate": "Başlanğıc Tarixi",
         "endDate": "Bitmə Tarixi",
         "returnToWorkDate": "İşə Qayıdış",
         "calendarDays": "Təqvim Günləri",
+        "workingDays": "İş Günləri",
         "holidaysInRange": "Aralıqdakı Bayramlar",
         "noHolidays": "Yoxdur",
         "startDateWarningTitle": "Başlanğıc tarixi qeyri-iş günündə düşür",
         "startDateWarningHoliday": "Seçilmiş başlanğıc tarixi rəsmi bayram günüdür.",
         "startDateWarningNonWorking": "Seçilmiş başlanğıc tarixi bu əməkdaşın iş qrafikinə görə iş günü deyil.",
         "eligibilityWarningTitle": "Uyğunluq xəbərdarlığı",
-        "eligibilityWarning": "Bu əməkdaş illik məzuniyyətə {date} tarixindən etibarən uyğun olur ({count} gün qalıb). HR yenə də davam edə bilər.",
+        "eligibilityWarning": "Bu əməkdaş Əmək Məzuniyyətinə {date} tarixindən etibarən uyğun olur ({count} gün qalıb). HR yenə də davam edə bilər.",
         "balance": "Məzuniyyət Qalığı",
         "balanceRemaining": "Bu tələbdən əvvəl {remaining} qalıb",
         "balanceSufficient": "Bu tələb üçün qalıq kifayətdir.",
-        "balanceWarning": "Bu tələb əməkdaşın qalan balansını aşır. Yenə də göndərə bilərsiniz — baxış üçün işarələnəcək.",
-        "balanceBlocked": "Bu tələb əməkdaşın qalan balansını aşır və bu məzuniyyət növünün siyasətinə görə göndərilə bilməz.",
+        "balanceWarning": "Bu tələb əməkdaşın qalan balansını aşır. Yenə də təqdim edə bilərsiniz — baxış üçün işarələnəcək.",
+        "balanceBlocked": "Bu tələb əməkdaşın qalan balansını aşır və bu məzuniyyət növünün siyasətinə görə təqdim edilə bilməz.",
         "attachment": "Məzuniyyət Ərizəsi (istəyə bağlı)",
         "attachmentHint": "Əməkdaşın imzalanmış məzuniyyət ərizəsini yükləyin — PDF, JPG və ya PNG.",
-        "submitError": "Məzuniyyət tələbi göndərilə bilmədi. Zəhmət olmasa yenidən cəhd edin."
+        "submitError": "Məzuniyyət tələbi təqdim edilə bilmədi. Zəhmət olmasa yenidən cəhd edin."
       }
     }
   }

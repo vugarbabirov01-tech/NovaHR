@@ -45,6 +45,13 @@ interface LeaveRequestWizardProps {
  * previewLeaveRequestAction, never recomputed here). Submission goes
  * through submitLeaveRequestAction, which re-evaluates server-side rather
  * than trusting this preview.
+ *
+ * Root layout is `flex h-full flex-col`: the modal wrapper
+ * (leave-request-wizard-modal.tsx) gives this component the full height of
+ * the dialog body, and this owns the internal scroll region itself so the
+ * Back/Next/Submit footer stays pinned in view rather than requiring a
+ * scroll to reach it — the Review step alone can be tall (several summary
+ * cards) once real balance/warning data is present.
  */
 export function LeaveRequestWizard({ profile, leaveTypes, onSuccess, onClose }: LeaveRequestWizardProps) {
   const t = useTranslations("Employees.leaveRequest")
@@ -126,44 +133,50 @@ export function LeaveRequestWizard({ profile, leaveTypes, onSuccess, onClose }: 
 
   if (submitted) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-status-good/10">
-            <CheckCircle2 className="size-6 text-status-good" strokeWidth={1.75} />
-          </div>
-          <h2 className="font-heading text-lg font-semibold text-foreground">{t("successTitle")}</h2>
-          <p className="max-w-sm text-sm text-muted-foreground">{t("successDescription")}</p>
-          <Button className="mt-2" variant="outline" onClick={onClose}>
-            {t("close")}
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="flex h-full items-center justify-center p-6">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-status-good/10">
+              <CheckCircle2 className="size-6 text-status-good" strokeWidth={1.75} />
+            </div>
+            <h2 className="font-heading text-lg font-semibold text-foreground">{t("successTitle")}</h2>
+            <p className="max-w-sm text-sm text-muted-foreground">{t("successDescription")}</p>
+            <Button className="mt-2" variant="outline" onClick={onClose}>
+              {t("close")}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
   const isLastStep = stepIndex === steps.length - 1
 
   return (
-    <div className="flex flex-col gap-6">
-      <Stepper steps={steps} currentIndex={stepIndex} />
-      <div className="flex flex-col gap-1.5 lg:hidden">
-        <span className="text-sm text-muted-foreground">
-          {t("stepIndicator", { current: stepIndex + 1, total: steps.length })}
-        </span>
-        <Progress value={((stepIndex + 1) / steps.length) * 100} />
-      </div>
+    <div className="flex h-full flex-col">
+      <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex flex-col gap-6">
+          <Stepper steps={steps} currentIndex={stepIndex} />
+          <div className="flex flex-col gap-1.5 lg:hidden">
+            <span className="text-sm text-muted-foreground">
+              {t("stepIndicator", { current: stepIndex + 1, total: steps.length })}
+            </span>
+            <Progress value={((stepIndex + 1) / steps.length) * 100} />
+          </div>
 
-      {submitError ? (
-        <Alert variant="destructive">
-          <AlertTriangle />
-          <AlertDescription>{submitError}</AlertDescription>
-        </Alert>
-      ) : null}
+          {submitError ? (
+            <Alert variant="destructive">
+              <AlertTriangle />
+              <AlertDescription>{submitError}</AlertDescription>
+            </Alert>
+          ) : null}
 
-      <Card>
-        <CardContent>
           {stepIndex === 0 ? (
-            <LeaveRequestDetailsStep data={details} onChange={patch} leaveTypes={leaveTypes} errors={errors} />
+            <Card>
+              <CardContent>
+                <LeaveRequestDetailsStep data={details} onChange={patch} leaveTypes={leaveTypes} errors={errors} />
+              </CardContent>
+            </Card>
           ) : null}
           {stepIndex === 1 && evaluation ? (
             <LeaveRequestReviewStep
@@ -174,10 +187,10 @@ export function LeaveRequestWizard({ profile, leaveTypes, onSuccess, onClose }: 
               onFileChange={setFile}
             />
           ) : null}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex shrink-0 items-center justify-between border-t border-border px-6 py-4">
         <Button variant="outline" onClick={handleBack} disabled={stepIndex === 0 || isPending}>
           <ChevronLeft className="size-4" strokeWidth={1.75} />
           {t("back")}
