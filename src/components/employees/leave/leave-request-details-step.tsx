@@ -1,11 +1,12 @@
 "use client"
 
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Field } from "@/components/common/field"
 import { EnumSelect } from "@/components/common/enum-select"
+import { DatePicker } from "@/components/common/date-picker"
 import type { LeaveType } from "@/repositories/leave-type-repository"
 
 export interface LeaveRequestDetailsData {
@@ -13,6 +14,20 @@ export interface LeaveRequestDetailsData {
   startDate: string
   numberOfDays: string
   reason: string
+}
+
+// Display order only — leaveTypes itself (ids, names, translations, the
+// underlying query) is untouched. Codes not listed here (a future leave
+// type) sort after all known ones rather than disappearing.
+const LEAVE_TYPE_DISPLAY_ORDER = ["ANNUAL", "UNPAID", "STUDY", "MATERNITY", "PATERNITY", "SICK"]
+
+function byPresentationOrder(a: LeaveType, b: LeaveType): number {
+  const aIndex = LEAVE_TYPE_DISPLAY_ORDER.indexOf(a.code)
+  const bIndex = LEAVE_TYPE_DISPLAY_ORDER.indexOf(b.code)
+  if (aIndex === -1 && bIndex === -1) return 0
+  if (aIndex === -1) return 1
+  if (bIndex === -1) return -1
+  return aIndex - bIndex
 }
 
 interface LeaveRequestDetailsStepProps {
@@ -29,26 +44,31 @@ export function LeaveRequestDetailsStep({
   errors = {},
 }: LeaveRequestDetailsStepProps) {
   const t = useTranslations("Employees.leaveRequest.details")
-  const locale = useLocale()
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-      <Field label={t("leaveType")} htmlFor="leaveTypeId" required error={errors.leaveTypeId} className="sm:col-span-2">
+      <Field
+        label={t("leaveType")}
+        htmlFor="leaveTypeId"
+        required
+        error={errors.leaveTypeId}
+        className="sm:col-span-2"
+      >
         <EnumSelect
           id="leaveTypeId"
           value={data.leaveTypeId}
           onValueChange={(v) => onChange({ leaveTypeId: v })}
-          options={leaveTypes.map((leaveType) => ({ value: leaveType.id, label: leaveType.name }))}
+          options={[...leaveTypes]
+            .sort(byPresentationOrder)
+            .map((leaveType) => ({ value: leaveType.id, label: leaveType.name }))}
           placeholder={t("leaveTypePlaceholder")}
         />
       </Field>
       <Field label={t("startDate")} htmlFor="startDate" required error={errors.startDate}>
-        <Input
+        <DatePicker
           id="startDate"
-          type="date"
-          lang={locale}
           value={data.startDate}
-          onChange={(e) => onChange({ startDate: e.target.value })}
+          onChange={(startDate) => onChange({ startDate })}
         />
       </Field>
       <Field

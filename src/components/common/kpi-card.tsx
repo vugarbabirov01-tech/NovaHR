@@ -31,14 +31,18 @@ export function KpiCard({
   const isPositive = (delta ?? 0) >= 0
 
   return (
-    <Card className={cn(className)}>
-      <CardContent className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1">
-            <p className="text-sm text-muted-foreground">{label}</p>
+    <Card className={cn("h-full min-w-0", className)}>
+      <CardContent className="flex h-full items-center justify-between gap-3">
+        {/* min-w-0 lets this column shrink/truncate instead of forcing the
+         * row wider than the card — without it, a long label pushes the
+         * icon past the card's own overflow-hidden edge instead of
+         * wrapping or clipping cleanly. */}
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <p className="truncate text-sm text-muted-foreground">{label}</p>
             {tooltip ? <InfoTooltip content={tooltip} /> : null}
           </div>
-          <p className="font-heading text-2xl font-semibold tracking-tight text-foreground tabular-nums">
+          <p className="truncate font-heading text-2xl font-semibold tracking-tight text-foreground tabular-nums">
             {value}
           </p>
           {typeof delta === "number" ? (
@@ -62,8 +66,8 @@ export function KpiCard({
             </div>
           ) : null}
         </div>
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent">
-          <Icon className="size-4 text-accent-foreground" strokeWidth={1.75} />
+        <div className="flex size-9 shrink-0 self-center items-center justify-center rounded-lg bg-accent">
+          <Icon className="size-4 shrink-0 text-accent-foreground" strokeWidth={1.75} />
         </div>
       </CardContent>
     </Card>

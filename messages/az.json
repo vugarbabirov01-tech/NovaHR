@@ -12,7 +12,14 @@
     "archive": "Arxivləşdir",
     "restore": "Bərpa Et",
     "genericError": "Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.",
-    "monthsShort": ["yan", "fev", "mar", "apr", "may", "iyn", "iyl", "avq", "sen", "okt", "noy", "dek"]
+    "monthsShort": ["yan", "fev", "mar", "apr", "may", "iyn", "iyl", "avq", "sen", "okt", "noy", "dek"],
+    "datePicker": {
+      "placeholder": "Tarix seçin",
+      "today": "Bu gün",
+      "clear": "Təmizlə",
+      "previousMonth": "Əvvəlki ay",
+      "nextMonth": "Növbəti ay"
+    }
   },
   "Navigation": {
     "dashboard": "İdarə paneli",
@@ -91,18 +98,37 @@
     "carriedForward": "Əvvəlki İldən Qalıq",
     "taken": "İstifadə Edilib",
     "remaining": "Cari Qalıq",
+    "pending": "Gözləmədə Olan",
     "daysUnit": "gün"
   },
   "Leave": {
     "dashboard": {
       "pendingApprovals": "Təsdiq Gözləyən",
+      "newLeave": "Yeni Məzuniyyət",
+      "kpis": {
+        "employeesOnLeave": "Hazırda Məzuniyyətdə",
+        "startingThisWeek": "Bu Həftə Başlayan",
+        "endingThisWeek": "Bu Həftə Bitən",
+        "leavesThisMonth": "Bu Ay Məzuniyyətlər",
+        "approvedThisMonth": "Bu Ay Təsdiqlənən",
+        "rejectedThisMonth": "Bu Ay Rədd Edilən"
+      },
       "table": {
         "title": "Məzuniyyət Tələbləri",
         "employee": "Əməkdaş",
+        "department": "Şöbə",
         "leaveType": "Məzuniyyət Növü",
         "dates": "Tarixlər",
         "units": "Miqdar",
+        "workingDays": "İş Günləri",
         "status": "Status",
+        "requestedBy": "Tələb Edən",
+        "approvalLevel": "Təsdiq Səviyyəsi",
+        "view": "Bax",
+        "approve": "Təsdiqlə",
+        "reject": "Rədd Et",
+        "cancel": "Ləğv Et",
+        "decisionError": "Əməliyyat yerinə yetirilmədi. Yenidən cəhd edin.",
         "emptyTitle": "Hələ məzuniyyət tələbi yoxdur",
         "emptyDescription": "Əməkdaşlar tərəfindən təqdim edilən məzuniyyət tələbləri burada görünəcək."
       }
@@ -670,12 +696,15 @@
         "carriedForward": "Əvvəlki İldən Qalıq",
         "taken": "İstifadə Edilib",
         "remaining": "Cari Qalıq",
+        "pending": "Gözləmədə Olan",
         "days": "{count} gün",
         "hours": "{count} saat",
         "leaveHistory": "Əməliyyat Tarixçəsi",
         "noHistory": "Hələ əməliyyat tarixçəsi yoxdur.",
         "noLeaveTypes": "Məzuniyyət növü yaradılmayıb.",
         "noLeaveTypesDescription": "Məzuniyyət növlərini yaratmaq üçün HR administratoru ilə əlaqə saxlayın.",
+        "noAnnualLeaveType": "Əmək Məzuniyyəti növü təyin edilməyib.",
+        "noAnnualLeaveTypeDescription": "Əmək Məzuniyyəti növünü yaratmaq üçün HR administratoru ilə əlaqə saxlayın.",
         "requestLeave": "Məzuniyyət Tələb Et",
         "requestsTitle": "Məzuniyyət Tələbləri",
         "noRequests": "Hələ heç bir məzuniyyət tələbi təqdim edilməyib.",
@@ -683,7 +712,8 @@
           "openingBalance": "{year}-ci il üzrə əməkdaşın illik məzuniyyət balansı.",
           "carriedForward": "Ötən iş ilindən istifadə olunmayaraq növbəti ilə keçirilmiş məzuniyyət günləri.",
           "taken": "Cari iş ili ərzində istifadə edilmiş məzuniyyət günləri.",
-          "remaining": "Hazırda istifadə oluna bilən məzuniyyət günləri."
+          "remaining": "Hazırda istifadə oluna bilən məzuniyyət günləri.",
+          "pending": "Təsdiq gözləyən məzuniyyət tələblərinin ümumi gün sayı. Bu günlər hələ balansdan çıxılmayıb."
         },
         "entryTypes": {
           "openingBalance": "İlkin Qalıq",
@@ -1096,6 +1126,7 @@
       "wizardTitle": "Məzuniyyət Tələb Et",
       "wizardDescription": "Başlanğıc tarixini və gün sayını daxil edin — bitmə tarixi, işə qayıdış tarixi və qalıq avtomatik hesablanır.",
       "steps": {
+        "employee": "Əməkdaş",
         "details": "Məlumatlar",
         "review": "Baxış və Təsdiq"
       },
@@ -1108,6 +1139,12 @@
       "successDescription": "Tələb artıq gözləmədədir.",
       "validation": {
         "required": "Bu sahə mütləqdir."
+      },
+      "employeeStep": {
+        "label": "Əməkdaş",
+        "placeholder": "Əməkdaş seçin",
+        "searchPlaceholder": "Ad, soyad və ya FIN üzrə axtarın...",
+        "emptyText": "Əməkdaş tapılmadı."
       },
       "details": {
         "leaveType": "Məzuniyyət Növü",
@@ -1123,6 +1160,7 @@
         "balanceSectionTitle": "Məzuniyyət Balansı",
         "warningsSectionTitle": "Xəbərdarlıq",
         "documentsSectionTitle": "Sənədlər",
+        "employee": "Əməkdaş",
         "leaveType": "Məzuniyyət Növü",
         "startDate": "Başlanğıc Tarixi",
         "endDate": "Bitmə Tarixi",
@@ -1141,6 +1179,8 @@
         "balanceSufficient": "Bu tələb üçün qalıq kifayətdir.",
         "balanceWarning": "Bu tələb əməkdaşın qalan balansını aşır. Yenə də təqdim edə bilərsiniz — baxış üçün işarələnəcək.",
         "balanceBlocked": "Bu tələb əməkdaşın qalan balansını aşır və bu məzuniyyət növünün siyasətinə görə təqdim edilə bilməz.",
+        "remainingAfterApproval": "Təsdiqdən Sonra Qalıq",
+        "remainingAfterApprovalTooltip": "Bu tələb təsdiqləndikdən sonra qalacaq məzuniyyət balansı (Cari Qalıq − Tələb Edilən Günlər).",
         "attachment": "Məzuniyyət Ərizəsi (istəyə bağlı)",
         "attachmentHint": "Əməkdaşın imzalanmış məzuniyyət ərizəsini yükləyin — PDF, JPG və ya PNG.",
         "submitError": "Məzuniyyət tələbi təqdim edilə bilmədi. Zəhmət olmasa yenidən cəhd edin."

@@ -12,7 +12,14 @@
     "archive": "Archive",
     "restore": "Restore",
     "genericError": "Something went wrong. Please try again.",
-    "monthsShort": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    "monthsShort": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    "datePicker": {
+      "placeholder": "Select date",
+      "today": "Today",
+      "clear": "Clear",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month"
+    }
   },
   "Navigation": {
     "dashboard": "Dashboard",
@@ -91,18 +98,37 @@
     "carriedForward": "Carried Forward",
     "taken": "Leave Taken",
     "remaining": "Remaining Balance",
+    "pending": "Pending Leave",
     "daysUnit": "days"
   },
   "Leave": {
     "dashboard": {
       "pendingApprovals": "Pending Approvals",
+      "newLeave": "New Leave",
+      "kpis": {
+        "employeesOnLeave": "Employees Currently on Leave",
+        "startingThisWeek": "Starting This Week",
+        "endingThisWeek": "Ending This Week",
+        "leavesThisMonth": "Leaves This Month",
+        "approvedThisMonth": "Approved This Month",
+        "rejectedThisMonth": "Rejected This Month"
+      },
       "table": {
         "title": "Leave Requests",
         "employee": "Employee",
+        "department": "Department",
         "leaveType": "Leave Type",
-        "dates": "Dates",
+        "dates": "Date Range",
         "units": "Amount",
+        "workingDays": "Working Days",
         "status": "Status",
+        "requestedBy": "Requested By",
+        "approvalLevel": "Approval Level",
+        "view": "View",
+        "approve": "Approve",
+        "reject": "Reject",
+        "cancel": "Cancel",
+        "decisionError": "The action could not be completed. Please try again.",
         "emptyTitle": "No leave requests yet",
         "emptyDescription": "Leave requests submitted by employees will appear here."
       }
@@ -670,12 +696,15 @@
         "carriedForward": "Carried Forward",
         "taken": "Taken",
         "remaining": "Remaining",
+        "pending": "Pending Leave",
         "days": "{count} {count, plural, =1 {day} other {days}}",
         "hours": "{count} {count, plural, =1 {hour} other {hours}}",
         "leaveHistory": "Transaction History",
         "noHistory": "No transaction history yet.",
         "noLeaveTypes": "No leave types have been created.",
         "noLeaveTypesDescription": "Contact your HR administrator to have leave types created.",
+        "noAnnualLeaveType": "Annual Leave type not configured.",
+        "noAnnualLeaveTypeDescription": "Contact your HR administrator to have the Annual Leave type created.",
         "requestLeave": "Request Leave",
         "requestsTitle": "Leave Requests",
         "noRequests": "No leave requests have been submitted yet.",
@@ -683,7 +712,8 @@
           "openingBalance": "The employee's annual leave balance for {year}.",
           "carriedForward": "Unused leave days carried over from the previous work year.",
           "taken": "Leave days used during the current work year.",
-          "remaining": "Leave days currently available to use."
+          "remaining": "Leave days currently available to use.",
+          "pending": "Total days across leave requests still awaiting approval. These days have not yet been deducted from the balance."
         },
         "entryTypes": {
           "openingBalance": "Opening Balance",
@@ -1096,6 +1126,7 @@
       "wizardTitle": "Request Leave",
       "wizardDescription": "Enter the start date and number of days — the end date, return-to-work date, and balance are calculated automatically.",
       "steps": {
+        "employee": "Employee",
         "details": "Details",
         "review": "Review & Submit"
       },
@@ -1109,6 +1140,12 @@
       "validation": {
         "required": "This field is required."
       },
+      "employeeStep": {
+        "label": "Employee",
+        "placeholder": "Select an employee",
+        "searchPlaceholder": "Search by name or FIN...",
+        "emptyText": "No employee found."
+      },
       "details": {
         "leaveType": "Leave Type",
         "leaveTypePlaceholder": "Select a leave type",
@@ -1120,6 +1157,7 @@
       },
       "review": {
         "generalInfoTitle": "General Information",
+        "employee": "Employee",
         "balanceSectionTitle": "Leave Balance",
         "warningsSectionTitle": "Warnings",
         "documentsSectionTitle": "Documents",
@@ -1141,6 +1179,8 @@
         "balanceSufficient": "Sufficient balance for this request.",
         "balanceWarning": "This request exceeds the employee's remaining balance. You may still submit — it will be flagged for review.",
         "balanceBlocked": "This request exceeds the employee's remaining balance and cannot be submitted under this leave type's policy.",
+        "remainingAfterApproval": "Remaining After Approval",
+        "remainingAfterApprovalTooltip": "The leave balance that will remain after this request is approved (Current Balance − Requested Days).",
         "attachment": "Leave Application (optional)",
         "attachmentHint": "Upload the employee's signed leave application — PDF, JPG, or PNG.",
         "submitError": "Could not submit the leave request. Please try again."
