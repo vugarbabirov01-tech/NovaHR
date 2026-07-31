@@ -10,6 +10,12 @@ export interface SearchableSelectOption {
   value: string
   label: string
   hint?: string
+  /** Text the search box matches against instead of `label` — lets a
+   * caller make an option findable by more than its displayed primary
+   * text (e.g. an employee's ID/FIN alongside their name) without
+   * showing that extra text as part of the label itself. Falls back to
+   * `label` when omitted, so every existing caller is unaffected. */
+  searchValue?: string
 }
 
 interface SearchableSelectProps {
@@ -116,9 +122,14 @@ export function SearchableSelect({
   const selectedOption = options.find((option) => option.value === value)
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    // Case-insensitive, space-agnostic substring match — stripping spaces
+    // from both sides means a query typed without the label's own spacing
+    // still matches, without needing per-field search logic here.
+    const q = query.toLowerCase().replace(/\s+/g, "")
     if (!q) return options
-    return options.filter((option) => option.label.toLowerCase().includes(q))
+    return options.filter((option) =>
+      (option.searchValue ?? option.label).toLowerCase().replace(/\s+/g, "").includes(q)
+    )
   }, [options, query])
 
   return (

@@ -3,14 +3,21 @@
 import { useTranslations } from "next-intl"
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { LeaveRequestWizard } from "@/components/employees/leave/leave-request-wizard"
+import {
+  LeaveRequestWizard,
+  type LeaveRequestEmployeeOption,
+} from "@/components/employees/leave/leave-request-wizard"
 import type { LeaveType } from "@/repositories/leave-type-repository"
-import type { EmployeeProfile } from "@/types/employee-profile"
 
 interface LeaveRequestWizardModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  profile: EmployeeProfile
+  /** Pre-known employee — from that employee's own Leave tab, the wizard
+   * skips straight to Leave Type. Omit when opening from the Leave
+   * Dashboard's "Yeni Məzuniyyət" button, and pass `employeeOptions`
+   * instead so the wizard's new Employee step has something to search. */
+  employee?: { id: string; name: string }
+  employeeOptions?: LeaveRequestEmployeeOption[]
   leaveTypes: LeaveType[]
   onSuccess: () => void
 }
@@ -30,7 +37,8 @@ interface LeaveRequestWizardModalProps {
 export function LeaveRequestWizardModal({
   open,
   onOpenChange,
-  profile,
+  employee,
+  employeeOptions,
   leaveTypes,
   onSuccess,
 }: LeaveRequestWizardModalProps) {
@@ -60,8 +68,9 @@ export function LeaveRequestWizardModal({
         </DialogHeader>
         <div className="flex-1 overflow-hidden">
           <LeaveRequestWizard
-            key={profile.id}
-            profile={profile}
+            key={employee?.id ?? "new"}
+            employee={employee}
+            employeeOptions={employeeOptions}
             leaveTypes={leaveTypes}
             onSuccess={onSuccess}
             onClose={handleClose}

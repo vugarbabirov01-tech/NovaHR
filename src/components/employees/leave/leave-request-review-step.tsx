@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { AlertTriangle, CalendarCheck, CalendarClock, CalendarMinus, CalendarPlus, CheckCircle2, Info } from "lucide-react"
+import { AlertTriangle, CalendarCheck, CalendarClock, CalendarMinus, CalendarPlus, CheckCircle2, Info, TrendingDown } from "lucide-react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,6 +14,7 @@ import type { LeaveRequestEvaluation } from "@/lib/leave/leave-request-service"
 
 interface LeaveRequestReviewStepProps {
   evaluation: LeaveRequestEvaluation
+  employeeName: string
   leaveTypeName: string
   unit: "DAYS" | "HOURS"
   file: File | null
@@ -39,6 +40,7 @@ interface LeaveRequestReviewStepProps {
  */
 export function LeaveRequestReviewStep({
   evaluation,
+  employeeName,
   leaveTypeName,
   unit,
   file,
@@ -51,6 +53,12 @@ export function LeaveRequestReviewStep({
   const monthsShort = tCommon.raw("monthsShort") as string[]
   const currentYear = new Date().getFullYear()
   const { returnToWork, eligibility, balance, balanceValidationMode, isBalanceSufficient } = evaluation
+  // Forward-looking, not a stored figure — what balance.remaining will
+  // become once this specific request (numberOfDays) is approved. Balance
+  // itself is already scoped to this employee/leaveType/startDate (see
+  // evaluateLeaveRequest), so this is the one number nothing upstream
+  // computes yet.
+  const remainingAfterApproval = balance.remaining - evaluation.numberOfDays
 
   function formatUnitAmount(value: number): string {
     return formatLeaveUnitAmount(tLeave, value, unit)
@@ -71,6 +79,9 @@ export function LeaveRequestReviewStep({
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
+            <Field label={t("employee")}>
+              <p className="text-sm font-medium text-foreground">{employeeName}</p>
+            </Field>
             <Field label={t("leaveType")}>
               <p className="text-sm font-medium text-foreground">{leaveTypeName}</p>
             </Field>
@@ -120,7 +131,7 @@ export function LeaveRequestReviewStep({
         <CardHeader>
           <CardTitle>{t("balanceSectionTitle")}</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
             label={tLeave("openingBalance")}
             tooltip={tTooltips("openingBalance", { year: currentYear })}
@@ -144,6 +155,12 @@ export function LeaveRequestReviewStep({
             tooltip={tTooltips("remaining")}
             value={formatUnitAmount(balance.remaining)}
             icon={CalendarCheck}
+          />
+          <KpiCard
+            label={t("remainingAfterApproval")}
+            tooltip={t("remainingAfterApprovalTooltip")}
+            value={formatUnitAmount(remainingAfterApproval)}
+            icon={TrendingDown}
           />
         </CardContent>
       </Card>

@@ -9,6 +9,8 @@ import { Progress } from "@/components/ui/progress"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Stepper } from "@/components/common/stepper"
+import { Field } from "@/components/common/field"
+import { SearchableSelect } from "@/components/common/searchable-select"
 import {
   LeaveRequestDetailsStep,
   type LeaveRequestDetailsData,
@@ -20,9 +22,8 @@ import {
 } from "@/lib/leave/leave-request-actions"
 import type { LeaveRequestEvaluation } from "@/lib/leave/leave-request-service"
 import type { LeaveType } from "@/repositories/leave-type-repository"
-import type { EmployeeProfile } from "@/types/employee-profile"
 
-const stepKeys = ["details", "review"] as const
+type StepKey = "employee" | "details" | "review"
 
 const emptyDetails: LeaveRequestDetailsData = {
   leaveTypeId: "",
@@ -31,18 +32,36 @@ const emptyDetails: LeaveRequestDetailsData = {
   reason: "",
 }
 
+export interface LeaveRequestEmployeeOption {
+  id: string
+  name: string
+  finCode?: string
+}
+
 interface LeaveRequestWizardProps {
-  profile: EmployeeProfile
+  /** Pre-known employee — opened from that employee's own Leave tab. When
+   * given, the Employee step never renders and the wizard starts directly
+   * at Leave Type, per "don't ask for the employee again". */
+  employee?: { id: string; name: string }
+  /** Only needed when `employee` isn't pre-known (opened from the Leave
+   * Dashboard's "Yeni Məzuniyyət" button) — the searchable list the new
+   * Employee step picks from. */
+  employeeOptions?: LeaveRequestEmployeeOption[]
   leaveTypes: LeaveType[]
   onSuccess: () => void
   onClose: () => void
 }
 
 /**
- * Two steps only, per Phase 3B scope — Details (Start Date + Number of
- * Days, HR's only real inputs) and Review & Submit (everything else is
- * calculated by the existing Leave Policy Resolution / Balance engines via
- * previewLeaveRequestAction, never recomputed here). Submission goes
+ * Three steps when the employee isn't already known (Employee, Details,
+ * Review), two when it is (Details, Review) — Phase 3B's original scope.
+ * Details bundles Leave Type + Start Date + Number of Days + Reason in one
+ * panel rather than splitting each into its own step; that keeps this
+ * change additive (reusing LeaveRequestDetailsStep exactly as it already
+ * works from the Employee Profile) instead of restructuring a step that
+ * already works. Review & Submit still lets the existing Leave Policy
+ * Resolution / Balance engines calculate everything else via
+ * previewLeaveRequestAction, never recomputed here. Submission goes
  * through submitLeaveRequestAction, which re-evaluates server-side rather
  * than trusting this preview.
  *
@@ -53,9 +72,22 @@ interface LeaveRequestWizardProps {
  * scroll to reach it — the Review step alone can be tall (several summary
  * cards) once real balance/warning data is present.
  */
-export function LeaveRequestWizard({ profile, leaveTypes, onSuccess, onClose }: LeaveRequestWizardProps) {
+export function LeaveRequestWizard({
+  employee,
+  employeeOptions,
+  leaveTypes,
+  onSuccess,
+  onClose,
+}: LeaveRequestWizardProps) {
   const t = useTranslations("Employees.leaveRequest")
+  const stepKeys: StepKey[] = employee ? ["details", "review"] : ["employee", "details", "review"]
+  const employeeStepIndex = stepKeys.indexOf("employee")
+  const detailsStepIndex = stepKeys.indexOf("details")
+  const reviewStepIndex = stepKeys.indexOf("review")
+
   const [stepIndex, setStepIndex] = useState(0)
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(employee?.id ?? "")
+  const [employeeError, setEmployeeError] = useState<string | null>(null)
   const [details, setDetails] = useState<LeaveRequestDetailsData>(emptyDetails)
   const [errors, setErrors] = useState<Partial<Record<keyof LeaveRequestDetailsData, string>>>({})
   const [evaluation, setEvaluation] = useState<LeaveRequestEvaluation | null>(null)
@@ -66,6 +98,7 @@ export function LeaveRequestWizard({ profile, leaveTypes, onSuccess, onClose }: 
 
   const steps = stepKeys.map((key) => ({ key, label: t(`steps.${key}`) }))
   const leaveType = leaveTypes.find((lt) => lt.id === details.leaveTypeId)
+  const selectedEmployeeName = employee?.name ?? employeeOptions?.find((e) => e.id === selectedEmployeeId)?.name ?? ""
 
   function patch(update: Partial<LeaveRequestDetailsData>) {
     setDetails((prev) => ({ ...prev, ...update }))
@@ -83,35 +116,50 @@ export function LeaveRequestWizard({ profile, leaveTypes, onSuccess, onClose }: 
     return Object.keys(nextErrors).length === 0
   }
 
-  function handleNext() {
+  function handleEmployeeNext() {
+    if (!selectedEmployeeId) {
+      setEmployeeError(t("validation.required"))
+      return
+    }
+    setEmployeeError(null)
+    setSubmitError(null)
+    setStepIndex((i) => i + 1)
+  }
+
+  function handleDetailsNext() {
     if (!validateDetails()) return
     setSubmitError(null)
     startTransition(async () => {
       const result = await previewLeaveRequestAction(
-        profile.id,
+        selectedEmployeeId,
         details.leaveTypeId,
         details.startDate,
         Number(details.numberOfDays)
       )
       if (result.success && result.data) {
         setEvaluation(result.data)
-        setStepIndex(1)
+        setStepIndex((i) => i + 1)
       } else {
         setSubmitError(result.error ?? t("review.submitError"))
       }
     })
   }
 
+  function handleNext() {
+    if (stepIndex === employeeStepIndex) handleEmployeeNext()
+    else if (stepIndex === detailsStepIndex) handleDetailsNext()
+  }
+
   function handleBack() {
     setSubmitError(null)
-    setStepIndex(0)
+    setStepIndex((i) => Math.max(0, i - 1))
   }
 
   function handleSubmit() {
     setSubmitError(null)
     startTransition(async () => {
       const formData = new FormData()
-      formData.set("employeeId", profile.id)
+      formData.set("employeeId", selectedEmployeeId)
       formData.set("leaveTypeId", details.leaveTypeId)
       formData.set("startDate", details.startDate)
       formData.set("numberOfDays", details.numberOfDays)
@@ -171,22 +219,62 @@ export function LeaveRequestWizard({ profile, leaveTypes, onSuccess, onClose }: 
             </Alert>
           ) : null}
 
-          {stepIndex === 0 ? (
-            <Card>
-              <CardContent>
-                <LeaveRequestDetailsStep data={details} onChange={patch} leaveTypes={leaveTypes} errors={errors} />
-              </CardContent>
-            </Card>
-          ) : null}
-          {stepIndex === 1 && evaluation ? (
-            <LeaveRequestReviewStep
-              evaluation={evaluation}
-              leaveTypeName={leaveType?.name ?? ""}
-              unit={leaveType?.unit ?? "DAYS"}
-              file={file}
-              onFileChange={setFile}
-            />
-          ) : null}
+          {/* Capped to a readable form width rather than stretching to the
+           * modal's full 90vw — the modal itself stays large (see
+           * leave-request-wizard-modal.tsx), only the form content inside
+           * it is narrowed to a professional, centered column. */}
+          <div className="mx-auto w-full max-w-3xl">
+            {stepIndex === employeeStepIndex ? (
+              <Card>
+                <CardContent>
+                  <Field
+                    label={t("employeeStep.label")}
+                    htmlFor="employeeId"
+                    required
+                    error={employeeError ?? undefined}
+                  >
+                    <SearchableSelect
+                      id="employeeId"
+                      value={selectedEmployeeId}
+                      onValueChange={setSelectedEmployeeId}
+                      options={(employeeOptions ?? []).map((option) => ({
+                        value: option.id,
+                        label: option.name,
+                        // Department is no longer a search criterion, so it
+                        // no longer appears here either — FIN + Employee ID
+                        // instead, matching what's actually searchable.
+                        hint: option.finCode ? `FIN: ${option.finCode} | ${option.id}` : option.id,
+                        // Matches on name (first/last/full — a substring
+                        // search over the full name already covers all
+                        // three), Employee ID, and FIN — never department.
+                        searchValue: [option.name, option.id, option.finCode].filter(Boolean).join(" "),
+                      }))}
+                      placeholder={t("employeeStep.placeholder")}
+                      searchPlaceholder={t("employeeStep.searchPlaceholder")}
+                      emptyText={t("employeeStep.emptyText")}
+                    />
+                  </Field>
+                </CardContent>
+              </Card>
+            ) : null}
+            {stepIndex === detailsStepIndex ? (
+              <Card>
+                <CardContent>
+                  <LeaveRequestDetailsStep data={details} onChange={patch} leaveTypes={leaveTypes} errors={errors} />
+                </CardContent>
+              </Card>
+            ) : null}
+            {stepIndex === reviewStepIndex && evaluation ? (
+              <LeaveRequestReviewStep
+                evaluation={evaluation}
+                employeeName={selectedEmployeeName}
+                leaveTypeName={leaveType?.name ?? ""}
+                unit={leaveType?.unit ?? "DAYS"}
+                file={file}
+                onFileChange={setFile}
+              />
+            ) : null}
+          </div>
         </div>
       </div>
 

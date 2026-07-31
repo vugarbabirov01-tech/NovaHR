@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { useTranslations } from "next-intl"
-import { CalendarCheck, CalendarClock, CalendarMinus, CalendarPlus, Loader2 } from "lucide-react"
+import { CalendarCheck, CalendarClock, CalendarMinus, CalendarPlus, Hourglass, Loader2 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -120,6 +120,16 @@ export function LeaveTab({ profile }: LeaveTabProps) {
 
   const leaveTypeById = new Map(leaveTypes.map((leaveType) => [leaveType.id, leaveType]))
 
+  // The balance summary above this tab's Requests/History sections is still
+  // scoped to Annual Leave only (its own card, its own empty state below),
+  // but the request wizard itself works with whatever active leave types
+  // are configured — HR chooses the type when submitting, same as any other
+  // leave type in the system.
+  const annualLeaveType = leaveTypes.find((leaveType) => leaveType.code === "ANNUAL")
+  const annualBalance = annualLeaveType
+    ? summary.find((balance) => balance.leaveTypeId === annualLeaveType.id)
+    : undefined
+
   if (isLoading) {
     return (
       <Card>
@@ -154,57 +164,67 @@ export function LeaveTab({ profile }: LeaveTabProps) {
         )}
       </div>
 
-      {leaveTypes.length === 0 ? (
+      {!annualLeaveType || !annualBalance ? (
         <Card>
           <CardContent>
-            <EmptyState icon={CalendarClock} title={t("noLeaveTypes")} description={t("noLeaveTypesDescription")} />
+            <EmptyState
+              icon={CalendarClock}
+              title={t("noAnnualLeaveType")}
+              description={t("noAnnualLeaveTypeDescription")}
+            />
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {summary.map((balance) => {
-            const leaveType = leaveTypeById.get(balance.leaveTypeId)
-            const unit = leaveType?.unit ?? "DAYS"
-            return (
-              <Card key={balance.leaveTypeId}>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">
-                    {leaveType?.name ?? balance.leaveTypeId}
-                  </CardTitle>
-                </CardHeader>
-                {/* Same KpiCard used on the Leave Dashboard (LeaveSummarySection)
-                 * — identical sizing, spacing, typography, icons, and
-                 * tooltips, per-leave-type instead of org-wide. */}
-                <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <KpiCard
-                    label={t("openingBalance")}
-                    tooltip={tTooltips("openingBalance", { year: currentYear })}
-                    value={formatLeaveUnitAmount(t, balance.opening, unit)}
-                    icon={CalendarPlus}
-                  />
-                  <KpiCard
-                    label={t("carriedForward")}
-                    tooltip={tTooltips("carriedForward")}
-                    value={formatLeaveUnitAmount(t, balance.carriedForward, unit)}
-                    icon={CalendarClock}
-                  />
-                  <KpiCard
-                    label={t("taken")}
-                    tooltip={tTooltips("taken")}
-                    value={formatLeaveUnitAmount(t, balance.taken, unit)}
-                    icon={CalendarMinus}
-                  />
-                  <KpiCard
-                    label={t("remaining")}
-                    tooltip={tTooltips("remaining")}
-                    value={formatLeaveUnitAmount(t, balance.remaining, unit)}
-                    icon={CalendarCheck}
-                  />
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+        // Annual Leave only — this tab is scoped to the employee's normal
+        // annual leave balance, not every configured leave type. Full width
+        // panel is what lets the metric grid below actually reach 4 columns
+        // on desktop.
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">{annualLeaveType.name}</CardTitle>
+          </CardHeader>
+          {/* Same KpiCard used on the Leave Dashboard (LeaveSummarySection)
+           * — identical sizing, spacing, typography, icons, and tooltips.
+           * Mobile: 1 column. Tablet (sm, 640px+): 2x2. Desktop (lg,
+           * 1024px+): all 4 in one row. */}
+          <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <KpiCard
+              label={t("openingBalance")}
+              tooltip={tTooltips("openingBalance", { year: currentYear })}
+              value={formatLeaveUnitAmount(t, annualBalance.opening, annualLeaveType.unit)}
+              icon={CalendarPlus}
+            />
+            <KpiCard
+              label={t("carriedForward")}
+              tooltip={tTooltips("carriedForward")}
+              value={formatLeaveUnitAmount(t, annualBalance.carriedForward, annualLeaveType.unit)}
+              icon={CalendarClock}
+            />
+            <KpiCard
+              label={t("taken")}
+              tooltip={tTooltips("taken")}
+              value={formatLeaveUnitAmount(t, annualBalance.taken, annualLeaveType.unit)}
+              icon={CalendarMinus}
+            />
+            <KpiCard
+              label={t("remaining")}
+              tooltip={tTooltips("remaining")}
+              value={formatLeaveUnitAmount(t, annualBalance.remaining, annualLeaveType.unit)}
+              icon={CalendarCheck}
+            />
+            {/* Pending requests reserve nothing from the ledger (submitting
+             * never writes a ledger entry — see submitLeaveRequestAction),
+             * so Remaining above is intentionally unaffected by them. This
+             * is the one place that pending total is surfaced instead, so
+             * "why didn't my balance drop" has a visible answer. */}
+            <KpiCard
+              label={t("pending")}
+              tooltip={tTooltips("pending")}
+              value={formatLeaveUnitAmount(t, annualBalance.pending, annualLeaveType.unit)}
+              icon={Hourglass}
+            />
+          </CardContent>
+        </Card>
       )}
 
       <Card>
@@ -296,7 +316,7 @@ export function LeaveTab({ profile }: LeaveTabProps) {
         <LeaveRequestWizardModal
           open={isWizardOpen}
           onOpenChange={setIsWizardOpen}
-          profile={profile}
+          employee={{ id: profile.id, name: `${profile.personal.firstName} ${profile.personal.lastName}` }}
           leaveTypes={leaveTypes}
           onSuccess={handleWizardSuccess}
         />

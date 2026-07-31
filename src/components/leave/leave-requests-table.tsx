@@ -1,14 +1,20 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState, useTransition } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useTranslations } from "next-intl"
-import { CalendarClock } from "lucide-react"
+import { CalendarClock, Check, Eye, Loader2, X, XCircle } from "lucide-react"
 
 import { Link } from "@/i18n/navigation"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/common/data-table"
 import { LeaveRequestStatusBadge } from "@/components/leave/leave-request-status-badge"
+import {
+  approveLeaveRequestAction,
+  cancelLeaveRequestAction,
+  rejectLeaveRequestAction,
+} from "@/lib/leave/leave-request-actions"
 import { formatLeaveUnitAmount } from "@/lib/leave/leave-unit-format"
 import { formatLeaveDate } from "@/lib/leave/leave-date-format"
 import type { LeaveRequestLifecycleStatus, LeaveUnit } from "@/generated/prisma/enums"
@@ -19,7 +25,10 @@ import type { LeaveRequestLifecycleStatus, LeaveUnit } from "@/generated/prisma/
  * page.tsx (which can safely import the in-memory employee directory);
  * shipping that whole directory into this client component's bundle just
  * to resolve a few dozen names would be wasteful. Same reasoning
- * EmployeeListItem already applies to the Employee List.
+ * EmployeeListItem already applies to the Employee List. workingDays,
+ * requestedBy, and approvalLevel are likewise resolved server-side —
+ * workingDays via the same Leave Policy Resolution engine the request
+ * wizard uses (calculateReturnToWork), never recomputed here.
  */
 export interface LeaveRequestRow {
   id: string
@@ -32,11 +41,100 @@ export interface LeaveRequestRow {
   startDate: string
   endDate: string
   requestedUnits: number
+  workingDays: number
   status: LeaveRequestLifecycleStatus
+  requestedBy: string
+  approvalLevel: string
 }
 
 interface LeaveRequestsTableProps {
   rows: LeaveRequestRow[]
+}
+
+type DecisionResult = { success: boolean; error?: string }
+
+/**
+ * View/Approve/Reject/Cancel for a row — the interactive bit that makes
+ * this table an actual HR approval queue rather than a read-only list.
+ * Approve/Reject only for PENDING_APPROVAL; Cancel for anything still
+ * PENDING_APPROVAL or already APPROVED (cancelLeaveRequestAction's own
+ * validation — see leave-request-decision-service.ts). Calls Server
+ * Actions directly; each one calls revalidatePath server-side, so a
+ * successful decision refreshes this table's rows (and every other Leave
+ * balance surface) without any client-side refetch code here.
+ */
+function RequestRowActions({ row }: { row: LeaveRequestRow }) {
+  const t = useTranslations("Leave.dashboard.table")
+  const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+
+  function decide(action: (id: string) => Promise<DecisionResult>) {
+    setError(null)
+    startTransition(async () => {
+      const result = await action(row.id)
+      if (!result.success) setError(result.error ?? t("decisionError"))
+    })
+  }
+
+  const canDecide = row.status === "PENDING_APPROVAL"
+  const canCancel = row.status === "PENDING_APPROVAL" || row.status === "APPROVED"
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t("view")}
+          nativeButton={false}
+          render={<Link href={`/employees/${row.employeeId}?tab=leave`} />}
+        >
+          <Eye className="size-4 text-muted-foreground" strokeWidth={1.75} />
+        </Button>
+        {canDecide ? (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("approve")}
+              disabled={isPending}
+              onClick={() => decide(approveLeaveRequestAction)}
+            >
+              {isPending ? (
+                <Loader2 className="size-4 animate-spin" strokeWidth={1.75} />
+              ) : (
+                <Check className="size-4 text-status-good" strokeWidth={1.75} />
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("reject")}
+              disabled={isPending}
+              onClick={() => decide((id) => rejectLeaveRequestAction(id))}
+            >
+              <X className="size-4 text-status-critical" strokeWidth={1.75} />
+            </Button>
+          </>
+        ) : null}
+        {canCancel ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t("cancel")}
+            disabled={isPending}
+            onClick={() => decide((id) => cancelLeaveRequestAction(id))}
+          >
+            <XCircle className="size-4 text-muted-foreground" strokeWidth={1.75} />
+          </Button>
+        ) : null}
+      </div>
+      {error ? <span className="text-xs text-status-critical">{error}</span> : null}
+    </div>
+  )
 }
 
 /**
@@ -45,9 +143,9 @@ interface LeaveRequestsTableProps {
  * getAllLeaveRequestsAction, the org-wide sibling of that tab's
  * getLeaveRequestsForEmployeeAction), same status badge
  * (LeaveRequestStatusBadge) and unit formatting (formatLeaveUnitAmount) as
- * the tab, rendered as a table instead of a per-employee list. Clicking a
- * row deep-links into that employee's own Leave tab (?tab=leave) rather
- * than duplicating the balance/history detail here.
+ * the tab, rendered as a table instead of a per-employee list. This is the
+ * Leave Dashboard's approval queue: every row exposes View, and Approve/
+ * Reject/Cancel where the request's current status permits them.
  */
 export function LeaveRequestsTable({ rows }: LeaveRequestsTableProps) {
   const t = useTranslations("Leave.dashboard.table")
@@ -70,12 +168,14 @@ export function LeaveRequestsTable({ rows }: LeaveRequestsTableProps) {
                 {row.original.employeeInitials}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
-              <span className="font-medium text-foreground">{row.original.employeeName}</span>
-              <span className="text-xs text-muted-foreground">{row.original.employeeDepartment}</span>
-            </div>
+            <span className="font-medium text-foreground">{row.original.employeeName}</span>
           </Link>
         ),
+      },
+      {
+        id: "department",
+        header: t("department"),
+        cell: ({ row }) => <span className="text-muted-foreground">{row.original.employeeDepartment}</span>,
       },
       {
         id: "leaveType",
@@ -92,11 +192,11 @@ export function LeaveRequestsTable({ rows }: LeaveRequestsTableProps) {
         ),
       },
       {
-        id: "units",
-        header: t("units"),
+        id: "workingDays",
+        header: t("workingDays"),
         cell: ({ row }) => (
           <span className="font-medium tabular-nums text-foreground">
-            {formatLeaveUnitAmount(tUnit, row.original.requestedUnits, row.original.unit)}
+            {formatLeaveUnitAmount(tUnit, row.original.workingDays, row.original.unit)}
           </span>
         ),
       },
@@ -104,6 +204,21 @@ export function LeaveRequestsTable({ rows }: LeaveRequestsTableProps) {
         id: "status",
         header: t("status"),
         cell: ({ row }) => <LeaveRequestStatusBadge status={row.original.status} />,
+      },
+      {
+        id: "requestedBy",
+        header: t("requestedBy"),
+        cell: ({ row }) => <span className="text-muted-foreground">{row.original.requestedBy}</span>,
+      },
+      {
+        id: "approvalLevel",
+        header: t("approvalLevel"),
+        cell: ({ row }) => <span className="text-muted-foreground tabular-nums">{row.original.approvalLevel}</span>,
+      },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => <RequestRowActions row={row.original} />,
       },
     ],
     [t, tUnit, monthsShort]
