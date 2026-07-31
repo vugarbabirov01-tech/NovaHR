@@ -19,6 +19,12 @@ export interface LeaveBalanceStatement {
   employeeId: string
   leaveTypeId: string
   asOfDate: string
+  /** SUM(OPENING_BALANCE + IMPORTED_BALANCE) ledger rows — unless no such
+   * row has ever been recorded for this employee/type, in which case this
+   * falls back to the employee's computed entitlement (ANNUAL leave only,
+   * from resolveAnnualLeaveEntitlement — see computeLeaveBalance). Real
+   * ledger data always wins over the computed fallback; the fallback only
+   * fills the gap before an opening balance has actually been imported. */
   opening: number
   accrued: number
   carriedForward: number
@@ -28,11 +34,19 @@ export interface LeaveBalanceStatement {
   settled: number
   encashed: number
   /** The authoritative figure — always the raw SUM(amount) over every
-   * ledger row, computed independently of the display buckets above (which
-   * are sign-flipped for readability and must never be re-summed to derive
-   * this). If this and a hand re-sum of the buckets ever disagree, this
-   * value is the one that's correct. */
+   * ledger row (plus the same entitlement fallback `opening` uses, kept in
+   * sync so the two never disagree), computed independently of the display
+   * buckets above (which are sign-flipped for readability and must never
+   * be re-summed to derive this). If this and a hand re-sum of the buckets
+   * ever disagree, this value is the one that's correct. */
   remaining: number
+  /** SUM(requestedUnits) of this employee's PENDING_APPROVAL LeaveRequest
+   * rows for this leave type — not ledger data (submitting a request never
+   * writes a ledger entry; see leave-request-actions.ts), so it neither
+   * reduces `remaining` nor comes from the ledger. Surfaced here so every
+   * consumer shows the same "reserved but not yet decided" figure instead
+   * of only the post-decision balance. */
+  pending: number
 }
 
 /**
@@ -49,4 +63,7 @@ export interface OrgLeaveDaysSummary {
   totalCarriedForward: number
   totalTaken: number
   totalRemaining: number
+  /** SUM of every LeaveBalanceStatement.pending across the org, DAYS-unit
+   * types only — same scoping reason as the totals above. */
+  totalPending: number
 }

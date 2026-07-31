@@ -34,8 +34,23 @@ function addDays(date: Date, days: number): Date {
   return next
 }
 
+/**
+ * Serializes a Date to "yyyy-MM-dd" using its LOCAL calendar components, not
+ * `.toISOString()`. Every Date this module produces (start, cursor,
+ * lastLeaveDay, returnToWorkDate, ...) is built via startOfDay/addDays,
+ * which mutate via setHours/setDate — local-timezone operations. Reading
+ * one back with `.toISOString()` (UTC) silently rolls it back a calendar
+ * day in any timezone ahead of UTC (e.g. Asia/Baku, UTC+4: local midnight
+ * Aug 3 is 2026-08-02T20:00:00Z, so `.toISOString().slice(0, 10)` returned
+ * "2026-08-02" for a date the user picked as Aug 3). Local getters match
+ * the local mutation these Dates were built with, so no round trip through
+ * UTC ever happens.
+ */
 function toDateOnlyIso(date: Date): string {
-  return date.toISOString().slice(0, 10)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
 }
 
 function parseWorkingDays(workingDays: string): Set<number> {

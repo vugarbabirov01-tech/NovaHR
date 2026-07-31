@@ -1,5 +1,7 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
+
 import {
   createLeaveRequest,
   findLeaveRequestById,
@@ -8,6 +10,11 @@ import {
   type LeaveRequest,
 } from "@/repositories/leave-request-repository"
 import { evaluateLeaveRequest, type LeaveRequestEvaluation } from "@/lib/leave/leave-request-service"
+import {
+  approveLeaveRequest,
+  rejectLeaveRequest,
+  cancelLeaveRequest,
+} from "@/lib/leave/leave-request-decision-service"
 import { leaveRequestInputSchema } from "@/lib/validation/leave"
 import { uploadDocument } from "@/lib/documents/document-service"
 import { DocumentEntityType } from "@/lib/documents/document-entity-types"
@@ -15,11 +22,24 @@ import { LeaveAuditAction, LeaveAuditEntityType, recordLeaveAudit } from "@/lib/
 import { eventBus } from "@/lib/event-bus/in-memory-event-bus"
 import { LeaveEventType } from "@/lib/event-bus/leave-event-types"
 
+/** revalidatePath after every write in this file — submitting, approving,
+ * rejecting, and cancelling all change Pending/Used/Current Balance on
+ * both the org dashboard and the affected employee's own profile. The
+ * Employee Profile tab already client-refetches after a successful action,
+ * but the /leave dashboard is a Server Component read on navigation, so
+ * without this it would keep serving Next's cached render until an
+ * unrelated revalidation happened to clear it. */
+function revalidateLeaveSurfaces() {
+  revalidatePath("/[locale]/leave", "page")
+  revalidatePath("/[locale]/employees/[id]", "page")
+}
+
 /**
  * getLeaveRequestsForEmployeeAction/getLeaveRequestByIdAction are read-only,
- * unchanged since Phase 2. Phase 3B adds the first writers: preview (no
- * write at all) and submit (creates a PENDING_APPROVAL request — never a
- * ledger entry, never an approval decision; that's still out of scope).
+ * unchanged since Phase 2. submit/approve/reject/cancel below are the
+ * writers — submit creates a PENDING_APPROVAL request (no ledger entry);
+ * approve/reject/cancel are Phase 4's decision actions, thin wrappers
+ * around leave-request-decision-service.ts's business rules.
  */
 export async function getLeaveRequestsForEmployeeAction(employeeId: string): Promise<LeaveRequest[]> {
   return findLeaveRequestsByEmployee(employeeId)
@@ -191,5 +211,102 @@ export async function submitLeaveRequestAction(formData: FormData): Promise<Subm
     timestamp: new Date().toISOString(),
   })
 
+  // A new PENDING_APPROVAL request changes the Pending Leave total (and,
+  // for a first-ever request, may be what first makes an opening-balance
+  // fallback kick in) on both the org-wide dashboard and this employee's
+  // own profile — the Employee Profile tab already client-refetches after
+  // a successful submit, but the /leave dashboard is a Server Component
+  // read on navigation, so without this it would keep serving Next's
+  // cached render until an unrelated revalidation happened to clear it.
+  revalidateLeaveSurfaces()
+
   return { success: true, data: { leaveRequest, documentUploaded } }
+}
+
+export interface LeaveRequestDecisionActionResult {
+  success: boolean
+  data?: { leaveRequest: LeaveRequest }
+  error?: string
+}
+
+/**
+ * The only place a PENDING_APPROVAL request becomes APPROVED — writes the
+ * LEAVE_TAKEN ledger entry (see leave-request-decision-service.ts for the
+ * full Pending/Approved/Rejected/Cancelled rule this implements).
+ */
+export async function approveLeaveRequestAction(leaveRequestId: string): Promise<LeaveRequestDecisionActionResult> {
+  try {
+    const { leaveRequest } = await approveLeaveRequest(leaveRequestId)
+    await recordLeaveAudit({
+      entityType: LeaveAuditEntityType.LeaveRequest,
+      entityId: leaveRequest.id,
+      action: LeaveAuditAction.LeaveRequestApproved,
+      actor: "HR",
+    })
+    await eventBus.publish({
+      id: `EVT-${leaveRequest.id}-${LeaveEventType.LeaveRequestApproved}`,
+      type: LeaveEventType.LeaveRequestApproved,
+      payload: { employeeId: leaveRequest.employeeId, leaveRequestId: leaveRequest.id },
+      timestamp: new Date().toISOString(),
+    })
+    revalidateLeaveSurfaces()
+    return { success: true, data: { leaveRequest } }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Could not approve leave request." }
+  }
+}
+
+/** Never writes a ledger entry — a rejected request had nothing to
+ * reverse, since PENDING_APPROVAL never touched the ledger either. */
+export async function rejectLeaveRequestAction(
+  leaveRequestId: string,
+  reason?: string
+): Promise<LeaveRequestDecisionActionResult> {
+  try {
+    const { leaveRequest } = await rejectLeaveRequest(leaveRequestId, reason)
+    await recordLeaveAudit({
+      entityType: LeaveAuditEntityType.LeaveRequest,
+      entityId: leaveRequest.id,
+      action: LeaveAuditAction.LeaveRequestRejected,
+      actor: "HR",
+    })
+    await eventBus.publish({
+      id: `EVT-${leaveRequest.id}-${LeaveEventType.LeaveRequestRejected}`,
+      type: LeaveEventType.LeaveRequestRejected,
+      payload: { employeeId: leaveRequest.employeeId, leaveRequestId: leaveRequest.id },
+      timestamp: new Date().toISOString(),
+    })
+    revalidateLeaveSurfaces()
+    return { success: true, data: { leaveRequest } }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Could not reject leave request." }
+  }
+}
+
+/** Cancels either a still-pending or an already-approved request. Only the
+ * approved case writes a reversing LEAVE_CANCELLED ledger entry — see
+ * leave-request-decision-service.ts. */
+export async function cancelLeaveRequestAction(
+  leaveRequestId: string,
+  reason?: string
+): Promise<LeaveRequestDecisionActionResult> {
+  try {
+    const { leaveRequest } = await cancelLeaveRequest(leaveRequestId, reason)
+    await recordLeaveAudit({
+      entityType: LeaveAuditEntityType.LeaveRequest,
+      entityId: leaveRequest.id,
+      action: LeaveAuditAction.LeaveRequestCancelled,
+      actor: "HR",
+    })
+    await eventBus.publish({
+      id: `EVT-${leaveRequest.id}-${LeaveEventType.LeaveRequestCancelled}`,
+      type: LeaveEventType.LeaveRequestCancelled,
+      payload: { employeeId: leaveRequest.employeeId, leaveRequestId: leaveRequest.id },
+      timestamp: new Date().toISOString(),
+    })
+    revalidateLeaveSurfaces()
+    return { success: true, data: { leaveRequest } }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Could not cancel leave request." }
+  }
 }

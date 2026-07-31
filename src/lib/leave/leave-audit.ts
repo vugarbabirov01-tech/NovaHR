@@ -41,6 +41,9 @@ export const LeaveAuditAction = {
   HolidayRestored: "holiday.restored",
   LeaveLedgerEntryRecorded: "leave_ledger_entry.recorded",
   LeaveRequestSubmitted: "leave_request.submitted",
+  LeaveRequestApproved: "leave_request.approved",
+  LeaveRequestRejected: "leave_request.rejected",
+  LeaveRequestCancelled: "leave_request.cancelled",
 } as const
 export type LeaveAuditActionName = (typeof LeaveAuditAction)[keyof typeof LeaveAuditAction]
 
