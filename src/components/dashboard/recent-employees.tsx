@@ -16,39 +16,42 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { buttonVariants } from "@/components/ui/button"
 import { DataTable } from "@/components/common/data-table"
-import { StatusBadge } from "@/components/common/status-badge"
-import { recentEmployees } from "@/data/employees"
-import type { Employee } from "@/types/employee"
+import { EmploymentStatusBadge } from "@/components/employees/employment-status-badge"
+import { WorkStatusBadge } from "@/components/employees/work-status-badge"
+import { getFullName, getInitials } from "@/lib/employees"
+import type { WorkStatus } from "@/lib/employee-work-status"
+import type { EmployeeListItem } from "@/types/employee-profile"
 
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase()
+interface RecentEmployeesProps {
+  /** The 5 most recently hired employees — resolved server-side from the
+   * real employeeDirectory (dashboard/page.tsx), not the disconnected mock
+   * array this widget used to read from. */
+  employees: EmployeeListItem[]
+  /** Resolved once, server-side, by resolveWorkStatus — this component
+   * never computes it itself. */
+  workStatusByEmployeeId: Record<string, WorkStatus>
 }
 
-export function RecentEmployees() {
+export function RecentEmployees({ employees, workStatusByEmployeeId }: RecentEmployeesProps) {
   const t = useTranslations("RecentEmployees")
 
-  const columns: ColumnDef<Employee>[] = [
+  const columns: ColumnDef<EmployeeListItem>[] = [
     {
-      accessorKey: "name",
+      id: "name",
       header: t("columnEmployee"),
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <Avatar size="sm">
             <AvatarFallback className="bg-accent text-accent-foreground text-[11px]">
-              {initials(row.original.name)}
+              {getInitials(row.original.firstName, row.original.lastName)}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
             <span className="font-medium text-foreground">
-              {row.original.name}
+              {getFullName(row.original)}
             </span>
             <span className="text-xs text-muted-foreground">
-              {row.original.role}
+              {row.original.position}
             </span>
           </div>
         </div>
@@ -62,9 +65,16 @@ export function RecentEmployees() {
       ),
     },
     {
-      accessorKey: "status",
+      id: "employmentStatus",
       header: t("columnStatus"),
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <EmploymentStatusBadge status={row.original.employmentStatus} />,
+    },
+    {
+      id: "workStatus",
+      header: t("columnWorkStatus"),
+      cell: ({ row }) => (
+        <WorkStatusBadge status={workStatusByEmployeeId[row.original.id] ?? "AT_WORK"} />
+      ),
     },
   ]
 
@@ -85,7 +95,7 @@ export function RecentEmployees() {
       <CardContent>
         <DataTable
           columns={columns}
-          data={recentEmployees.slice(0, 5)}
+          data={employees}
           emptyIcon={Inbox}
           emptyTitle={t("emptyTitle")}
           emptyDescription={t("emptyDescription")}

@@ -1,4 +1,6 @@
 import { employeeDirectory } from "@/data/employee-directory"
+import { findAllLeaveRequests } from "@/repositories/leave-request-repository"
+import { findActiveLeaveByEmployee } from "@/lib/leave/leave-active-status"
 
 export interface DashboardKpis {
   totalEmployees: number
@@ -15,15 +17,25 @@ export interface DashboardKpis {
  * rule. There is no historical month-over-month snapshot to compute a real
  * trend delta from, so none is fabricated here — the KPI cards simply don't
  * show one.
+ *
+ * onLeave used to filter employmentStatus === "on-leave" — a static field
+ * nothing ever recomputed, so it silently went stale the moment a leave
+ * request was approved or its dates passed. It now shares the exact same
+ * "who's on approved leave today" computation the Leave Dashboard's
+ * "Employees Currently on Leave" KPI and each employee's WorkStatus badge
+ * use (findActiveLeaveByEmployee), so this count can never disagree with
+ * either of them.
  */
-export function getDashboardKpis(): DashboardKpis {
+export async function getDashboardKpis(): Promise<DashboardKpis> {
   const totalEmployees = employeeDirectory.filter(
     (employee) => employee.employmentStatus !== "terminated"
   ).length
   const activeEmployees = employeeDirectory.filter(
     (employee) => employee.employmentStatus === "active"
   ).length
-  const onLeave = employeeDirectory.filter((employee) => employee.employmentStatus === "on-leave").length
+
+  const requests = await findAllLeaveRequests()
+  const onLeave = findActiveLeaveByEmployee(requests).size
 
   const now = new Date()
   const newHires = employeeDirectory.filter((employee) => {

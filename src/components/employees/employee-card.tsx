@@ -13,15 +13,19 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { EmploymentStatusBadge } from "@/components/employees/employment-status-badge"
+import { WorkStatusBadge } from "@/components/employees/work-status-badge"
 import { SmartFilterBadge } from "@/components/employees/smart-filter-badge"
 import { EmployeeQuickActions } from "@/components/employees/EmployeeQuickActions"
 import { calculateAgeFromDateOfBirth, getFullName, getInitials } from "@/lib/employees"
 import type { SmartFilterDefinition } from "@/lib/employee-smart-filters"
+import type { WorkStatus } from "@/lib/employee-work-status"
 import type { EmployeeListItem } from "@/types/employee-profile"
 
 interface EmployeeCardProps {
   employee: EmployeeListItem
+  /** Resolved once per page load by resolveWorkStatus (see
+   * employees/page.tsx) — this component never computes it itself. */
+  workStatus: WorkStatus
   onEditEmployee?: (employee: { id: string; fullName: string }) => void
   /** The currently-active HR Action Center card, if any — shown as a
    * temporary badge above the name. Not persisted anywhere; it only reflects
@@ -29,7 +33,7 @@ interface EmployeeCardProps {
   activeSmartFilter?: SmartFilterDefinition | null
 }
 
-export function EmployeeCard({ employee, onEditEmployee, activeSmartFilter }: EmployeeCardProps) {
+export function EmployeeCard({ employee, workStatus, onEditEmployee, activeSmartFilter }: EmployeeCardProps) {
   const t = useTranslations("Employees.card")
   const tTable = useTranslations("Employees.table")
   const fullName = getFullName(employee)
@@ -60,7 +64,14 @@ export function EmployeeCard({ employee, onEditEmployee, activeSmartFilter }: Em
               {fullName}
             </span>
             <span className="truncate text-sm text-muted-foreground">{employee.position}</span>
-            <EmploymentStatusBadge status={employee.employmentStatus} />
+            {/* Employment Status (Active/Terminated/...) is intentionally
+             * not shown here — it's implied by the employee even appearing
+             * in this (already Active-filtered) list, and showing it next
+             * to Work Status produced redundant pairs like "Aktiv · İşdə".
+             * EmploymentStatus itself is untouched everywhere else
+             * (filtering, reports, the Profile header) — this is the one
+             * surface that only ever renders WorkStatus now. */}
+            <WorkStatusBadge status={workStatus} />
             <span className="text-xs text-muted-foreground tabular-nums">{employee.finCode}</span>
           </div>
         </Link>

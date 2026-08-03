@@ -7,15 +7,20 @@ import { Link } from "@/i18n/navigation"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { buttonVariants } from "@/components/ui/button"
 import { EmploymentStatusBadge } from "@/components/employees/employment-status-badge"
+import { WorkStatusBadge } from "@/components/employees/work-status-badge"
 import { getFullName, getInitials } from "@/lib/employees"
 import { cn } from "@/lib/utils"
+import type { WorkStatus } from "@/lib/employee-work-status"
 import type { EmployeeProfile } from "@/types/employee-profile"
 
 interface ProfileHeaderProps {
   profile: EmployeeProfile
+  /** Resolved once per page load by resolveWorkStatus (see
+   * employees/[id]/page.tsx) — this component never computes it itself. */
+  workStatus: WorkStatus
 }
 
-export function ProfileHeader({ profile }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, workStatus }: ProfileHeaderProps) {
   const t = useTranslations("Employees.profile")
   const name = getFullName(profile.personal)
 
@@ -42,6 +47,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                 {name}
               </h1>
               <EmploymentStatusBadge status={profile.employmentStatus} />
+              <WorkStatusBadge status={workStatus} />
             </div>
             <p className="text-sm text-muted-foreground">
               {profile.employment.position} · {profile.employment.department}

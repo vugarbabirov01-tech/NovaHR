@@ -69,11 +69,18 @@
   "Status": {
     "active": "Active",
     "probation": "Probation",
-    "onLeave": "On Leave",
-    "businessTrip": "Business Trip",
     "suspended": "Suspended",
     "terminated": "Terminated",
     "inactive": "Inactive"
+  },
+  "WorkStatus": {
+    "atWork": "At Work",
+    "onLeave": "On Leave",
+    "onSickLeave": "On Sick Leave",
+    "onPaternityLeave": "On Paternity Leave",
+    "onMaternityLeave": "On Maternity Leave",
+    "onUnpaidLeave": "On Unpaid Leave",
+    "onBusinessTrip": "On Business Trip"
   },
   "Dashboard": {
     "title": "Dashboard",
@@ -141,6 +148,7 @@
     "columnEmployee": "Employee",
     "columnDepartment": "Department",
     "columnStatus": "Status",
+    "columnWorkStatus": "Work Status",
     "emptyTitle": "No records found",
     "emptyDescription": "There is no data to display yet."
   },
@@ -509,6 +517,7 @@
       "columnWorkLocation": "Work Location",
       "columnEmploymentType": "Employment Type",
       "columnStatus": "Status",
+      "columnWorkStatus": "Work Status",
       "columnHireDate": "Hire Date",
       "columnActions": "Actions",
       "columns": "Columns",
@@ -1183,7 +1192,22 @@
         "remainingAfterApprovalTooltip": "The leave balance that will remain after this request is approved (Current Balance − Requested Days).",
         "attachment": "Leave Application (optional)",
         "attachmentHint": "Upload the employee's signed leave application — PDF, JPG, or PNG.",
-        "submitError": "Could not submit the leave request. Please try again."
+        "submitError": "Could not submit the leave request. Please try again.",
+        "paymentSectionTitle": "Leave Payment",
+        "paymentAverageMonthlySalary": "Average Monthly Salary",
+        "paymentAverageDailySalary": "Average Daily Salary",
+        "paymentLeaveDays": "Leave Days",
+        "paymentGrossAmount": "Gross Leave Payment",
+        "paymentIncomeTax": "Income Tax",
+        "paymentSocialSecurityFund": "Social Security Fund (DSMF)",
+        "paymentUnemploymentInsurance": "Unemployment Insurance",
+        "paymentMedicalInsurance": "Mandatory Medical Insurance",
+        "paymentNetAmount": "Net Payable Amount",
+        "paymentPending": "Pending",
+        "paymentNotCalculatedNote": "Will be calculated automatically once the Payroll module is active.",
+        "validationSectionTitle": "Validation",
+        "validationDatesValid": "Dates are valid.",
+        "validationEligible": "Employee is eligible for this leave type."
       }
     }
   }

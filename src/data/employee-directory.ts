@@ -321,7 +321,11 @@ const seedEmployeeDirectory: EmployeeProfile[] = [
   },
   {
     id: "EMP-1040",
-    employmentStatus: "on-leave",
+    // Was hardcoded "on-leave" — that's a WorkStatus value, not an
+    // EmploymentStatus one (see the type's own doc comment). Whether this
+    // employee is actually on leave right now is computed live from their
+    // approved LeaveRequest data (resolveWorkStatus), not stored here.
+    employmentStatus: "active",
     employment: {
       employeeNumber: "EMP-1040",
       hireDate: "2026-07-14",

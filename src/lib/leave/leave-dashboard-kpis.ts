@@ -1,3 +1,4 @@
+import { findActiveLeaveByEmployee, utcMidnightOfLocalDate } from "@/lib/leave/leave-active-status"
 import type { LeaveRequest } from "@/repositories/leave-request-repository"
 
 /**
@@ -16,24 +17,6 @@ export interface LeaveDashboardKpis {
   leavesThisMonth: number
   approvedThisMonth: number
   rejectedThisMonth: number
-}
-
-/**
- * LeaveRequest.startDate/endDate are date-ONLY values: submitLeaveRequestAction
- * builds them via `new Date(dateOnlyString)`, which the spec parses as UTC
- * midnight, not local midnight (see the matching doc comment in
- * leave-policy-resolution-service.ts — this is the exact bug that turned
- * "03.08.2026" into "02.08.2026" on the Review step). Comparing them
- * against a *locally*-computed "today"/"this week"/"this month" boundary
- * would silently misclassify a leave starting today as not-today in any
- * timezone that isn't UTC (this deployment runs Asia/Baku, UTC+4). So the
- * boundaries used against startDate/endDate are built with Date.UTC from
- * "now"'s LOCAL calendar date (what a human means by "today"), not with
- * local mutation — matching the UTC-midnight anchor those fields already
- * use, rather than fighting it.
- */
-function utcMidnightOfLocalDate(date: Date): Date {
-  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
 }
 
 /** Monday-anchored week, matching this codebase's existing work-week
@@ -84,7 +67,6 @@ function isWithin(date: Date, start: Date, end: Date): boolean {
 }
 
 export function computeLeaveDashboardKpis(requests: LeaveRequest[], now: Date = new Date()): LeaveDashboardKpis {
-  const today = utcMidnightOfLocalDate(now)
   const weekStart = startOfWeekUtc(now)
   const weekEnd = endOfWeekUtc(now)
   const monthStartUtc = startOfMonthUtc(now)
@@ -96,9 +78,10 @@ export function computeLeaveDashboardKpis(requests: LeaveRequest[], now: Date = 
 
   const pendingApprovals = requests.filter((r) => r.status === "PENDING_APPROVAL").length
 
-  const employeesOnLeave = new Set(
-    approved.filter((r) => r.startDate <= today && today <= r.endDate).map((r) => r.employeeId)
-  ).size
+  // Same computation resolveWorkStatus uses per-employee elsewhere — this
+  // KPI is just the size of that same map, not a separate "who's on leave"
+  // check, so the two can never silently disagree.
+  const employeesOnLeave = findActiveLeaveByEmployee(requests, now).size
 
   const startingThisWeek = approved.filter((r) => isWithin(r.startDate, weekStart, weekEnd)).length
   const endingThisWeek = approved.filter((r) => isWithin(r.endDate, weekStart, weekEnd)).length

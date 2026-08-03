@@ -129,11 +129,14 @@ export function isEmployeeNumberTaken(
   return existingEmployeeNumbers.some((value) => value.trim() === normalized && value.trim() !== excluded)
 }
 
+// Employment Status only — active/probation/suspended/terminated/inactive.
+// "on-leave" and "business-trip" used to live in these lookups; they were
+// WorkStatus values masquerading as EmploymentStatus ones. That live,
+// day-to-day status now comes exclusively from resolveWorkStatus
+// (src/lib/employee-work-status.ts) + WorkStatusBadge — never from here.
 export const statusToneClassName: Record<EmployeeListItem["employmentStatus"], string> = {
   active: "bg-status-good",
   probation: "bg-status-warning",
-  "on-leave": "bg-status-warning",
-  "business-trip": "bg-sky-500",
   suspended: "bg-status-serious",
   terminated: "bg-status-critical",
   inactive: "bg-muted-foreground",
@@ -142,8 +145,6 @@ export const statusToneClassName: Record<EmployeeListItem["employmentStatus"], s
 export const statusTextClassName: Record<EmployeeListItem["employmentStatus"], string> = {
   active: "text-status-good",
   probation: "text-amber-700",
-  "on-leave": "text-amber-700",
-  "business-trip": "text-sky-700",
   suspended: "text-orange-700",
   terminated: "text-status-critical",
   inactive: "text-muted-foreground",
@@ -151,12 +152,10 @@ export const statusTextClassName: Record<EmployeeListItem["employmentStatus"], s
 
 export const statusMessageKeys: Record<
   EmploymentStatus,
-  "active" | "probation" | "onLeave" | "businessTrip" | "suspended" | "terminated" | "inactive"
+  "active" | "probation" | "suspended" | "terminated" | "inactive"
 > = {
   active: "active",
   probation: "probation",
-  "on-leave": "onLeave",
-  "business-trip": "businessTrip",
   suspended: "suspended",
   terminated: "terminated",
   inactive: "inactive",

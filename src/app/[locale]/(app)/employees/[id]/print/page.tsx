@@ -4,6 +4,8 @@ import { setRequestLocale } from "next-intl/server"
 import { PrintEmployeeCard } from "@/components/employees/print-employee-card"
 import { getEmployeeById } from "@/data/employee-directory"
 import { toListItem } from "@/types/employee-profile"
+import { resolveWorkStatus } from "@/lib/employee-work-status"
+import { loadWorkStatusContext } from "@/lib/employee-work-status-loader"
 
 type Props = {
   params: Promise<{ locale: string; id: string }>
@@ -16,5 +18,8 @@ export default async function EmployeeCardPrintPage({ params }: Props) {
   const profile = getEmployeeById(id)
   if (!profile) notFound()
 
-  return <PrintEmployeeCard employee={toListItem(profile)} />
+  const workStatusContext = await loadWorkStatusContext()
+  const workStatus = resolveWorkStatus(profile.id, workStatusContext)
+
+  return <PrintEmployeeCard employee={toListItem(profile)} workStatus={workStatus} />
 }

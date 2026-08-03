@@ -34,7 +34,6 @@ import { SearchInput } from "@/components/common/search-input"
 import { EmptyState } from "@/components/common/empty-state"
 import { EmployeeCard } from "@/components/employees/employee-card"
 import { EmployeeFiltersPanel } from "@/components/employees/employee-filters-panel"
-import { EmployeeSmartFiltersPanel } from "@/components/employees/employee-smart-filters-panel"
 import { EmployeeListTable } from "@/components/employees/employee-list-table"
 import { ViewToggle } from "@/components/employees/view-toggle"
 import { getEmployeeProfileAction, getWizardMasterDataAction } from "@/app/[locale]/(app)/employees/actions"
@@ -44,6 +43,7 @@ import { computeSmartFilterMatches, getEmployeeSmartFilters } from "@/lib/employ
 import { HR_SETTINGS } from "@/lib/hr-settings"
 import { cn } from "@/lib/utils"
 import type { WizardMasterData } from "@/lib/employee-wizard-mapper"
+import type { WorkStatus } from "@/lib/employee-work-status"
 import {
   ALL_VALUE,
   DEFAULT_STATUS_FILTER,
@@ -57,8 +57,6 @@ import type { EmployeeListItem, EmployeeProfile, EmploymentStatus } from "@/type
 const statusFilterOptions: EmploymentStatus[] = [
   "active",
   "probation",
-  "on-leave",
-  "business-trip",
   "suspended",
   "inactive",
   "terminated",
@@ -106,9 +104,14 @@ const ExportEmployeesDialog = dynamic(
 
 interface EmployeeListClientProps {
   employees: EmployeeListItem[]
+  /** Resolved once, server-side, by resolveWorkStatus (see
+   * employees/page.tsx) — plain Record rather than a Map so it serializes
+   * cleanly across the Server->Client boundary. Neither this component nor
+   * EmployeeCard/EmployeeListTable ever compute a work status themselves. */
+  workStatusByEmployeeId: Record<string, WorkStatus>
 }
 
-export function EmployeeListClient({ employees }: EmployeeListClientProps) {
+export function EmployeeListClient({ employees, workStatusByEmployeeId }: EmployeeListClientProps) {
   const t = useTranslations("Employees.list")
   const tStatus = useTranslations("Status")
   const tSmartFilters = useTranslations("Employees.smartFilters")
@@ -369,12 +372,6 @@ export function EmployeeListClient({ employees }: EmployeeListClientProps) {
         </div>
       </div>
 
-      <EmployeeSmartFiltersPanel
-        matches={smartFilterMatches}
-        selectedId={filters.smartFilter}
-        onSelect={handleSmartFilterSelect}
-      />
-
       <div id="employee-results" className="flex flex-col gap-3 scroll-mt-4">
         {activeSmartFilter ? (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
@@ -404,6 +401,7 @@ export function EmployeeListClient({ employees }: EmployeeListClientProps) {
               <EmployeeCard
                 key={employee.id}
                 employee={employee}
+                workStatus={workStatusByEmployeeId[employee.id] ?? "AT_WORK"}
                 onEditEmployee={handleEditEmployee}
                 activeSmartFilter={activeSmartFilter}
               />
@@ -412,6 +410,7 @@ export function EmployeeListClient({ employees }: EmployeeListClientProps) {
         ) : (
           <EmployeeListTable
             data={filtered}
+            workStatusByEmployeeId={workStatusByEmployeeId}
             onEditEmployee={handleEditEmployee}
             onSelectionChange={setSelectedIds}
             activeSmartFilter={activeSmartFilter}

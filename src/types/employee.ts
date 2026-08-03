@@ -1,17 +1,3 @@
-export type EmployeeStatus = "active" | "on-leave" | "inactive"
-
-export interface Employee {
-  id: string
-  name: string
-  avatarUrl?: string
-  email: string
-  role: string
-  department: string
-  status: EmployeeStatus
-  joinedAt: string
-  location: string
-}
-
 export interface UpcomingBirthday {
   id: string
   name: string

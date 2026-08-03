@@ -69,11 +69,18 @@
   "Status": {
     "active": "Активен",
     "probation": "Испытательный срок",
-    "onLeave": "В отпуске",
-    "businessTrip": "В командировке",
     "suspended": "Приостановлен",
     "terminated": "Уволен",
     "inactive": "Неактивен"
+  },
+  "WorkStatus": {
+    "atWork": "На работе",
+    "onLeave": "В отпуске",
+    "onSickLeave": "На больничном",
+    "onPaternityLeave": "В отпуске по уходу (отец)",
+    "onMaternityLeave": "В декретном отпуске",
+    "onUnpaidLeave": "В неоплачиваемом отпуске",
+    "onBusinessTrip": "В командировке"
   },
   "Dashboard": {
     "title": "Панель управления",
@@ -141,6 +148,7 @@
     "columnEmployee": "Сотрудник",
     "columnDepartment": "Отдел",
     "columnStatus": "Статус",
+    "columnWorkStatus": "Рабочий статус",
     "emptyTitle": "Записи не найдены",
     "emptyDescription": "Пока нет данных для отображения."
   },
@@ -509,6 +517,7 @@
       "columnWorkLocation": "Место работы",
       "columnEmploymentType": "Тип занятости",
       "columnStatus": "Статус",
+      "columnWorkStatus": "Рабочий статус",
       "columnHireDate": "Дата найма",
       "columnActions": "Действия",
       "columns": "Столбцы",
@@ -1183,7 +1192,22 @@
         "remainingAfterApprovalTooltip": "Остаток отпуска, который останется после утверждения этой заявки (Текущий остаток − Запрошенные дни).",
         "attachment": "Заявление на отпуск (необязательно)",
         "attachmentHint": "Загрузите подписанное заявление сотрудника на отпуск — PDF, JPG или PNG.",
-        "submitError": "Не удалось отправить заявку на отпуск. Попробуйте ещё раз."
+        "submitError": "Не удалось отправить заявку на отпуск. Попробуйте ещё раз.",
+        "paymentSectionTitle": "Оплата отпуска",
+        "paymentAverageMonthlySalary": "Средняя месячная зарплата",
+        "paymentAverageDailySalary": "Средняя дневная зарплата",
+        "paymentLeaveDays": "Дни отпуска",
+        "paymentGrossAmount": "Валовая сумма отпускных",
+        "paymentIncomeTax": "Налог",
+        "paymentSocialSecurityFund": "ГФСЗ (DSMF)",
+        "paymentUnemploymentInsurance": "Страхование от безработицы",
+        "paymentMedicalInsurance": "Обязательное медицинское страхование",
+        "paymentNetAmount": "Сумма к выплате (нетто)",
+        "paymentPending": "Ожидается",
+        "paymentNotCalculatedNote": "Будет рассчитано автоматически после подключения модуля Payroll.",
+        "validationSectionTitle": "Проверка",
+        "validationDatesValid": "Даты корректны.",
+        "validationEligible": "Сотрудник имеет право на этот вид отпуска."
       }
     }
   }

@@ -7,7 +7,7 @@ import { getDashboardKpis } from "@/lib/dashboard-service"
 export async function KpiSection() {
   const t = await getTranslations("Kpi")
   const format = await getFormatter()
-  const kpis = getDashboardKpis()
+  const kpis = await getDashboardKpis()
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -10,6 +10,10 @@ import { RecentEmployees } from "@/components/dashboard/recent-employees"
 import { UpcomingBirthdays } from "@/components/dashboard/upcoming-birthdays"
 import { RecentActivities } from "@/components/dashboard/recent-activities"
 import { QuickActions } from "@/components/dashboard/quick-actions"
+import { employeeDirectory } from "@/data/employee-directory"
+import { toListItem } from "@/types/employee-profile"
+import { resolveWorkStatus, type WorkStatus } from "@/lib/employee-work-status"
+import { loadWorkStatusContext } from "@/lib/employee-work-status-loader"
 
 
 type Props = {
@@ -30,6 +34,19 @@ export default async function DashboardPage({ params }: Props) {
 
   const t = await getTranslations("Dashboard")
 
+  // Real employeeDirectory data, most recently hired first — replaces the
+  // old disconnected mock array (src/data/employees.ts) this widget used to
+  // read from, which could never agree with the rest of the app.
+  const recentEmployees = [...employeeDirectory]
+    .sort((a, b) => new Date(b.employment.hireDate).getTime() - new Date(a.employment.hireDate).getTime())
+    .slice(0, 5)
+    .map(toListItem)
+  const workStatusContext = await loadWorkStatusContext()
+  const recentEmployeesWorkStatus: Record<string, WorkStatus> = {}
+  for (const employee of recentEmployees) {
+    recentEmployeesWorkStatus[employee.id] = resolveWorkStatus(employee.id, workStatusContext)
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <PageTitle title={t("title")} description={t("description")} />
@@ -47,7 +64,7 @@ export default async function DashboardPage({ params }: Props) {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="xl:col-span-2">
-          <RecentEmployees />
+          <RecentEmployees employees={recentEmployees} workStatusByEmployeeId={recentEmployeesWorkStatus} />
         </div>
         <UpcomingBirthdays />
       </div>

@@ -19,14 +19,16 @@ export const ALL_VALUE = "all"
 
 /**
  * The status filter's own default sentinel — distinct from ALL_VALUE.
- * ALL_VALUE means literally every status, including Terminated/Suspended/
- * Inactive. DEFAULT_STATUS_FILTER means "the normal working-employee view":
- * Active, Probation, On Leave, Business Trip. Terminated (and Suspended/
- * Inactive) only ever show up when explicitly filtered for.
+ * ALL_VALUE means literally every EmploymentStatus, including Terminated/
+ * Suspended/Inactive. DEFAULT_STATUS_FILTER means "the normal
+ * working-employee view": Active, Probation. Terminated/Suspended/Inactive
+ * only ever show up when explicitly filtered for. This is about
+ * EmploymentStatus only — whether someone is at their desk right now
+ * (WorkStatus) is a separate axis and isn't filtered here.
  */
 export const DEFAULT_STATUS_FILTER = "default"
 
-export const DEFAULT_VISIBLE_STATUSES: EmploymentStatus[] = ["active", "probation", "on-leave", "business-trip"]
+export const DEFAULT_VISIBLE_STATUSES: EmploymentStatus[] = ["active", "probation"]
 
 export const defaultEmployeeFilters: EmployeeFilters = {
   search: "",

@@ -4,11 +4,17 @@
 // is expected to read from this shape, so fields are grouped by the legal /
 // operational concern that owns them rather than by UI convenience.
 
+// Employment Status is the legal/administrative relationship with the
+// company — it never changes because of leave. Whether someone is
+// currently at their desk, on leave, or on a business trip is a *different*
+// axis entirely: WorkStatus (src/lib/employee-work-status.ts), computed live
+// from approved LeaveRequest data, never stored here. "on-leave" and
+// "business-trip" used to live in this union and get set once in seed data
+// — that's exactly the bug this split fixes: a static field can't reflect
+// "today" the way a resolver can, so it silently went stale.
 export type EmploymentStatus =
   | "active"
   | "probation"
-  | "on-leave"
-  | "business-trip"
   | "suspended"
   | "terminated"
   | "inactive"

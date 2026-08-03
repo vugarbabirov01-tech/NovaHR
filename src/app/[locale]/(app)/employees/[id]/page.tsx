@@ -8,6 +8,8 @@ import { ProfileHeader } from "@/components/employees/profile/profile-header"
 import { EmployeeProfileTabs } from "@/components/employees/profile/employee-profile-tabs"
 import { employeeDirectory, getEmployeeById } from "@/data/employee-directory"
 import { getFullName } from "@/lib/employees"
+import { resolveWorkStatus } from "@/lib/employee-work-status"
+import { loadWorkStatusContext } from "@/lib/employee-work-status-loader"
 
 type Props = {
   params: Promise<{ locale: string; id: string }>
@@ -34,9 +36,12 @@ export default async function EmployeeProfilePage({ params }: Props) {
   const employee = getEmployeeById(id)
   if (!employee) notFound()
 
+  const workStatusContext = await loadWorkStatusContext()
+  const workStatus = resolveWorkStatus(employee.id, workStatusContext)
+
   return (
     <div className="flex flex-col gap-6">
-      <ProfileHeader profile={employee} />
+      <ProfileHeader profile={employee} workStatus={workStatus} />
       <Suspense
         fallback={
           <div className="flex items-center justify-center py-16">

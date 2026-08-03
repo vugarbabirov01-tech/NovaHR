@@ -7,6 +7,8 @@ import { PageTitle } from "@/components/common/page-title"
 import { EmployeeListClient } from "@/components/employees/employee-list-client"
 import { employeeDirectory } from "@/data/employee-directory"
 import { toListItem } from "@/types/employee-profile"
+import { resolveWorkStatus, type WorkStatus } from "@/lib/employee-work-status"
+import { loadWorkStatusContext } from "@/lib/employee-work-status-loader"
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -27,6 +29,15 @@ export default async function EmployeesPage({ params }: Props) {
   const t = await getTranslations("Employees.list")
   const employees = employeeDirectory.map(toListItem)
 
+  // One fetch for every employee's current work status, instead of one
+  // per row — see loadWorkStatusContext's own doc comment. Plain Record,
+  // not a Map, so it serializes across the Server -> Client boundary.
+  const workStatusContext = await loadWorkStatusContext()
+  const workStatusByEmployeeId: Record<string, WorkStatus> = {}
+  for (const employee of employees) {
+    workStatusByEmployeeId[employee.id] = resolveWorkStatus(employee.id, workStatusContext)
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <PageTitle title={t("title")} description={t("description")} />
@@ -37,7 +48,7 @@ export default async function EmployeesPage({ params }: Props) {
           </div>
         }
       >
-        <EmployeeListClient employees={employees} />
+        <EmployeeListClient employees={employees} workStatusByEmployeeId={workStatusByEmployeeId} />
       </Suspense>
     </div>
   )

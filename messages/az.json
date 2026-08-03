@@ -69,11 +69,18 @@
   "Status": {
     "active": "Aktiv",
     "probation": "Sınaq müddəti",
-    "onLeave": "Məzuniyyətdə",
-    "businessTrip": "Ezamiyyətdə",
     "suspended": "Dayandırılıb",
     "terminated": "İşdən çıxarılıb",
     "inactive": "Qeyri-aktiv"
+  },
+  "WorkStatus": {
+    "atWork": "İşdə",
+    "onLeave": "Məzuniyyətdə",
+    "onSickLeave": "Xəstəlikdə",
+    "onPaternityLeave": "Atalıq Məzuniyyətində",
+    "onMaternityLeave": "Analıq Məzuniyyətində",
+    "onUnpaidLeave": "Ödənişsiz Məzuniyyətdə",
+    "onBusinessTrip": "Ezamiyyətdə"
   },
   "Dashboard": {
     "title": "İdarə paneli",
@@ -141,6 +148,7 @@
     "columnEmployee": "Əməkdaş",
     "columnDepartment": "Şöbə",
     "columnStatus": "Status",
+    "columnWorkStatus": "İş Statusu",
     "emptyTitle": "Qeyd tapılmadı",
     "emptyDescription": "Hələ göstəriləcək məlumat yoxdur."
   },
@@ -509,6 +517,7 @@
       "columnWorkLocation": "İş Yeri",
       "columnEmploymentType": "Məşğulluq Növü",
       "columnStatus": "Status",
+      "columnWorkStatus": "İş Statusu",
       "columnHireDate": "İşə Qəbul Tarixi",
       "columnActions": "Əməliyyatlar",
       "columns": "Sütunlar",
@@ -1183,7 +1192,22 @@
         "remainingAfterApprovalTooltip": "Bu tələb təsdiqləndikdən sonra qalacaq məzuniyyət balansı (Cari Qalıq − Tələb Edilən Günlər).",
         "attachment": "Məzuniyyət Ərizəsi (istəyə bağlı)",
         "attachmentHint": "Əməkdaşın imzalanmış məzuniyyət ərizəsini yükləyin — PDF, JPG və ya PNG.",
-        "submitError": "Məzuniyyət tələbi təqdim edilə bilmədi. Zəhmət olmasa yenidən cəhd edin."
+        "submitError": "Məzuniyyət tələbi təqdim edilə bilmədi. Zəhmət olmasa yenidən cəhd edin.",
+        "paymentSectionTitle": "Məzuniyyət Ödənişi",
+        "paymentAverageMonthlySalary": "Orta Aylıq Əmək Haqqı",
+        "paymentAverageDailySalary": "Orta Gündəlik Əmək Haqqı",
+        "paymentLeaveDays": "Məzuniyyət Günləri",
+        "paymentGrossAmount": "Brüt Məzuniyyət Ödənişi",
+        "paymentIncomeTax": "Vergi",
+        "paymentSocialSecurityFund": "DSMF",
+        "paymentUnemploymentInsurance": "İşsizlik Sığortası",
+        "paymentMedicalInsurance": "İcbari Tibbi Sığorta",
+        "paymentNetAmount": "Net Ödəniləcək Məbləğ",
+        "paymentPending": "Gözlənilir",
+        "paymentNotCalculatedNote": "Payroll modulu aktiv olduqda avtomatik hesablanacaq.",
+        "validationSectionTitle": "Yoxlama",
+        "validationDatesValid": "Tarixlər etibarlıdır.",
+        "validationEligible": "Əməkdaş bu məzuniyyət növünə uyğundur."
       }
     }
   }

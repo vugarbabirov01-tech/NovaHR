@@ -60,15 +60,20 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { EmptyState } from "@/components/common/empty-state"
 import { EmploymentStatusBadge } from "@/components/employees/employment-status-badge"
+import { WorkStatusBadge } from "@/components/employees/work-status-badge"
 import { SmartFilterBadge } from "@/components/employees/smart-filter-badge"
 import { EmployeeQuickActions } from "@/components/employees/EmployeeQuickActions"
 import { employmentTypeMessageKeys, getFullName, getInitials } from "@/lib/employees"
 import type { SmartFilterDefinition } from "@/lib/employee-smart-filters"
+import type { WorkStatus } from "@/lib/employee-work-status"
 import type { EmployeeGroupBy } from "@/types/employee-filters"
 import type { EmployeeListItem } from "@/types/employee-profile"
 
 interface EmployeeListTableProps {
   data: EmployeeListItem[]
+  /** Resolved once per page load by resolveWorkStatus (see
+   * employees/page.tsx) — this component never computes it itself. */
+  workStatusByEmployeeId: Record<string, WorkStatus>
   onEditEmployee?: (employee: { id: string; fullName: string }) => void
   onSelectionChange?: (ids: string[]) => void
   /** The currently-active HR Action Center card, if any — shown as a
@@ -84,6 +89,7 @@ const groupColumnIds: Record<Exclude<EmployeeGroupBy, "none">, string> = {
 
 export function EmployeeListTable({
   data,
+  workStatusByEmployeeId,
   onEditEmployee,
   onSelectionChange,
   activeSmartFilter,
@@ -109,6 +115,7 @@ export function EmployeeListTable({
     workLocation: t("columnWorkLocation"),
     employmentType: t("columnEmploymentType"),
     employmentStatus: t("columnStatus"),
+    workStatus: t("columnWorkStatus"),
     hireDate: t("columnHireDate"),
   }
 
@@ -212,6 +219,13 @@ export function EmployeeListTable({
         cell: ({ row }) => <EmploymentStatusBadge status={row.original.employmentStatus} />,
       },
       {
+        id: "workStatus",
+        header: t("columnWorkStatus"),
+        enableGrouping: false,
+        enableSorting: false,
+        cell: ({ row }) => <WorkStatusBadge status={workStatusByEmployeeId[row.original.id] ?? "AT_WORK"} />,
+      },
+      {
         accessorKey: "hireDate",
         enableGrouping: false,
         header: ({ column }) => (
@@ -247,7 +261,7 @@ export function EmployeeListTable({
         ),
       },
     ],
-    [t, tType, tCommon, onEditEmployee, activeSmartFilter]
+    [t, tType, tCommon, onEditEmployee, activeSmartFilter, workStatusByEmployeeId]
   )
 
   const table = useReactTable({
