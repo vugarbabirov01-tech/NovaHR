@@ -1,9 +1,20 @@
 import { getEmployeeById } from "@/data/employee-directory"
 import type {
+  LeavePaymentSummary,
   PayrollProvider,
   PayrollSettlementContext,
   PayrollSettlementItem,
 } from "@/types/integrations/payroll"
+
+// Placeholder divisor only — the real average daily wage is a statutory
+// calculation over the employee's actual last-12-months Payroll earnings,
+// not a fixed 30. Used solely to estimate a gross figure until the real
+// Payroll engine replaces this whole method.
+const PLACEHOLDER_DAYS_IN_MONTH = 30
+
+function roundToTwoDecimals(value: number): number {
+  return Math.round(value * 100) / 100
+}
 
 /**
  * Temporary adapter. Base Salary/Bonuses/Allowances are real, already-entered
@@ -32,6 +43,36 @@ class MockPayrollProvider implements PayrollProvider {
       { key: "outstandingAssetDeductions", amount: null, currency },
       { key: "estimatedFinalPayment", amount: null, currency },
     ]
+  }
+
+  /**
+   * Same "real now, null until Payroll" split as getFinalSettlementSummary
+   * above: baseSalary is a real, already-entered payroll record field, so
+   * average daily salary and gross are derivable today. Tax/DSMF/
+   * unemployment/medical insurance/net all require the real Payroll
+   * engine's statutory rules — this adapter never fabricates them.
+   */
+  async getLeavePaymentSummary(employeeId: string, leaveDays: number): Promise<LeavePaymentSummary> {
+    const profile = getEmployeeById(employeeId)
+    const currency = profile?.payroll.currency ?? "AZN"
+    const averageMonthlySalary = profile?.payroll.baseSalary ?? null
+    const averageDailySalary =
+      averageMonthlySalary !== null ? roundToTwoDecimals(averageMonthlySalary / PLACEHOLDER_DAYS_IN_MONTH) : null
+    const grossAmount = averageDailySalary !== null ? roundToTwoDecimals(averageDailySalary * leaveDays) : null
+
+    return {
+      averageMonthlySalary,
+      averageDailySalary,
+      leaveDays,
+      grossAmount,
+      incomeTax: null,
+      socialSecurityFund: null,
+      unemploymentInsurance: null,
+      medicalInsurance: null,
+      netAmount: null,
+      currency,
+      isFullyCalculated: false,
+    }
   }
 }
 

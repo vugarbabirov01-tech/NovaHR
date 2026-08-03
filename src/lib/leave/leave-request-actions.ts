@@ -21,6 +21,8 @@ import { DocumentEntityType } from "@/lib/documents/document-entity-types"
 import { LeaveAuditAction, LeaveAuditEntityType, recordLeaveAudit } from "@/lib/leave/leave-audit"
 import { eventBus } from "@/lib/event-bus/in-memory-event-bus"
 import { LeaveEventType } from "@/lib/event-bus/leave-event-types"
+import { payrollProvider } from "@/lib/integrations/payroll-provider"
+import type { LeavePaymentSummary } from "@/types/integrations/payroll"
 
 /** revalidatePath after every write in this file — submitting, approving,
  * rejecting, and cancelling all change Pending/Used/Current Balance on
@@ -99,6 +101,19 @@ export async function previewLeaveRequestAction(
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Could not evaluate leave request." }
   }
+}
+
+/**
+ * Read-only, thin wrapper around the Payroll integration — Leave never
+ * calculates salary/tax/insurance figures itself, only asks Payroll for
+ * them, same module boundary the Termination wizard already uses for its
+ * own final settlement summary (see lib/termination/actions.ts).
+ */
+export async function getLeavePaymentSummaryAction(
+  employeeId: string,
+  leaveDays: number
+): Promise<LeavePaymentSummary> {
+  return payrollProvider.getLeavePaymentSummary(employeeId, leaveDays)
 }
 
 export interface SubmitLeaveRequestResult {

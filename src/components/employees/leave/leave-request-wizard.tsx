@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -17,11 +17,14 @@ import {
 } from "@/components/employees/leave/leave-request-details-step"
 import { LeaveRequestReviewStep } from "@/components/employees/leave/leave-request-review-step"
 import {
+  getLeavePaymentSummaryAction,
   previewLeaveRequestAction,
   submitLeaveRequestAction,
 } from "@/lib/leave/leave-request-actions"
+import { formatLeaveUnitAmount } from "@/lib/leave/leave-unit-format"
 import type { LeaveRequestEvaluation } from "@/lib/leave/leave-request-service"
 import type { LeaveType } from "@/repositories/leave-type-repository"
+import type { LeavePaymentSummary } from "@/types/integrations/payroll"
 
 type StepKey = "employee" | "details" | "review"
 
@@ -80,6 +83,8 @@ export function LeaveRequestWizard({
   onClose,
 }: LeaveRequestWizardProps) {
   const t = useTranslations("Employees.leaveRequest")
+  const tLeave = useTranslations("Employees.profile.leave")
+  const locale = useLocale()
   const stepKeys: StepKey[] = employee ? ["details", "review"] : ["employee", "details", "review"]
   const employeeStepIndex = stepKeys.indexOf("employee")
   const detailsStepIndex = stepKeys.indexOf("details")
@@ -91,6 +96,7 @@ export function LeaveRequestWizard({
   const [details, setDetails] = useState<LeaveRequestDetailsData>(emptyDetails)
   const [errors, setErrors] = useState<Partial<Record<keyof LeaveRequestDetailsData, string>>>({})
   const [evaluation, setEvaluation] = useState<LeaveRequestEvaluation | null>(null)
+  const [paymentSummary, setPaymentSummary] = useState<LeavePaymentSummary | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
@@ -130,12 +136,15 @@ export function LeaveRequestWizard({
     if (!validateDetails()) return
     setSubmitError(null)
     startTransition(async () => {
-      const result = await previewLeaveRequestAction(
-        selectedEmployeeId,
-        details.leaveTypeId,
-        details.startDate,
-        Number(details.numberOfDays)
-      )
+      const numberOfDays = Number(details.numberOfDays)
+      const [result, payment] = await Promise.all([
+        previewLeaveRequestAction(selectedEmployeeId, details.leaveTypeId, details.startDate, numberOfDays),
+        // Read-only, unrelated to whether the preview itself succeeds — the
+        // Review step already renders a "pending" placeholder for any field
+        // this can't estimate yet, so it doesn't gate the Next transition.
+        getLeavePaymentSummaryAction(selectedEmployeeId, numberOfDays),
+      ])
+      setPaymentSummary(payment)
       if (result.success && result.data) {
         setEvaluation(result.data)
         setStepIndex((i) => i + 1)
@@ -199,19 +208,30 @@ export function LeaveRequestWizard({
   }
 
   const isLastStep = stepIndex === steps.length - 1
+  const unit = leaveType?.unit ?? "DAYS"
+
+  function formatFooterCurrency(amount: number, currency: string) {
+    return new Intl.NumberFormat(locale, { style: "currency", currency }).format(amount)
+  }
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-y-auto px-6 py-4">
-        <div className="flex flex-col gap-6">
-          <Stepper steps={steps} currentIndex={stepIndex} />
-          <div className="flex flex-col gap-1.5 lg:hidden">
-            <span className="text-sm text-muted-foreground">
-              {t("stepIndicator", { current: stepIndex + 1, total: steps.length })}
-            </span>
-            <Progress value={((stepIndex + 1) / steps.length) * 100} />
-          </div>
+      {/* Stepper lives in its own sticky strip, outside the scrollable
+       * region below — on a tall step (Review, with five summary cards) it
+       * used to scroll out of view along with the content; now it stays put
+       * the same way the header above and the footer below already did. */}
+      <div className="flex shrink-0 flex-col gap-1.5 border-b border-border px-6 py-3">
+        <Stepper steps={steps} currentIndex={stepIndex} />
+        <div className="flex flex-col gap-1.5 lg:hidden">
+          <span className="text-sm text-muted-foreground">
+            {t("stepIndicator", { current: stepIndex + 1, total: steps.length })}
+          </span>
+          <Progress value={((stepIndex + 1) / steps.length) * 100} />
+        </div>
+      </div>
 
+      <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex flex-col gap-4">
           {submitError ? (
             <Alert variant="destructive">
               <AlertTriangle />
@@ -269,7 +289,8 @@ export function LeaveRequestWizard({
                 evaluation={evaluation}
                 employeeName={selectedEmployeeName}
                 leaveTypeName={leaveType?.name ?? ""}
-                unit={leaveType?.unit ?? "DAYS"}
+                unit={unit}
+                payment={paymentSummary}
                 file={file}
                 onFileChange={setFile}
               />
@@ -278,27 +299,53 @@ export function LeaveRequestWizard({
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center justify-between border-t border-border px-6 py-4">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border px-6 py-4">
         <Button variant="outline" onClick={handleBack} disabled={stepIndex === 0 || isPending}>
           <ChevronLeft className="size-4" strokeWidth={1.75} />
           {t("back")}
         </Button>
 
-        {isLastStep ? (
-          <Button
-            onClick={handleSubmit}
-            disabled={isPending || (evaluation ? evaluation.balanceValidationMode === "BLOCK" && !evaluation.isBalanceSufficient : true)}
-          >
-            {isPending ? <Loader2 className="size-4 animate-spin" strokeWidth={1.75} /> : null}
-            {t("submit")}
-          </Button>
-        ) : (
-          <Button onClick={handleNext} disabled={isPending}>
-            {isPending ? <Loader2 className="size-4 animate-spin" strokeWidth={1.75} /> : null}
-            {t("next")}
-            <ChevronRight className="size-4" strokeWidth={1.75} />
-          </Button>
-        )}
+        <div className="flex items-center gap-4">
+          {/* Requested Days / Gross Payment readout — the same two numbers
+           * the Review step's own cards already show, surfaced here too so
+           * they're never scrolled out of view right before Submit. Only
+           * meaningful once the Review step has both fetches loaded — the
+           * Employee/Details steps never reach this branch. */}
+          {isLastStep && evaluation && paymentSummary ? (
+            <div className="hidden items-center gap-4 sm:flex">
+              <div className="flex flex-col items-end">
+                <span className="text-xs text-muted-foreground">{t("review.paymentLeaveDays")}</span>
+                <span className="text-sm font-medium text-foreground tabular-nums">
+                  {formatLeaveUnitAmount(tLeave, evaluation.numberOfDays, unit)}
+                </span>
+              </div>
+              <div className="flex flex-col items-end">
+                <span className="text-xs text-muted-foreground">{t("review.paymentGrossAmount")}</span>
+                <span className="text-sm font-semibold text-foreground tabular-nums">
+                  {paymentSummary.grossAmount === null
+                    ? t("review.paymentPending")
+                    : formatFooterCurrency(paymentSummary.grossAmount, paymentSummary.currency)}
+                </span>
+              </div>
+            </div>
+          ) : null}
+
+          {isLastStep ? (
+            <Button
+              onClick={handleSubmit}
+              disabled={isPending || (evaluation ? evaluation.balanceValidationMode === "BLOCK" && !evaluation.isBalanceSufficient : true)}
+            >
+              {isPending ? <Loader2 className="size-4 animate-spin" strokeWidth={1.75} /> : null}
+              {t("submit")}
+            </Button>
+          ) : (
+            <Button onClick={handleNext} disabled={isPending}>
+              {isPending ? <Loader2 className="size-4 animate-spin" strokeWidth={1.75} /> : null}
+              {t("next")}
+              <ChevronRight className="size-4" strokeWidth={1.75} />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   )
