@@ -7,6 +7,7 @@ import {
 } from "@/lib/leave/leave-policy-resolution-service"
 import { computeLeaveBalance } from "@/lib/leave/leave-balance-service"
 import { findActiveLeavePoliciesByLeaveType } from "@/repositories/leave-policy-repository"
+import { findLeaveTypeById } from "@/repositories/leave-type-repository"
 import type { LeaveBalanceStatement } from "@/types/leave"
 
 /** Local calendar components, not `.toISOString()` — see the matching doc
@@ -74,6 +75,15 @@ export async function evaluateLeaveRequest(
 ): Promise<LeaveRequestEvaluation> {
   const profile = getEmployeeById(employeeId)
   if (!profile) throw new Error("Employee not found.")
+
+  // The wizard's dropdown already only lists active types
+  // (getActiveLeaveTypesAction), but that's a client-visible filter, not
+  // enforcement — this is the one place preview and submit both funnel
+  // through, so it's also the one place a retired type (e.g. Maternity/
+  // Paternity — see prisma/seed.ts) is rejected server-side, not just hidden.
+  const leaveType = await findLeaveTypeById(leaveTypeId)
+  if (!leaveType) throw new Error("Leave type not found.")
+  if (!leaveType.active) throw new Error("This leave type is no longer available for new requests.")
 
   const workingDayContext = {
     workScheduleLabel: profile.employment.workSchedule,

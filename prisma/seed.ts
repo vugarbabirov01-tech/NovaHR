@@ -172,11 +172,23 @@ async function main() {
   // isn't read anywhere in application logic today (confirmed — Annual
   // Leave's own entitlement is independently computed by the Labour Code
   // engine in leave-policy-resolution-service.ts, not from this field), and
-  // the other five leave types don't have a rolling annual entitlement in
-  // the same sense to begin with (maternity/paternity/sick are
-  // case-by-case, statutorily-fixed or certificate-driven durations, not an
-  // annual allowance) — so a number here would be decorative at best,
-  // misleading at worst.
+  // the other leave types don't have a rolling annual entitlement in the
+  // same sense to begin with (social/paternity/sick are case-by-case,
+  // statutorily-fixed or certificate-driven durations, not an annual
+  // allowance) — so a number here would be decorative at best, misleading
+  // at worst.
+  //
+  // Maternity/Paternity were retired from new leave requests (HR decision,
+  // 2026) in favor of a single broader "Sosial Məzuniyyət" type — `active:
+  // false` here (never a delete) is the same archive pattern
+  // archiveDepartment/archiveLeaveType already use everywhere else:
+  // findActiveLeaveTypes() (what the request wizard's dropdown reads) stops
+  // offering them, but the rows themselves — and any LeaveRequest that
+  // already references them — are untouched, so historical data keeps
+  // resolving and displaying exactly as before. Listed last, after the five
+  // still-offered types, purely for readability; array order here has no
+  // effect on dropdown order (LEAVE_TYPE_DISPLAY_ORDER in
+  // leave-request-details-step.tsx owns that).
   const leaveTypeDefinitions = [
     {
       code: "ANNUAL",
@@ -187,6 +199,7 @@ async function main() {
       isPaid: true,
       requiresBalance: true,
       entitlementUnitsPerYear: 21,
+      active: true,
     },
     {
       code: "UNPAID",
@@ -196,6 +209,7 @@ async function main() {
       isPaid: false,
       requiresBalance: false,
       entitlementUnitsPerYear: null,
+      active: true,
     },
     {
       code: "STUDY",
@@ -205,24 +219,17 @@ async function main() {
       isPaid: true,
       requiresBalance: true,
       entitlementUnitsPerYear: null,
+      active: true,
     },
     {
-      code: "MATERNITY",
-      name: "Analıq Məzuniyyəti",
-      description: "Hamiləlik və doğuşla əlaqədar məzuniyyət (Əmək Məcəlləsi, 125-ci maddə).",
+      code: "SOCIAL",
+      name: "Sosial Məzuniyyət",
+      description: "Ailə vəziyyəti və digər sosial hallarla əlaqədar verilən qısamüddətli məzuniyyət (nikah, yaxın qohumun vəfatı və digər hallar).",
       unit: "DAYS" as const,
       isPaid: true,
       requiresBalance: false,
       entitlementUnitsPerYear: null,
-    },
-    {
-      code: "PATERNITY",
-      name: "Atalıq Məzuniyyəti",
-      description: "Uşağın doğulması ilə əlaqədar ataya verilən qısamüddətli məzuniyyət.",
-      unit: "DAYS" as const,
-      isPaid: true,
-      requiresBalance: false,
-      entitlementUnitsPerYear: null,
+      active: true,
     },
     {
       code: "SICK",
@@ -232,13 +239,34 @@ async function main() {
       isPaid: true,
       requiresBalance: false,
       entitlementUnitsPerYear: null,
+      active: true,
+    },
+    {
+      code: "MATERNITY",
+      name: "Analıq Məzuniyyəti",
+      description: "Hamiləlik və doğuşla əlaqədar məzuniyyət (Əmək Məcəlləsi, 125-ci maddə).",
+      unit: "DAYS" as const,
+      isPaid: true,
+      requiresBalance: false,
+      entitlementUnitsPerYear: null,
+      active: false,
+    },
+    {
+      code: "PATERNITY",
+      name: "Atalıq Məzuniyyəti",
+      description: "Uşağın doğulması ilə əlaqədar ataya verilən qısamüddətli məzuniyyət.",
+      unit: "DAYS" as const,
+      isPaid: true,
+      requiresBalance: false,
+      entitlementUnitsPerYear: null,
+      active: false,
     },
   ]
 
   for (const def of leaveTypeDefinitions) {
     const leaveType = await prisma.leaveType.upsert({
       where: { code: def.code },
-      update: { name: def.name, description: def.description },
+      update: { name: def.name, description: def.description, active: def.active },
       create: {
         code: def.code,
         name: def.name,
@@ -246,6 +274,7 @@ async function main() {
         unit: def.unit,
         isPaid: def.isPaid,
         requiresBalance: def.requiresBalance,
+        active: def.active,
       },
     })
 

@@ -18,8 +18,12 @@ export interface LeaveRequestDetailsData {
 
 // Display order only — leaveTypes itself (ids, names, translations, the
 // underlying query) is untouched. Codes not listed here (a future leave
-// type) sort after all known ones rather than disappearing.
-const LEAVE_TYPE_DISPLAY_ORDER = ["ANNUAL", "UNPAID", "STUDY", "MATERNITY", "PATERNITY", "SICK"]
+// type) sort after all known ones rather than disappearing. MATERNITY/
+// PATERNITY dropped from this list along with their leave types going
+// inactive (prisma/seed.ts) — findActiveLeaveTypes() already excludes them
+// from `leaveTypes`, so they'd never reach this function anyway; SOCIAL
+// replaces them in the offered lineup.
+const LEAVE_TYPE_DISPLAY_ORDER = ["ANNUAL", "UNPAID", "STUDY", "SOCIAL", "SICK"]
 
 function byPresentationOrder(a: LeaveType, b: LeaveType): number {
   const aIndex = LEAVE_TYPE_DISPLAY_ORDER.indexOf(a.code)

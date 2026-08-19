@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import { calculateReturnToWork } from "@/lib/leave/leave-policy-resolution-service"
 import { evaluateLeaveRequest } from "@/lib/leave/leave-request-service"
 import { getEmployeeById } from "@/data/employee-directory"
-import { findActiveLeaveTypes } from "@/repositories/leave-type-repository"
+import { findActiveLeaveTypes, findAllLeaveTypes } from "@/repositories/leave-type-repository"
 
 /**
  * Regression coverage for the Leave Request Review screen's date/business
@@ -102,5 +102,26 @@ describe("evaluateLeaveRequest — balance preview reflects the request being su
     const longRemainingAfterApproval = longRequest.balance.remaining - longRequest.numberOfDays
     expect(shortRemainingAfterApproval).not.toBe(longRemainingAfterApproval)
     expect(longRemainingAfterApproval).toBe(shortRemainingAfterApproval - 41)
+  })
+
+  it("rejects a retired (inactive) leave type — server-side, not just hidden from the dropdown", async () => {
+    // Maternity/Paternity were retired in favor of Social Leave (see
+    // prisma/seed.ts) — findActiveLeaveTypes() already excludes them from
+    // the wizard's own options, so this proves the rejection also holds if
+    // an inactive id reaches evaluateLeaveRequest by any other path (a
+    // stale client, a direct call), not only via the dropdown's own filter.
+    const maternity = (await findAllLeaveTypes()).find((t) => t.code === "MATERNITY")
+    expect(maternity).toBeDefined()
+    expect(maternity!.active).toBe(false)
+
+    await expect(evaluateLeaveRequest("EMP-1042", maternity!.id, new Date("2026-08-03"), 5)).rejects.toThrow(
+      "no longer available"
+    )
+  })
+
+  it("rejects a leave type id that doesn't exist at all", async () => {
+    await expect(evaluateLeaveRequest("EMP-1042", "does-not-exist", new Date("2026-08-03"), 5)).rejects.toThrow(
+      "Leave type not found."
+    )
   })
 })
