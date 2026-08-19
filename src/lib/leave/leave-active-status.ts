@@ -26,6 +26,22 @@ export function utcMidnightOfLocalDate(date: Date): Date {
  * function — neither re-implements the date-range check, so they can never
  * silently disagree about who's on leave today.
  */
+const MS_PER_DAY = 24 * 60 * 60 * 1000
+
+/**
+ * Calendar days from `asOfDate`'s local date to a "yyyy-MM-dd" date-only
+ * string (e.g. ReturnToWorkResult.returnToWorkDate) — both sides go through
+ * utcMidnightOfLocalDate/UTC-midnight parsing first, so this is a pure
+ * calendar-day count, never off by one the way a raw millisecond-difference
+ * divide against two differently-anchored Dates would be. Negative once
+ * `asOfDate` is past the target date.
+ */
+export function calendarDaysUntil(dateOnlyIso: string, asOfDate: Date = new Date()): number {
+  const target = new Date(dateOnlyIso)
+  const today = utcMidnightOfLocalDate(asOfDate)
+  return Math.round((target.getTime() - today.getTime()) / MS_PER_DAY)
+}
+
 export function findActiveLeaveByEmployee(
   requests: LeaveRequest[],
   asOfDate: Date = new Date()

@@ -40,7 +40,7 @@ export interface PendingRequestedUnitsFilter {
   employeeId?: string
   leaveTypeId?: string
   /** Filters via the related LeaveType's unit — a request itself doesn't
-   * store one (see LeaveRequestRow's own mapping in the /leave page). */
+   * store one (see CurrentlyOnLeaveRow's own mapping in the /leave page). */
   unit?: LeaveUnit
 }
 

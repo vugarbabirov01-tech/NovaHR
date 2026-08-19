@@ -138,6 +138,19 @@
         "decisionError": "Əməliyyat yerinə yetirilmədi. Yenidən cəhd edin.",
         "emptyTitle": "Hələ məzuniyyət tələbi yoxdur",
         "emptyDescription": "Əməkdaşlar tərəfindən təqdim edilən məzuniyyət tələbləri burada görünəcək."
+      },
+      "currentlyOnLeaveTable": {
+        "title": "Hazırda Məzuniyyətdə Olan İşçilər",
+        "description": "Məzuniyyətdən qayıtma gün sayına görə (azdan çoxa)",
+        "employee": "Əməkdaş",
+        "positionDepartment": "Vəzifə / Şöbə",
+        "leaveType": "Məzuniyyət növü",
+        "startDate": "Başlama tarixi",
+        "endDate": "Bitmə tarixi",
+        "returnDate": "Qayıtma tarixi",
+        "daysUntilReturn": "Qayıtma gün sayı",
+        "emptyTitle": "Hazırda məzuniyyətdə olan əməkdaş yoxdur",
+        "emptyDescription": "Bütün əməkdaşlar hazırda işdədir."
       }
     }
   },

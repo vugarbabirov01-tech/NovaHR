@@ -138,6 +138,19 @@
         "decisionError": "The action could not be completed. Please try again.",
         "emptyTitle": "No leave requests yet",
         "emptyDescription": "Leave requests submitted by employees will appear here."
+      },
+      "currentlyOnLeaveTable": {
+        "title": "Employees Currently on Leave",
+        "description": "Sorted by days until return (fewest to most)",
+        "employee": "Employee",
+        "positionDepartment": "Position / Department",
+        "leaveType": "Leave Type",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "returnDate": "Return Date",
+        "daysUntilReturn": "Days Until Return",
+        "emptyTitle": "No employees are currently on leave",
+        "emptyDescription": "Everyone is currently at work."
       }
     }
   },

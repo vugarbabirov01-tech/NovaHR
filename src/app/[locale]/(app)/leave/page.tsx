@@ -5,12 +5,13 @@ import { getTranslations, setRequestLocale } from "next-intl/server"
 import { PageTitle } from "@/components/common/page-title"
 import { KpiCard } from "@/components/common/kpi-card"
 import { NewLeaveRequestButton } from "@/components/leave/new-leave-request-button"
-import { LeaveRequestsTable, type LeaveRequestRow } from "@/components/leave/leave-requests-table"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { CurrentlyOnLeaveTable, type CurrentlyOnLeaveRow } from "@/components/leave/currently-on-leave-table"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getAllLeaveRequestsAction } from "@/lib/leave/leave-request-actions"
 import { getActiveLeaveTypesAction } from "@/lib/leave/leave-balance-actions"
 import { calculateReturnToWork } from "@/lib/leave/leave-policy-resolution-service"
 import { computeLeaveDashboardKpis } from "@/lib/leave/leave-dashboard-kpis"
+import { findActiveLeaveByEmployee, calendarDaysUntil } from "@/lib/leave/leave-active-status"
 import { employeeDirectory, getEmployeeById } from "@/data/employee-directory"
 
 type Props = {
@@ -30,14 +31,19 @@ function initials(firstName: string, lastName: string): string {
 }
 
 /**
- * The central HR Leave Dashboard — monitor leave, approve requests, view
- * company-wide statistics, and start new requests. Deliberately does NOT
- * show any individual employee's balance (Initial/Previous Year/Used/
- * Current) — those are the Employee Leave tab's job (leave-tab.tsx); this
- * page only ever shows company-wide KPIs and the request queue. See
- * computeLeaveDashboardKpis's own doc comment for why these are pure
+ * The central HR Leave Dashboard — company-wide statistics, who's currently
+ * out and when they're back, and starting new requests. Deliberately does
+ * NOT show any individual employee's balance (Initial/Previous Year/Used/
+ * Current) — those are the Employee Leave tab's job (leave-tab.tsx). See
+ * computeLeaveDashboardKpis's own doc comment for why the KPIs are pure
  * derivations of the same getAllLeaveRequestsAction data this page already
  * fetched, not a second query.
+ *
+ * No approve/reject/cancel actions live on this page (the old requests
+ * table had them; the "currently on leave" table replacing it is a
+ * read-only status view) — approveLeaveRequestAction/rejectLeaveRequestAction/
+ * cancelLeaveRequestAction still exist in leave-request-actions.ts and work
+ * unchanged, they're just not wired to any UI on this specific page today.
  */
 export default async function LeavePage({ params }: Props) {
   const { locale } = await params
@@ -50,14 +56,22 @@ export default async function LeavePage({ params }: Props) {
   const leaveTypeById = new Map(leaveTypes.map((leaveType) => [leaveType.id, leaveType]))
   const kpis = computeLeaveDashboardKpis(requests)
 
-  const rows: LeaveRequestRow[] = await Promise.all(
-    requests.map(async (request) => {
+  // Single "now" for both filtering (which requests are active today) and
+  // the day-count below — the same shared computation the "Hazırda
+  // Məzuniyyətdə" KPI (computeLeaveDashboardKpis) and every employee's
+  // WorkStatus badge already use, so this table can never disagree with
+  // them about who's currently on leave.
+  const now = new Date()
+  const activeLeaveRequests = Array.from(findActiveLeaveByEmployee(requests, now).values())
+
+  const onLeaveRows: CurrentlyOnLeaveRow[] = await Promise.all(
+    activeLeaveRequests.map(async (request) => {
       const profile = getEmployeeById(request.employeeId)
       const leaveType = leaveTypeById.get(request.leaveTypeId)
-      // Reuses the same Leave Policy Resolution engine the request wizard's
-      // Review step calls (evaluateLeaveRequest) — Working Days is a real
-      // calculated figure (weekends/holidays excluded per this employee's
-      // actual schedule), never re-derived from requestedUnits.
+      // Same Leave Policy Resolution engine the request wizard's Review
+      // step and the old requests table both called — returnDate is the
+      // real, holiday/non-working-day-adjusted return-to-work date, never
+      // a naive endDate+1.
       const returnToWork = await calculateReturnToWork(request.startDate, request.requestedUnits, {
         workScheduleLabel: profile?.employment.workSchedule,
         companyId: request.companyId ?? undefined,
@@ -68,24 +82,19 @@ export default async function LeavePage({ params }: Props) {
         employeeId: request.employeeId,
         employeeName: profile ? `${profile.personal.firstName} ${profile.personal.lastName}` : request.employeeId,
         employeeInitials: profile ? initials(profile.personal.firstName, profile.personal.lastName) : "—",
-        employeeDepartment: profile?.employment.department ?? "",
+        position: profile?.employment.position ?? "",
+        department: profile?.employment.department ?? "",
         leaveTypeName: leaveType?.name ?? request.leaveTypeId,
-        unit: leaveType?.unit ?? "DAYS",
         startDate: request.startDate.toISOString(),
         endDate: request.endDate.toISOString(),
-        requestedUnits: request.requestedUnits,
-        workingDays: returnToWork.workingDaysInRange,
-        status: request.status,
-        // No authenticated approver/submitter identity exists yet anywhere
-        // in this codebase — every write in the Leave module already
-        // records a fixed "HR" actor (see leave-request-actions.ts,
-        // leave-request-decision-service.ts). Single decision step today,
-        // hence "1/1" rather than a fabricated multi-level chain.
-        requestedBy: "HR",
-        approvalLevel: "1/1",
+        returnDate: returnToWork.returnToWorkDate,
+        daysUntilReturn: calendarDaysUntil(returnToWork.returnToWorkDate, now),
       }
     })
   )
+  // Soonest return first — the employee coming back tomorrow is more
+  // actionable for HR than one who just started a month-long leave.
+  onLeaveRows.sort((a, b) => a.daysUntilReturn - b.daysUntilReturn)
 
   // Only employees still on the payroll are assignable from "Yeni
   // Məzuniyyət" — this is a picker-list filter, not a business-logic
@@ -131,10 +140,11 @@ export default async function LeavePage({ params }: Props) {
 
       <Card>
         <CardHeader>
-          <CardTitle>{tDashboard("table.title")}</CardTitle>
+          <CardTitle>{tDashboard("currentlyOnLeaveTable.title")}</CardTitle>
+          <CardDescription>{tDashboard("currentlyOnLeaveTable.description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <LeaveRequestsTable rows={rows} />
+          <CurrentlyOnLeaveTable rows={onLeaveRows} />
         </CardContent>
       </Card>
     </div>
