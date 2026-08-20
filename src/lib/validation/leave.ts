@@ -99,5 +99,10 @@ export const leaveRequestInputSchema = z.object({
   branchId: z.string().trim().min(1).optional().nullable(),
   startDate: isoDate,
   numberOfDays: z.number().positive("Number of days must be greater than zero."),
+  // The entitlement/work year this leave draws its balance from (e.g. 2025
+  // for "2025–2026") — HR-selected, not derived from startDate. Required
+  // for new submissions; the underlying column stays nullable so existing
+  // requests (created before this field existed) are never invalidated.
+  leavePeriodStartYear: z.number().int("Leave period is required."),
   reason: z.string().trim().max(1000).optional(),
 })

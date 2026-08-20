@@ -16,6 +16,10 @@ export interface LeaveRequestInput {
   startDate: Date
   endDate: Date
   requestedUnits: number
+  /** The entitlement/work year (e.g. 2025 for "2025–2026") this leave draws
+   * its balance from — see LeaveRequest.leavePeriodStartYear's schema
+   * comment. Optional only because existing rows predate this field. */
+  leavePeriodStartYear?: number | null
   reason?: string | null
   status?: LeaveRequestLifecycleStatus
 }
@@ -71,6 +75,7 @@ export function createLeaveRequest(input: LeaveRequestInput): Promise<LeaveReque
       startDate: input.startDate,
       endDate: input.endDate,
       requestedUnits: input.requestedUnits,
+      leavePeriodStartYear: input.leavePeriodStartYear ?? null,
       reason: input.reason ?? null,
       status,
       submittedAt: status === "DRAFT" ? null : new Date(),

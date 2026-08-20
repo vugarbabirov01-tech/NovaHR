@@ -1171,6 +1171,9 @@
       "details": {
         "leaveType": "Вид отпуска",
         "leaveTypePlaceholder": "Выберите вид отпуска",
+        "leavePeriod": "Период отпуска",
+        "leavePeriodPlaceholder": "Выберите период",
+        "leavePeriodHint": "Указывает, за какой рабочий год используется остаток отпуска.",
         "startDate": "Дата начала",
         "numberOfDays": "Количество дней",
         "numberOfDaysHint": "Дата окончания будет рассчитана автоматически.",

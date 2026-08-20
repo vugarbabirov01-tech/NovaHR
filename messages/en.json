@@ -1171,6 +1171,9 @@
       "details": {
         "leaveType": "Leave Type",
         "leaveTypePlaceholder": "Select a leave type",
+        "leavePeriod": "Leave Period",
+        "leavePeriodPlaceholder": "Select a period",
+        "leavePeriodHint": "Indicates which work year's balance this leave draws from.",
         "startDate": "Start Date",
         "numberOfDays": "Number of Days",
         "numberOfDaysHint": "The end date will be calculated automatically.",

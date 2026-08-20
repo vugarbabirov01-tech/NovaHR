@@ -294,6 +294,12 @@ model LeaveRequest {
   startDate       DateTime
   endDate         DateTime
   requestedUnits  Float
+  /// The entitlement/work year this leave draws its balance from — e.g. 2025
+  /// for a "2025–2026" period — HR-selected, never derived from startDate
+  /// (an employee can use a prior year's remaining balance for leave taken
+  /// well into the following year). Nullable so every request created before
+  /// this field existed keeps loading and displaying exactly as before.
+  leavePeriodStartYear Int?
   status          LeaveRequestLifecycleStatus @default(DRAFT)
   reason          String?
   submittedAt     DateTime?

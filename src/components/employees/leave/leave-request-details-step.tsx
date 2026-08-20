@@ -7,10 +7,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { Field } from "@/components/common/field"
 import { EnumSelect } from "@/components/common/enum-select"
 import { DatePicker } from "@/components/common/date-picker"
+import { generateLeavePeriodOptions } from "@/lib/leave/leave-period"
 import type { LeaveType } from "@/repositories/leave-type-repository"
 
 export interface LeaveRequestDetailsData {
   leaveTypeId: string
+  /** The entitlement/work year (as a string, e.g. "2025") this leave draws
+   * its balance from — HR-selected, never derived from startDate. See
+   * leave-period.ts's own doc comment. */
+  leavePeriodStartYear: string
   startDate: string
   numberOfDays: string
   reason: string
@@ -48,6 +53,7 @@ export function LeaveRequestDetailsStep({
   errors = {},
 }: LeaveRequestDetailsStepProps) {
   const t = useTranslations("Employees.leaveRequest.details")
+  const leavePeriodOptions = generateLeavePeriodOptions()
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -66,6 +72,25 @@ export function LeaveRequestDetailsStep({
             .sort(byPresentationOrder)
             .map((leaveType) => ({ value: leaveType.id, label: leaveType.name }))}
           placeholder={t("leaveTypePlaceholder")}
+        />
+      </Field>
+      <Field
+        label={t("leavePeriod")}
+        htmlFor="leavePeriodStartYear"
+        required
+        error={errors.leavePeriodStartYear}
+        hint={t("leavePeriodHint")}
+        className="sm:col-span-2"
+      >
+        <EnumSelect
+          id="leavePeriodStartYear"
+          value={data.leavePeriodStartYear}
+          onValueChange={(v) => onChange({ leavePeriodStartYear: v })}
+          options={leavePeriodOptions.map((period) => ({
+            value: String(period.startYear),
+            label: period.label,
+          }))}
+          placeholder={t("leavePeriodPlaceholder")}
         />
       </Field>
       <Field label={t("startDate")} htmlFor="startDate" required error={errors.startDate}>

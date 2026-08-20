@@ -67,13 +67,18 @@ export interface PreviewLeaveRequestResult {
 /**
  * No write. Calls the same evaluateLeaveRequest the submit action re-runs
  * server-side, so what the wizard's Step 2 shows and what submit enforces
- * can never drift apart.
+ * can never drift apart. Takes leavePeriodStartYear only to match
+ * leaveRequestInputSchema's shape (the same schema submit parses against) —
+ * evaluateLeaveRequest itself never receives it, since the period doesn't
+ * affect any date/balance calculation (see LeaveRequest.leavePeriodStartYear's
+ * schema comment).
  */
 export async function previewLeaveRequestAction(
   employeeId: string,
   leaveTypeId: string,
   startDate: string,
   numberOfDays: number,
+  leavePeriodStartYear: number,
   companyId?: string | null,
   branchId?: string | null
 ): Promise<PreviewLeaveRequestResult> {
@@ -84,6 +89,7 @@ export async function previewLeaveRequestAction(
     branchId: branchId ?? undefined,
     startDate,
     numberOfDays,
+    leavePeriodStartYear,
   })
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input." }
@@ -139,6 +145,7 @@ export interface SubmitLeaveRequestResult {
  */
 export async function submitLeaveRequestAction(formData: FormData): Promise<SubmitLeaveRequestResult> {
   const rawNumberOfDays = formData.get("numberOfDays")
+  const rawLeavePeriodStartYear = formData.get("leavePeriodStartYear")
   const parsed = leaveRequestInputSchema.safeParse({
     employeeId: formData.get("employeeId"),
     leaveTypeId: formData.get("leaveTypeId"),
@@ -146,6 +153,8 @@ export async function submitLeaveRequestAction(formData: FormData): Promise<Subm
     branchId: formData.get("branchId") || undefined,
     startDate: formData.get("startDate"),
     numberOfDays: typeof rawNumberOfDays === "string" ? Number(rawNumberOfDays) : rawNumberOfDays,
+    leavePeriodStartYear:
+      typeof rawLeavePeriodStartYear === "string" ? Number(rawLeavePeriodStartYear) : rawLeavePeriodStartYear,
     reason: formData.get("reason") || undefined,
   })
   if (!parsed.success) {
@@ -181,6 +190,7 @@ export async function submitLeaveRequestAction(formData: FormData): Promise<Subm
       startDate,
       endDate: new Date(evaluation.returnToWork.lastLeaveDay),
       requestedUnits: parsed.data.numberOfDays,
+      leavePeriodStartYear: parsed.data.leavePeriodStartYear,
       reason: parsed.data.reason ?? null,
       status: "PENDING_APPROVAL",
     })

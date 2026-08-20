@@ -1171,6 +1171,9 @@
       "details": {
         "leaveType": "Məzuniyyət Növü",
         "leaveTypePlaceholder": "Məzuniyyət növünü seçin",
+        "leavePeriod": "Məzuniyyət Dövrü",
+        "leavePeriodPlaceholder": "Dövrü seçin",
+        "leavePeriodHint": "Bu məzuniyyətin hansı iş ili üzrə balansdan istifadə etdiyini bildirir.",
         "startDate": "Başlanğıc Tarixi",
         "numberOfDays": "Gün Sayı",
         "numberOfDaysHint": "Bitmə tarixi avtomatik hesablanacaq.",

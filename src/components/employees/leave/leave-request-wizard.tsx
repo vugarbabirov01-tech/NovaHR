@@ -30,6 +30,7 @@ type StepKey = "employee" | "details" | "review"
 
 const emptyDetails: LeaveRequestDetailsData = {
   leaveTypeId: "",
+  leavePeriodStartYear: "",
   startDate: "",
   numberOfDays: "",
   reason: "",
@@ -113,6 +114,7 @@ export function LeaveRequestWizard({
   function validateDetails(): boolean {
     const nextErrors: Partial<Record<keyof LeaveRequestDetailsData, string>> = {}
     if (!details.leaveTypeId) nextErrors.leaveTypeId = t("validation.required")
+    if (!details.leavePeriodStartYear) nextErrors.leavePeriodStartYear = t("validation.required")
     if (!details.startDate) nextErrors.startDate = t("validation.required")
     const numberOfDays = Number(details.numberOfDays)
     if (!details.numberOfDays || !Number.isFinite(numberOfDays) || numberOfDays <= 0) {
@@ -137,8 +139,15 @@ export function LeaveRequestWizard({
     setSubmitError(null)
     startTransition(async () => {
       const numberOfDays = Number(details.numberOfDays)
+      const leavePeriodStartYear = Number(details.leavePeriodStartYear)
       const [result, payment] = await Promise.all([
-        previewLeaveRequestAction(selectedEmployeeId, details.leaveTypeId, details.startDate, numberOfDays),
+        previewLeaveRequestAction(
+          selectedEmployeeId,
+          details.leaveTypeId,
+          details.startDate,
+          numberOfDays,
+          leavePeriodStartYear
+        ),
         // Read-only, unrelated to whether the preview itself succeeds — the
         // Review step already renders a "pending" placeholder for any field
         // this can't estimate yet, so it doesn't gate the Next transition.
@@ -172,6 +181,7 @@ export function LeaveRequestWizard({
       formData.set("leaveTypeId", details.leaveTypeId)
       formData.set("startDate", details.startDate)
       formData.set("numberOfDays", details.numberOfDays)
+      formData.set("leavePeriodStartYear", details.leavePeriodStartYear)
       if (details.reason.trim()) formData.set("reason", details.reason.trim())
       if (file) formData.set("document", file)
 
@@ -289,6 +299,7 @@ export function LeaveRequestWizard({
                 evaluation={evaluation}
                 employeeName={selectedEmployeeName}
                 leaveTypeName={leaveType?.name ?? ""}
+                leavePeriodStartYear={details.leavePeriodStartYear}
                 unit={unit}
                 payment={paymentSummary}
                 file={file}

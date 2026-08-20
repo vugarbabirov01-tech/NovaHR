@@ -10,6 +10,7 @@ import { InfoTooltip } from "@/components/common/info-tooltip"
 import { LeavePaymentSummary } from "@/components/employees/leave/leave-payment-summary"
 import { formatLeaveUnitAmount } from "@/lib/leave/leave-unit-format"
 import { formatLeaveDate } from "@/lib/leave/leave-date-format"
+import { formatLeavePeriod } from "@/lib/leave/leave-period"
 import { cn } from "@/lib/utils"
 import type { LeaveRequestEvaluation } from "@/lib/leave/leave-request-service"
 import type { LeavePaymentSummary as LeavePaymentSummaryData } from "@/types/integrations/payroll"
@@ -18,6 +19,9 @@ interface LeaveRequestReviewStepProps {
   evaluation: LeaveRequestEvaluation
   employeeName: string
   leaveTypeName: string
+  /** String form of the Details step's selection (e.g. "2025") — see
+   * LeaveRequestDetailsData.leavePeriodStartYear. */
+  leavePeriodStartYear: string
   unit: "DAYS" | "HOURS"
   /** Fetched once alongside `evaluation` (see leave-request-wizard.tsx) from
    * the Payroll integration provider — null only for the brief window before
@@ -106,6 +110,7 @@ export function LeaveRequestReviewStep({
   evaluation,
   employeeName,
   leaveTypeName,
+  leavePeriodStartYear,
   unit,
   payment,
   file,
@@ -149,7 +154,14 @@ export function LeaveRequestReviewStep({
               <span className="text-xs text-muted-foreground">{t("employee")}</span>
               <span className="text-base font-semibold text-foreground">{employeeName}</span>
             </div>
-            <Badge variant="secondary">{leaveTypeName}</Badge>
+            <div className="flex flex-col items-end gap-1">
+              <Badge variant="secondary">{leaveTypeName}</Badge>
+              {leavePeriodStartYear ? (
+                <span className="text-xs text-muted-foreground">
+                  {tDetails("leavePeriod")}: {formatLeavePeriod(Number(leavePeriodStartYear))}
+                </span>
+              ) : null}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-x-6 gap-y-3 border-t border-border pt-4 sm:grid-cols-3 lg:grid-cols-5">

@@ -20,6 +20,7 @@ import {
 import { getLeaveRequestsForEmployeeAction } from "@/lib/leave/leave-request-actions"
 import { formatLeaveUnitAmount } from "@/lib/leave/leave-unit-format"
 import { formatLeaveDate } from "@/lib/leave/leave-date-format"
+import { formatLeavePeriod } from "@/lib/leave/leave-period"
 import type { LeaveBalanceStatement } from "@/types/leave"
 import type { LeaveType } from "@/repositories/leave-type-repository"
 import type { LeaveLedgerEntry } from "@/repositories/leave-ledger-repository"
@@ -249,6 +250,12 @@ export function LeaveTab({ profile }: LeaveTabProps) {
                         <LeaveRequestStatusBadge status={request.status} />
                         <span className="text-xs text-muted-foreground">
                           {leaveType?.name ?? request.leaveTypeId}
+                          {/* null for requests created before this field
+                           * existed — omitted rather than showing a
+                           * placeholder for data that was never collected. */}
+                          {request.leavePeriodStartYear != null
+                            ? ` · ${formatLeavePeriod(request.leavePeriodStartYear)}`
+                            : ""}
                         </span>
                       </div>
                       {request.reason ? (
