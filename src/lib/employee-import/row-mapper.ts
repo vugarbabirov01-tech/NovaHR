@@ -8,6 +8,13 @@ import type {
 import type { EmployeeWizardData } from "@/types/employee-wizard"
 import type { ColumnMapping, ImportRowMessage, ImportableField, RawImportRow } from "@/lib/employee-import/types"
 import { ImportValidationMessages } from "@/lib/employee-import/validation-messages"
+import {
+  CONTRACT_TYPE_VALUE_LABELS,
+  EMPLOYMENT_TYPE_VALUE_LABELS,
+  GENDER_VALUE_LABELS,
+  MARITAL_STATUS_VALUE_LABELS,
+  WORK_LOCATION_TYPE_VALUE_LABELS,
+} from "@/lib/employee-import/column-mapping"
 
 function normalizeKey(text: string): string {
   return text.trim().toLowerCase().replace(/[\s_-]+/g, "")
@@ -19,61 +26,79 @@ function cellToString(value: unknown): string {
   return String(value).trim()
 }
 
-const GENDER_MAP: Record<string, Gender> = {
+/**
+ * Seeds a recognition map from a field's canonical AZ export label
+ * (column-mapping.ts) — so anything Export just wrote, or a value copy-
+ * pasted from an already-filled row in the same template, always reads
+ * back correctly — then layers `extraAliases` (English words, common
+ * abbreviations, diacritic-free spellings) on top for real-world files
+ * that don't use the exact export wording. Building it this way means the
+ * canonical label can never drift out of sync with what Import accepts,
+ * the same guarantee suggestFieldForColumn already gives column headers.
+ */
+function buildEnumMap<T extends string>(
+  canonicalLabels: Record<T, string>,
+  extraAliases: Record<string, T>
+): Record<string, T> {
+  const map: Record<string, T> = {}
+  for (const [code, label] of Object.entries(canonicalLabels) as [T, string][]) {
+    map[label.trim().toLowerCase()] = code
+  }
+  return { ...map, ...extraAliases }
+}
+
+const GENDER_MAP: Record<string, Gender> = buildEnumMap<Gender>(GENDER_VALUE_LABELS, {
   male: "male",
   m: "male",
-  kişi: "male",
   kisi: "male",
   female: "female",
   f: "female",
-  qadın: "female",
   qadin: "female",
-}
+})
 
-const MARITAL_MAP: Record<string, MaritalStatus> = {
+const MARITAL_MAP: Record<string, MaritalStatus> = buildEnumMap<MaritalStatus>(MARITAL_STATUS_VALUE_LABELS, {
   single: "single",
-  subay: "single",
   married: "married",
-  evli: "married",
   divorced: "divorced",
-  boşanmış: "divorced",
   bosanmis: "divorced",
   widowed: "widowed",
-  dul: "widowed",
-}
+})
 
-const EMPLOYMENT_TYPE_MAP: Record<string, EmploymentType> = {
-  "full-time": "full-time",
-  fulltime: "full-time",
-  "part-time": "part-time",
-  parttime: "part-time",
-  seasonal: "seasonal",
-  temporary: "temporary",
-  contract: "contract",
-  internship: "internship",
-}
+const EMPLOYMENT_TYPE_MAP: Record<string, EmploymentType> = buildEnumMap<EmploymentType>(
+  EMPLOYMENT_TYPE_VALUE_LABELS,
+  {
+    "full-time": "full-time",
+    fulltime: "full-time",
+    "part-time": "part-time",
+    parttime: "part-time",
+    seasonal: "seasonal",
+    temporary: "temporary",
+    contract: "contract",
+    internship: "internship",
+  }
+)
 
-const CONTRACT_TYPE_MAP: Record<string, ContractType> = {
+const CONTRACT_TYPE_MAP: Record<string, ContractType> = buildEnumMap<ContractType>(CONTRACT_TYPE_VALUE_LABELS, {
   permanent: "permanent",
   "fixed-term": "fixed-term",
   fixedterm: "fixed-term",
   "project-based": "project-based",
   projectbased: "project-based",
   internship: "internship",
-}
+})
 
-const WORK_LOCATION_TYPE_MAP: Record<string, WorkLocationType> = {
-  "on-site": "on-site",
-  onsite: "on-site",
-  ofisdən: "on-site",
-  ofisden: "on-site",
-  remote: "remote",
-  məsafədən: "remote",
-  mesafeden: "remote",
-  hybrid: "hybrid",
-  "hibrid iş rejimi": "hybrid",
-  hibrid: "hybrid",
-}
+const WORK_LOCATION_TYPE_MAP: Record<string, WorkLocationType> = buildEnumMap<WorkLocationType>(
+  WORK_LOCATION_TYPE_VALUE_LABELS,
+  {
+    "on-site": "on-site",
+    onsite: "on-site",
+    ofisden: "on-site",
+    remote: "remote",
+    mesafeden: "remote",
+    hybrid: "hybrid",
+    hibrid: "hybrid",
+  }
+)
 
 function mapEnum<T extends string>(raw: string, table: Record<string, T>): T | undefined {
   return table[raw.trim().toLowerCase()]

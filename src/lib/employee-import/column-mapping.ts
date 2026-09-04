@@ -1,3 +1,10 @@
+import type {
+  ContractType,
+  EmploymentType,
+  Gender,
+  MaritalStatus,
+  WorkLocationType,
+} from "@/types/employee-profile"
 import type { ImportableField } from "@/lib/employee-import/types"
 
 /**
@@ -63,6 +70,54 @@ export const FIELD_LABELS: Record<ImportableField, Record<HeaderLocale, string>>
   workSchedule: { az: "İş Qrafiki", en: "Work Schedule", ru: "График работы" },
   workLocationType: { az: "İşin İcra Yeri", en: "Work Location Type", ru: "Тип места работы" },
   workLocation: { az: "İş Yeri", en: "Work Location", ru: "Место работы" },
+}
+
+/**
+ * The file format's fixed CELL-VALUE vocabulary for the five importable
+ * fields whose underlying value is a closed enum rather than free text —
+ * same "independent of next-intl, Azerbaijan-market-only" reasoning as
+ * FIELD_LABELS above, and same AZ wording the app's own UI already shows
+ * for these exact values (messages/az.json's Gender/MaritalStatus/
+ * EmploymentType/ContractType/WorkLocationType namespaces), duplicated here
+ * deliberately rather than imported so the file format never depends on
+ * next-intl. profile-to-export-row.ts writes these labels into
+ * Import-Template/Full-Report cells instead of the raw internal code
+ * ("male", "full-time", ...); row-mapper.ts's enum maps recognize them
+ * (case-insensitively) coming back in on Import, built from these same
+ * tables so the two directions can never drift apart.
+ */
+export const GENDER_VALUE_LABELS: Record<Gender, string> = {
+  male: "Kişi",
+  female: "Qadın",
+}
+
+export const MARITAL_STATUS_VALUE_LABELS: Record<MaritalStatus, string> = {
+  single: "Subay",
+  married: "Evli",
+  divorced: "Boşanmış",
+  widowed: "Dul",
+}
+
+export const EMPLOYMENT_TYPE_VALUE_LABELS: Record<EmploymentType, string> = {
+  "full-time": "Tam ştat",
+  "part-time": "Yarım ştat",
+  seasonal: "Mövsümi",
+  temporary: "Müvəqqəti",
+  contract: "Müqavilə əsaslı",
+  internship: "Təcrübə (stajor)",
+}
+
+export const CONTRACT_TYPE_VALUE_LABELS: Record<ContractType, string> = {
+  permanent: "Müddətsiz",
+  "fixed-term": "Müddətli",
+  "project-based": "Layihə əsaslı",
+  internship: "Təcrübə müqaviləsi",
+}
+
+export const WORK_LOCATION_TYPE_VALUE_LABELS: Record<WorkLocationType, string> = {
+  "on-site": "Ofisdən",
+  remote: "Məsafədən",
+  hybrid: "Hibrid iş rejimi",
 }
 
 /**

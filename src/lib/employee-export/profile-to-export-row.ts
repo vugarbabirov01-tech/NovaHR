@@ -7,6 +7,13 @@ import type { EmployeeProfile } from "@/types/employee-profile"
 import type { ImportableField } from "@/lib/employee-import/types"
 import type { ExportType } from "@/lib/employee-export/types"
 import {
+  CONTRACT_TYPE_VALUE_LABELS,
+  EMPLOYMENT_TYPE_VALUE_LABELS,
+  GENDER_VALUE_LABELS,
+  MARITAL_STATUS_VALUE_LABELS,
+  WORK_LOCATION_TYPE_VALUE_LABELS,
+} from "@/lib/employee-import/column-mapping"
+import {
   DISABILITY_GROUP_LABELS,
   EMPLOYMENT_STATUS_LABELS,
   PROFESSIONAL_CATEGORY_LABELS,
@@ -36,10 +43,10 @@ export function profileToExportRow(profile: EmployeeProfile, exportType: ExportT
     firstName: profile.personal.firstName ?? "",
     lastName: profile.personal.lastName ?? "",
     fatherName: profile.personal.fatherName ?? "",
-    gender: profile.personal.gender ?? "",
+    gender: GENDER_VALUE_LABELS[profile.personal.gender] ?? "",
     dateOfBirth: profile.personal.dateOfBirth ?? "",
     nationality: profile.personal.nationality ?? "",
-    maritalStatus: profile.personal.maritalStatus ?? "",
+    maritalStatus: MARITAL_STATUS_VALUE_LABELS[profile.personal.maritalStatus] ?? "",
     finCode: profile.personal.finCode ?? "",
     nationalId: profile.personal.nationalId ?? "",
     passportNumber: profile.personal.passportNumber ?? "",
@@ -52,15 +59,15 @@ export function profileToExportRow(profile: EmployeeProfile, exportType: ExportT
     employeeNumber: profile.employment.employeeNumber ?? "",
     hireDate: profile.employment.hireDate ?? "",
     probationEndDate: profile.employment.probationEndDate ?? "",
-    employmentType: profile.employment.employmentType ?? "",
-    contractType: profile.employment.contractType ?? "",
+    employmentType: EMPLOYMENT_TYPE_VALUE_LABELS[profile.employment.employmentType] ?? "",
+    contractType: CONTRACT_TYPE_VALUE_LABELS[profile.employment.contractType] ?? "",
     department: profile.employment.department ?? "",
     position: profile.employment.position ?? "",
     company: profile.employment.company ?? "",
     branch: profile.employment.branch ?? "",
     manager: profile.employment.managerName ?? "",
     workSchedule: profile.employment.workSchedule ?? "",
-    workLocationType: profile.employment.workLocationType ?? "",
+    workLocationType: WORK_LOCATION_TYPE_VALUE_LABELS[profile.employment.workLocationType] ?? "",
     workLocation: profile.employment.workLocation ?? "",
   }
 
