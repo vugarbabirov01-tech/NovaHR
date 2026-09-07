@@ -1226,5 +1226,34 @@
         "validationEligible": "Employee is eligible for this leave type."
       }
     }
+  },
+  "OrganizationChart": {
+    "title": "Organization Chart",
+    "fullChart": "Full Chart",
+    "fullChartDescription": "Explore the entire company structure on one screen — zoom, pan, and expand or collapse everything.",
+    "searchPlaceholder": "Search by name, FIN, position, or department...",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "expandAll": "Expand All",
+    "collapseAll": "Collapse All",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "fitToScreen": "Fit to Screen",
+    "noData": "No organization structure available",
+    "noDataDescription": "No employee data has been found yet.",
+    "noResults": "No results found",
+    "noResultsDescription": "Try adjusting your search or filters.",
+    "filters": {
+      "trigger": "Filters",
+      "clear": "Clear",
+      "department": "Department",
+      "allDepartments": "All Departments",
+      "position": "Position",
+      "allPositions": "All Positions",
+      "manager": "Manager",
+      "allManagers": "All Managers",
+      "employmentStatus": "Employment Status",
+      "allStatuses": "All Statuses"
+    }
   }
 }

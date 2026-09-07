@@ -1226,5 +1226,34 @@
         "validationEligible": "Əməkdaş bu məzuniyyət növünə uyğundur."
       }
     }
+  },
+  "OrganizationChart": {
+    "title": "Təşkilati Struktur",
+    "fullChart": "Tam Struktur",
+    "fullChartDescription": "Bütün şirkət strukturunu bir ekranda araşdırın — yaxınlaşdırın, sürüşdürün, hamısını açın və ya bağlayın.",
+    "searchPlaceholder": "Ad, soyad, FIN, vəzifə və ya şöbə üzrə axtarın...",
+    "expand": "Aç",
+    "collapse": "Bağla",
+    "expandAll": "Hamısını Aç",
+    "collapseAll": "Hamısını Bağla",
+    "zoomIn": "Yaxınlaşdır",
+    "zoomOut": "Uzaqlaşdır",
+    "fitToScreen": "Ekrana Sığdır",
+    "noData": "Təşkilati struktur mövcud deyil",
+    "noDataDescription": "Hələ heç bir əməkdaş məlumatı tapılmadı.",
+    "noResults": "Nəticə tapılmadı",
+    "noResultsDescription": "Axtarış və ya filtrlərinizi dəyişməyi sınayın.",
+    "filters": {
+      "trigger": "Filtrlər",
+      "clear": "Təmizlə",
+      "department": "Şöbə",
+      "allDepartments": "Bütün Şöbələr",
+      "position": "Vəzifə",
+      "allPositions": "Bütün Vəzifələr",
+      "manager": "Rəhbər",
+      "allManagers": "Bütün Rəhbərlər",
+      "employmentStatus": "Məşğulluq Statusu",
+      "allStatuses": "Bütün Statuslar"
+    }
   }
 }
