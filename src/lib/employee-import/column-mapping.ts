@@ -65,11 +65,12 @@ export const FIELD_LABELS: Record<ImportableField, Record<HeaderLocale, string>>
   department: { az: "Şöbə", en: "Department", ru: "Отдел" },
   position: { az: "Vəzifə", en: "Position", ru: "Должность" },
   company: { az: "Şirkət", en: "Company", ru: "Компания" },
-  branch: { az: "Filial", en: "Branch", ru: "Филиал" },
   manager: { az: "Rəhbər", en: "Manager", ru: "Руководитель" },
   workSchedule: { az: "İş Qrafiki", en: "Work Schedule", ru: "График работы" },
   workLocationType: { az: "İşin İcra Yeri", en: "Work Location Type", ru: "Тип места работы" },
   workLocation: { az: "İş Yeri", en: "Work Location", ru: "Место работы" },
+  salary: { az: "Maaş", en: "Salary", ru: "Зарплата" },
+  salaryStartDate: { az: "Maaşın başlanma tarixi", en: "Salary Start Date", ru: "Дата начала выплаты зарплаты" },
 }
 
 /**
@@ -189,9 +190,10 @@ export const IMPORTABLE_FIELD_ORDER: ImportableField[] = [
   "department",
   "position",
   "company",
-  "branch",
   "manager",
   "workSchedule",
   "workLocationType",
   "workLocation",
+  "salary",
+  "salaryStartDate",
 ]

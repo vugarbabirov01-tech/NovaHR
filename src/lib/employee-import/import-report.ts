@@ -1,21 +1,29 @@
 import * as XLSX from "xlsx"
 
+import { getFullName } from "@/lib/employees"
 import type { ImportRowResult } from "@/lib/employee-import/types"
 
 /**
  * The official audit document for an import run — every processed row,
- * whether imported, skipped, or blocked. Built client-side (the rows are
- * already in the browser after the Import step finishes) with the same
- * library used to parse the source file.
+ * whether imported, updated, skipped, or blocked (§21). Built client-side
+ * (the rows are already in the browser after the Import step finishes)
+ * with the same library used to parse the source file. Errors and
+ * warnings are split into their own columns (rather than one combined
+ * "Messages" column) so the row-by-row status table reads the way §21's
+ * own example does.
  */
 export function downloadImportReport(results: ImportRowResult[], fileName: string) {
+  const wasWritten = (row: ImportRowResult) => row.outcome === "imported" || row.outcome === "updated"
+
   const sheetRows = results.map((row) => ({
-    "Original Row Number": row.rowNumber,
+    Row: row.rowNumber,
+    Employee: getFullName(row.mapped as { firstName: string; lastName: string }),
+    FIN: row.mapped.finCode ?? "",
     Status: row.outcome,
-    Severity: row.severity,
-    Messages: row.messages.map((m) => m.message).join(" | "),
-    "Imported Employee Number": row.outcome === "imported" ? (row.employeeNumber ?? "") : "",
-    "Imported Employee ID": row.outcome === "imported" ? (row.employeeId ?? "") : "",
+    Errors: row.messages.filter((m) => m.severity === "error").map((m) => m.message).join(" | "),
+    Warnings: row.messages.filter((m) => m.severity === "warning").map((m) => m.message).join(" | "),
+    "Employee Number": wasWritten(row) ? (row.employeeNumber ?? "") : "",
+    "Employee ID": wasWritten(row) ? (row.employeeId ?? "") : "",
   }))
 
   const worksheet = XLSX.utils.json_to_sheet(sheetRows)

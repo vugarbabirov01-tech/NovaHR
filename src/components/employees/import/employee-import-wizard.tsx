@@ -8,22 +8,31 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Stepper } from "@/components/common/stepper"
 import {
+  autoResolveMasterDataAction,
   getExistingEmployeeKeysAction,
   runImportChunkAction,
   saveImportDraftAction,
 } from "@/app/[locale]/(app)/employees/import/actions"
 import { suggestFieldForColumn } from "@/lib/employee-import/column-mapping"
+import { defaultImportSettings } from "@/lib/employee-import/types"
 import type {
   ColumnMapping,
   ImportDraft,
   ImportRow,
   ImportRowResult,
+  ImportSettings,
   ImportSummary,
   RawImportRow,
 } from "@/lib/employee-import/types"
 import { summarizeImportResults } from "@/lib/employee-import/import-service"
-import type { WizardMasterData } from "@/lib/employee-wizard-mapper"
+import type { ReferenceDataCreationSummary } from "@/lib/employee-import/reference-data-auto-resolver"
 import type { WorkerRequest, WorkerResponse } from "@/workers/employee-import.worker"
+
+const emptyReferenceDataSummary: ReferenceDataCreationSummary = {
+  companies: [],
+  departments: [],
+  positions: [],
+}
 
 import { ImportDraftsList } from "@/components/employees/import/import-drafts-list"
 import { UploadStep } from "@/components/employees/import/steps/upload-step"
@@ -39,7 +48,6 @@ const stepKeys = ["upload", "worksheet", "mapping", "validate", "preview", "impo
 const IMPORT_CHUNK_SIZE = 300
 
 interface EmployeeImportWizardProps {
-  masterData: WizardMasterData
   initialDrafts: ImportDraft[]
 }
 
@@ -47,7 +55,7 @@ function generateDraftId() {
   return `IMPD-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-export function EmployeeImportWizard({ masterData, initialDrafts }: EmployeeImportWizardProps) {
+export function EmployeeImportWizard({ initialDrafts }: EmployeeImportWizardProps) {
   const t = useTranslations("Employees.import")
 
   const [stepIndex, setStepIndex] = useState(0)
@@ -60,6 +68,12 @@ export function EmployeeImportWizard({ masterData, initialDrafts }: EmployeeImpo
   const [headerColumns, setHeaderColumns] = useState<string[]>([])
   const [rawRows, setRawRows] = useState<RawImportRow[]>([])
   const [columnMapping, setColumnMapping] = useState<ColumnMapping[]>([])
+
+  const [isAutoResolving, setIsAutoResolving] = useState(false)
+  const [referenceDataCreated, setReferenceDataCreated] = useState<ReferenceDataCreationSummary>(
+    emptyReferenceDataSummary
+  )
+  const [settings, setSettings] = useState<ImportSettings>(defaultImportSettings)
 
   const [validateProgress, setValidateProgress] = useState<{ processed: number; total: number } | null>(null)
   const [validatedRows, setValidatedRows] = useState<ImportRow[] | null>(null)
@@ -94,6 +108,8 @@ export function EmployeeImportWizard({ masterData, initialDrafts }: EmployeeImpo
     setImportResults(null)
     setImportProgress(null)
     setSummary(null)
+    setReferenceDataCreated(emptyReferenceDataSummary)
+    setIsAutoResolving(false)
   }
 
   async function handleFileSelected(file: File) {
@@ -149,10 +165,21 @@ export function EmployeeImportWizard({ masterData, initialDrafts }: EmployeeImpo
     if (stepIndex !== 3 || validatedRows !== null) return
 
     let cancelled = false
+    setIsAutoResolving(true)
     setValidateProgress({ processed: 0, total: rawRows.length })
 
     async function runValidation() {
-      const { fins, employeeNumbers } = await getExistingEmployeeKeysAction()
+      // Step 4 — Auto Resolve: create every missing Company/Department/
+      // Position/Branch for real (one Prisma transaction) before a single
+      // row is validated, so Validate resolves every row against the
+      // augmented snapshot instead of flagging what this step is about to
+      // fix anyway.
+      const { masterData: augmentedMasterData, created } = await autoResolveMasterDataAction(rawRows, columnMapping)
+      if (cancelled) return
+      setReferenceDataCreated(created)
+      setIsAutoResolving(false)
+
+      const { employeesByFin, employeeNumbers } = await getExistingEmployeeKeysAction()
       if (cancelled) return
 
       const worker = workerRef.current
@@ -174,9 +201,10 @@ export function EmployeeImportWizard({ masterData, initialDrafts }: EmployeeImpo
         type: "validate",
         rows: rawRows,
         columnMapping,
-        masterData,
-        existingFins: fins,
+        masterData: augmentedMasterData,
+        existingEmployeesByFin: employeesByFin,
         existingEmployeeNumbers: employeeNumbers,
+        settings,
       })
     }
 
@@ -184,7 +212,8 @@ export function EmployeeImportWizard({ masterData, initialDrafts }: EmployeeImpo
     return () => {
       cancelled = true
     }
-  }, [stepIndex, validatedRows, rawRows, columnMapping, masterData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- settings is read once when validation starts; changing it in Preview re-runs at Import time, not by re-validating.
+  }, [stepIndex, validatedRows, rawRows, columnMapping])
 
   async function handleSaveDraft() {
     const id = draftId ?? generateDraftId()
@@ -218,6 +247,7 @@ export function EmployeeImportWizard({ masterData, initialDrafts }: EmployeeImpo
     setValidateProgress(null)
     setImportResults(null)
     setSummary(null)
+    setReferenceDataCreated(emptyReferenceDataSummary)
     setStepIndex(Math.min(draft.currentStep, 2))
 
     // The worker needs the sheet re-selected in its own memory too, so
@@ -241,7 +271,7 @@ export function EmployeeImportWizard({ masterData, initialDrafts }: EmployeeImpo
     setImportProgress({ processed: 0, total: validatedRows.length })
 
     for (const chunk of chunks) {
-      const { results: chunkResults } = await runImportChunkAction(chunk)
+      const { results: chunkResults } = await runImportChunkAction(chunk, settings)
       results.push(...chunkResults)
       setImportProgress({ processed: results.length, total: validatedRows.length })
     }
@@ -308,7 +338,7 @@ export function EmployeeImportWizard({ masterData, initialDrafts }: EmployeeImpo
       {stepIndex === 3 ? (
         <Card>
           <CardContent>
-            <ValidateStep progress={validateProgress} totalRows={rawRows.length} />
+            <ValidateStep progress={validateProgress} totalRows={rawRows.length} isAutoResolving={isAutoResolving} />
           </CardContent>
         </Card>
       ) : null}
@@ -316,6 +346,9 @@ export function EmployeeImportWizard({ masterData, initialDrafts }: EmployeeImpo
       {stepIndex === 4 && validatedRows ? (
         <PreviewStep
           rows={validatedRows}
+          referenceDataCreated={referenceDataCreated}
+          settings={settings}
+          onSettingsChange={setSettings}
           onBack={() => setStepIndex(2)}
           onNext={() => setStepIndex(5)}
           onSaveDraft={handleSaveDraft}

@@ -15,6 +15,19 @@ import {
   MARITAL_STATUS_VALUE_LABELS,
   WORK_LOCATION_TYPE_VALUE_LABELS,
 } from "@/lib/employee-import/column-mapping"
+import { FALLBACK_DEPARTMENT_NAME } from "@/lib/employee-import/reference-data-fallbacks"
+
+/**
+ * The default every closed-enum field falls back to when the Excel cell is
+ * blank or its text doesn't match any known label — matches
+ * wizardDataToProfile's own post-hoc defaults (employee-wizard-mapper.ts),
+ * just applied earlier so validateWizardStep never sees an empty value to
+ * reject. Always paired with a non-blocking WARNING (row-validator.ts) so
+ * the assumption is visible, never silent.
+ */
+const DEFAULT_EMPLOYMENT_TYPE: EmploymentType = "full-time"
+const DEFAULT_CONTRACT_TYPE: ContractType = "permanent"
+const DEFAULT_WORK_LOCATION_TYPE: WorkLocationType = "on-site"
 
 function normalizeKey(text: string): string {
   return text.trim().toLowerCase().replace(/[\s_-]+/g, "")
@@ -128,12 +141,43 @@ function parseImportDate(raw: string): string | null {
   return null
 }
 
+/**
+ * Handles every shape §11 lists: "1200", "1200.00", "1200,00", "1 200",
+ * "1 200,50", "1,200". Spaces are always a thousands separator (never
+ * meaningful otherwise in a salary cell). With only one separator kind
+ * present, a comma/dot is decimal only when it has exactly 1-2 trailing
+ * digits ("1200,00" -> 1200.00); otherwise it's thousands ("1,200" -> 1200,
+ * matching the spec's own example). With both present, whichever comes
+ * last is the decimal separator ("1.200,50" vs "1,200.50"). Returns null
+ * for anything that still doesn't parse as a finite number — the caller
+ * treats that as SALARY_INVALID rather than silently coercing to 0.
+ */
+function parseSalaryAmount(raw: string): number | null {
+  let value = raw.trim().replace(/[^\d\s.,-]/g, "").replace(/\s+/g, "")
+  if (!value) return null
+
+  const lastComma = value.lastIndexOf(",")
+  const lastDot = value.lastIndexOf(".")
+
+  if (lastComma !== -1 && lastDot !== -1) {
+    value =
+      lastComma > lastDot
+        ? value.replace(/\./g, "").replace(",", ".")
+        : value.replace(/,/g, "")
+  } else if (lastComma !== -1) {
+    const decimalDigits = value.length - lastComma - 1
+    value = decimalDigits > 0 && decimalDigits <= 2 ? value.replace(",", ".") : value.replace(/,/g, "")
+  }
+
+  const num = Number(value)
+  return Number.isFinite(num) ? num : null
+}
+
 export interface MappedRow {
   mapped: Partial<EmployeeWizardData> & {
     department: string
     position: string
     company: string
-    branch: string
     manager: string
     workSchedule: string
   }
@@ -147,9 +191,9 @@ export interface MappedRow {
  * message wherever the source text didn't already match the target shape
  * exactly (e.g. "male" from "Kişi", or a reformatted date).
  *
- * department/position/company/branch/manager/workSchedule stay as plain
- * text here — resolving them to ids is row-validator's job, since that's
- * where master data is available.
+ * department/position/company/manager/workSchedule stay as plain text
+ * here — resolving them to ids is row-validator's job, since that's where
+ * master data is available.
  */
 export function mapRawRow(row: RawImportRow, columnMapping: ColumnMapping[]): MappedRow {
   const messages: ImportRowMessage[] = []
@@ -199,18 +243,95 @@ export function mapRawRow(row: RawImportRow, columnMapping: ColumnMapping[]): Ma
     employeeNumber: (text.employeeNumber ?? "").trim(),
     hireDate: "",
     probationEndDate: "",
-    employmentType: text.employmentType ? (mapEnum(text.employmentType, EMPLOYMENT_TYPE_MAP) ?? "") : "",
-    contractType: text.contractType ? (mapEnum(text.contractType, CONTRACT_TYPE_MAP) ?? "") : "",
-    department: text.department ?? "",
+    employmentType: "",
+    contractType: "",
+    department: text.department?.trim() || "",
     position: text.position ?? "",
     company: text.company ?? "",
-    branch: text.branch ?? "",
     manager: text.manager ?? "",
     workSchedule: text.workSchedule ?? "",
-    workLocationType: text.workLocationType
-      ? (mapEnum(text.workLocationType, WORK_LOCATION_TYPE_MAP) ?? "")
-      : "",
+    workLocationType: "",
     workLocation: text.workLocation ?? "",
+    baseSalary: "",
+    salaryEffectiveDate: "",
+  }
+
+  function defaultEnum<T extends string>(
+    field: "employmentType" | "contractType" | "workLocationType",
+    rawText: string | undefined,
+    table: Record<string, T>,
+    fallback: T,
+    fallbackLabel: string,
+    buildMessage: (rawValue: string | null, defaultLabel: string) => string,
+    code: "EMPLOYMENT_TYPE_DEFAULTED" | "CONTRACT_TYPE_DEFAULTED" | "WORK_LOCATION_TYPE_DEFAULTED"
+  ): T {
+    const matched = rawText ? mapEnum(rawText, table) : undefined
+    if (matched) return matched
+    messages.push({
+      code,
+      severity: "warning",
+      field,
+      message: buildMessage(rawText?.trim() || null, fallbackLabel),
+    })
+    return fallback
+  }
+
+  mapped.employmentType = defaultEnum(
+    "employmentType",
+    text.employmentType,
+    EMPLOYMENT_TYPE_MAP,
+    DEFAULT_EMPLOYMENT_TYPE,
+    EMPLOYMENT_TYPE_VALUE_LABELS[DEFAULT_EMPLOYMENT_TYPE],
+    ImportValidationMessages.employmentTypeDefaulted,
+    "EMPLOYMENT_TYPE_DEFAULTED"
+  )
+  mapped.contractType = defaultEnum(
+    "contractType",
+    text.contractType,
+    CONTRACT_TYPE_MAP,
+    DEFAULT_CONTRACT_TYPE,
+    CONTRACT_TYPE_VALUE_LABELS[DEFAULT_CONTRACT_TYPE],
+    ImportValidationMessages.contractTypeDefaulted,
+    "CONTRACT_TYPE_DEFAULTED"
+  )
+  mapped.workLocationType = defaultEnum(
+    "workLocationType",
+    text.workLocationType,
+    WORK_LOCATION_TYPE_MAP,
+    DEFAULT_WORK_LOCATION_TYPE,
+    WORK_LOCATION_TYPE_VALUE_LABELS[DEFAULT_WORK_LOCATION_TYPE],
+    ImportValidationMessages.workLocationTypeDefaulted,
+    "WORK_LOCATION_TYPE_DEFAULTED"
+  )
+
+  if (!mapped.department) {
+    mapped.department = FALLBACK_DEPARTMENT_NAME
+    messages.push({
+      code: "DEPARTMENT_DEFAULTED",
+      severity: "warning",
+      field: "department",
+      message: ImportValidationMessages.departmentDefaulted(FALLBACK_DEPARTMENT_NAME),
+    })
+  }
+
+  if (!mapped.email) {
+    messages.push({ code: "EMAIL_MISSING", severity: "warning", field: "email", message: ImportValidationMessages.emailMissing() })
+  }
+
+  if (text.salary) {
+    const amount = parseSalaryAmount(text.salary)
+    if (amount === null) {
+      messages.push({
+        code: "SALARY_INVALID",
+        severity: "warning",
+        field: "salary",
+        message: ImportValidationMessages.salaryInvalid(text.salary),
+      })
+    } else {
+      mapped.baseSalary = amount
+    }
+  } else {
+    messages.push({ code: "SALARY_MISSING", severity: "warning", field: "salary", message: ImportValidationMessages.salaryMissing() })
   }
 
   if (text.dateOfBirth) {
@@ -247,6 +368,20 @@ export function mapRawRow(row: RawImportRow, columnMapping: ColumnMapping[]): Ma
       mapped.probationEndDate = normalized("probationEndDate", parsedDate, text.probationEndDate)
     }
     // An unparsable optional date is silently left empty — not required.
+  }
+
+  if (text.salaryStartDate) {
+    const parsedDate = parseImportDate(text.salaryStartDate)
+    if (parsedDate) {
+      mapped.salaryEffectiveDate = normalized("salaryStartDate", parsedDate, text.salaryStartDate)
+    } else {
+      messages.push({
+        code: "INVALID_DATE",
+        severity: "warning",
+        field: "salaryStartDate",
+        message: ImportValidationMessages.invalidDate("salaryStartDate", text.salaryStartDate),
+      })
+    }
   }
 
   return { mapped, messages }

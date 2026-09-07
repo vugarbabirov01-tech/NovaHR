@@ -1,7 +1,7 @@
 import { parseWorkbook, extractSheetRows } from "@/lib/employee-import/file-parser"
-import { validateImportRows } from "@/lib/employee-import/row-validator"
+import { validateImportRows, type ExistingEmployeeSummary } from "@/lib/employee-import/row-validator"
 import { ImportValidationMessages } from "@/lib/employee-import/validation-messages"
-import type { ColumnMapping, RawImportRow } from "@/lib/employee-import/types"
+import type { ColumnMapping, ImportSettings, RawImportRow } from "@/lib/employee-import/types"
 import type { WizardMasterData } from "@/lib/employee-wizard-mapper"
 
 /**
@@ -19,8 +19,9 @@ export type WorkerRequest =
       rows: RawImportRow[]
       columnMapping: ColumnMapping[]
       masterData: WizardMasterData
-      existingFins: string[]
+      existingEmployeesByFin: Record<string, ExistingEmployeeSummary>
       existingEmployeeNumbers: string[]
+      settings: ImportSettings
     }
 
 export type WorkerResponse =
@@ -50,12 +51,14 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
     }
 
     if (message.type === "validate") {
+      const existingEmployeesByFin = new Map(Object.entries(message.existingEmployeesByFin))
       const results = validateImportRows(
         message.rows,
         message.columnMapping,
         message.masterData,
-        new Set(message.existingFins.map((fin) => fin.trim().toUpperCase())),
+        existingEmployeesByFin,
         new Set(message.existingEmployeeNumbers),
+        message.settings,
         (processed, total) => post({ type: "validateProgress", processed, total })
       )
       post({ type: "validated", rows: results })

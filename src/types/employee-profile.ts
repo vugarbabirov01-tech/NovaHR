@@ -300,6 +300,8 @@ export interface EmployeePayroll {
   bonus: number
   allowances: PayrollAllowance[]
   compensationNotes?: string
+  /** ISO date (YYYY-MM-DD) this baseSalary took effect — undefined for records with no known start date (e.g. pre-dating this field). No history/ledger: this is always the current value's own start date, same flat-field shape as the rest of payroll. */
+  salaryEffectiveDate?: string
 }
 
 // ---------------------------------------------------------------------------

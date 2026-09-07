@@ -3,7 +3,6 @@ import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { PageTitle } from "@/components/common/page-title"
 import { EmployeeImportWizard } from "@/components/employees/import/employee-import-wizard"
-import { getWizardMasterData } from "@/lib/wizard-master-data"
 import { listImportDrafts } from "@/data/import-draft-store"
 
 type Props = {
@@ -23,12 +22,12 @@ export default async function EmployeeImportPage({ params }: Props) {
   setRequestLocale(locale)
 
   const t = await getTranslations("Employees.import")
-  const [masterData, drafts] = await Promise.all([getWizardMasterData(), Promise.resolve(listImportDrafts())])
+  const drafts = listImportDrafts()
 
   return (
     <div className="flex flex-col gap-6">
       <PageTitle title={t("title")} description={t("description")} />
-      <EmployeeImportWizard masterData={masterData} initialDrafts={drafts} />
+      <EmployeeImportWizard initialDrafts={drafts} />
     </div>
   )
 }

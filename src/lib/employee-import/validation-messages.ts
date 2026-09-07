@@ -42,21 +42,21 @@ const VALIDATION_FIELD_LABELS: Record<ImportableField, string> = {
   department: "Şöbə",
   position: "Vəzifə",
   company: "Şirkət",
-  branch: "Filial",
   manager: "Rəhbər",
   workSchedule: "İş qrafiki",
   workLocationType: "İşin icra yeri",
   workLocation: "İş yeri",
+  salary: "Maaş",
+  salaryStartDate: "Maaşın başlanma tarixi",
 }
 
 /**
  * validateWizardStep (reused unmodified from Employee Create/Edit) returns
  * errors keyed by EmployeeWizardData's own property names — which for the
  * cascading master-data fields are the *id* fields (departmentId,
- * positionId, companyId, branchId), not the plain-text ImportableFields
- * (department, position, company, branch) Import's own vocabulary uses.
- * This bridges the two so every field, however it's keyed, resolves to
- * the same business name.
+ * positionId, companyId), not the plain-text ImportableFields (department,
+ * position, company) Import's own vocabulary uses. This bridges the two so
+ * every field, however it's keyed, resolves to the same business name.
  */
 const WIZARD_VALIDATION_FIELD_TO_IMPORTABLE_FIELD: Record<string, ImportableField> = {
   firstName: "firstName",
@@ -73,7 +73,6 @@ const WIZARD_VALIDATION_FIELD_TO_IMPORTABLE_FIELD: Record<string, ImportableFiel
   departmentId: "department",
   positionId: "position",
   companyId: "company",
-  branchId: "branch",
   workLocationType: "workLocationType",
 }
 
@@ -88,26 +87,53 @@ function labelForWizardField(wizardFieldKey: string): string {
 export const ImportValidationMessages = {
   requiredField: (wizardFieldKey: string) => `${labelForWizardField(wizardFieldKey)} daxil edilməlidir.`,
 
-  invalidDate: (field: "dateOfBirth" | "hireDate", rawValue: string) =>
+  invalidDate: (field: "dateOfBirth" | "hireDate" | "salaryStartDate", rawValue: string) =>
     `${VALIDATION_FIELD_LABELS[field]} "${rawValue}" düzgün formatda deyil.`,
 
   valueNormalized: (field: ImportableField, original: string, normalized: string) =>
     `${VALIDATION_FIELD_LABELS[field]}: "${original}" dəyəri "${normalized}" formatına gətirildi.`,
 
-  departmentNotFound: (value: string) => `Şöbə "${value}" sistemdə tapılmadı.`,
+  departmentWillBeCreated: (value: string) => `Şöbə "${value}" sistemdə tapılmadı — avtomatik yaradılacaq.`,
 
-  positionNotFound: (value: string, scopedToDepartment: boolean) =>
-    `Vəzifə "${value}" ${scopedToDepartment ? "seçilmiş şöbədə" : "sistemdə"} tapılmadı.`,
+  positionWillBeCreated: (value: string, scopedToDepartment: boolean) =>
+    `Vəzifə "${value}" ${scopedToDepartment ? "seçilmiş şöbədə" : "sistemdə"} tapılmadı — avtomatik yaradılacaq.`,
 
-  companyNotFound: (value: string) => `Şirkət "${value}" sistemdə tapılmadı.`,
+  companyWillBeCreated: (value: string) => `Şirkət "${value}" sistemdə tapılmadı — avtomatik yaradılacaq.`,
 
-  branchNotFound: (value: string, scopedToCompany: boolean) =>
-    `Filial "${value}" ${scopedToCompany ? "seçilmiş şirkətdə" : "sistemdə"} tapılmadı.`,
+  departmentDefaulted: (fallbackName: string) =>
+    `Şöbə göstərilməyib — "${fallbackName}" şöbəsi üzrə qeydə alınacaq.`,
 
-  managerNotFound: (value: string) => `Rəhbər "${value}" sistemdə tapılmadı.`,
+  managerNotFound: (value: string) => `Rəhbər "${value}" sistemdə tapılmadı — bu sətir rəhbərsiz idxal ediləcək.`,
 
   workScheduleCustom: (value: string) =>
     `İş qrafiki "${value}" sistemdə tapılmadı. Bu sətir üçün fərdi iş qrafiki istifadə olunacaq.`,
+
+  employmentTypeDefaulted: (rawValue: string | null, defaultLabel: string) =>
+    rawValue
+      ? `Məşğulluq növü "${rawValue}" tanınmadı — "${defaultLabel}" olaraq təyin edildi.`
+      : `Məşğulluq növü göstərilməyib — "${defaultLabel}" olaraq təyin edildi.`,
+
+  contractTypeDefaulted: (rawValue: string | null, defaultLabel: string) =>
+    rawValue
+      ? `Müqavilə növü "${rawValue}" tanınmadı — "${defaultLabel}" olaraq təyin edildi.`
+      : `Müqavilə növü göstərilməyib — "${defaultLabel}" olaraq təyin edildi.`,
+
+  workLocationTypeDefaulted: (rawValue: string | null, defaultLabel: string) =>
+    rawValue
+      ? `İşin icra yeri "${rawValue}" tanınmadı — "${defaultLabel}" olaraq təyin edildi.`
+      : `İşin icra yeri göstərilməyib — "${defaultLabel}" olaraq təyin edildi.`,
+
+  emailMissing: () => "E-poçt ünvanı göstərilməyib.",
+
+  salaryInvalid: (value: string) => `Maaş dəyəri "${value}" düzgün formatda deyil.`,
+
+  salaryMissing: () => "Maaş göstərilməyib.",
+
+  salaryExistingKept: (existing: number, fromExcel: number, currency: string) =>
+    `Mövcud maaş saxlanıldı: ${existing} ${currency} (Excel-də: ${fromExcel} ${currency}).`,
+
+  salaryWillUpdate: (existing: number, fromExcel: number, currency: string) =>
+    `Maaş Excel-dən yenilənəcək: ${existing} ${currency} → ${fromExcel} ${currency}.`,
 
   duplicateFinInFile: (value: string) => `FIN kodu "${value}" bu fayl daxilində birdən çox dəfə istifadə olunub.`,
 

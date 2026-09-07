@@ -145,6 +145,7 @@ export function wizardDataToProfile(data: EmployeeWizardData, masterData: Wizard
       bonus: data.bonus,
       allowances: [],
       compensationNotes: data.compensationNotes || undefined,
+      salaryEffectiveDate: data.salaryEffectiveDate || undefined,
     },
     documents: data.documents.map((doc) => ({
       id: doc.id,
@@ -262,6 +263,7 @@ export function profileToWizardData(
     currency: profile.payroll.currency,
     bonus: profile.payroll.bonus,
     compensationNotes: profile.payroll.compensationNotes ?? "",
+    salaryEffectiveDate: profile.payroll.salaryEffectiveDate ?? "",
 
     documents: profile.documents.map((doc) => ({ id: doc.id, name: doc.name, category: doc.category })),
   }

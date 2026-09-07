@@ -100,6 +100,8 @@ export interface EmployeeWizardData {
   currency: string
   bonus: number
   compensationNotes: string
+  /** ISO date (YYYY-MM-DD) this base salary took effect — "" means unknown/not entered. */
+  salaryEffectiveDate: string
 
   // Step 5 — Documents
   documents: WizardDocument[]
@@ -171,6 +173,7 @@ export const defaultWizardData: EmployeeWizardData = {
   currency: "AZN",
   bonus: 0,
   compensationNotes: "",
+  salaryEffectiveDate: "",
 
   documents: [],
 }

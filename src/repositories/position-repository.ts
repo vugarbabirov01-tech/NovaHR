@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import { prisma, type PrismaClientOrTransaction } from "@/lib/prisma"
 import type { PositionModel } from "@/generated/prisma/models"
 
 export type { PositionModel as Position }
@@ -10,7 +10,7 @@ export interface PositionInput {
   description?: string
 }
 
-async function generateUniqueCode(base: string): Promise<string> {
+async function generateUniqueCode(base: string, client: PrismaClientOrTransaction): Promise<string> {
   const slug =
     base
       .toUpperCase()
@@ -19,7 +19,7 @@ async function generateUniqueCode(base: string): Promise<string> {
       .slice(0, 24) || "POS"
   let code = slug
   let suffix = 2
-  while (await prisma.position.findUnique({ where: { code } })) {
+  while (await client.position.findUnique({ where: { code } })) {
     code = `${slug}-${suffix}`
     suffix += 1
   }
@@ -42,9 +42,12 @@ export function findPositionById(id: string): Promise<PositionModel | null> {
   return prisma.position.findUnique({ where: { id } })
 }
 
-export async function createPosition(input: PositionInput): Promise<PositionModel> {
-  const code = input.code?.trim() ? input.code.trim().toUpperCase() : await generateUniqueCode(input.title)
-  return prisma.position.create({
+export async function createPosition(
+  input: PositionInput,
+  client: PrismaClientOrTransaction = prisma
+): Promise<PositionModel> {
+  const code = input.code?.trim() ? input.code.trim().toUpperCase() : await generateUniqueCode(input.title, client)
+  return client.position.create({
     data: {
       title: input.title,
       code,

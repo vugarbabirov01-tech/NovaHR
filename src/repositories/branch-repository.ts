@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import { prisma, type PrismaClientOrTransaction } from "@/lib/prisma"
 import type { BranchModel } from "@/generated/prisma/models"
 
 export type { BranchModel as Branch }
@@ -10,7 +10,7 @@ export interface BranchInput {
   description?: string
 }
 
-async function generateUniqueCode(base: string): Promise<string> {
+async function generateUniqueCode(base: string, client: PrismaClientOrTransaction): Promise<string> {
   const slug =
     base
       .toUpperCase()
@@ -19,7 +19,7 @@ async function generateUniqueCode(base: string): Promise<string> {
       .slice(0, 24) || "BR"
   let code = slug
   let suffix = 2
-  while (await prisma.branch.findUnique({ where: { code } })) {
+  while (await client.branch.findUnique({ where: { code } })) {
     code = `${slug}-${suffix}`
     suffix += 1
   }
@@ -42,9 +42,12 @@ export function findBranchById(id: string): Promise<BranchModel | null> {
   return prisma.branch.findUnique({ where: { id } })
 }
 
-export async function createBranch(input: BranchInput): Promise<BranchModel> {
-  const code = input.code?.trim() ? input.code.trim().toUpperCase() : await generateUniqueCode(input.name)
-  return prisma.branch.create({
+export async function createBranch(
+  input: BranchInput,
+  client: PrismaClientOrTransaction = prisma
+): Promise<BranchModel> {
+  const code = input.code?.trim() ? input.code.trim().toUpperCase() : await generateUniqueCode(input.name, client)
+  return client.branch.create({
     data: { name: input.name, code, companyId: input.companyId, description: input.description || null },
   })
 }

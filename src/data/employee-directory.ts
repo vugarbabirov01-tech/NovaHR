@@ -1250,6 +1250,12 @@ export function isEmployeeIdTaken(id: string): boolean {
   return employeeDirectory.some((employee) => employee.id === id)
 }
 
+/** Used by Import's Skip/Update-existing flow (§14) to find the actual record a matching FIN belongs to, not just whether one exists. */
+export function getEmployeeByFin(finCode: string): EmployeeProfile | undefined {
+  const normalized = finCode.trim().toUpperCase()
+  return employeeDirectory.find((employee) => employee.personal.finCode.trim().toUpperCase() === normalized)
+}
+
 /**
  * Used by Import for FIN-based idempotency, and by Create/Edit to enforce
  * global FIN uniqueness. excludeId lets Edit ignore the employee's own

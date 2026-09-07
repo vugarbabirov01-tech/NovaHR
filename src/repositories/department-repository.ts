@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import { prisma, type PrismaClientOrTransaction } from "@/lib/prisma"
 import type { DepartmentModel } from "@/generated/prisma/models"
 
 export type { DepartmentModel as Department }
@@ -9,7 +9,7 @@ export interface DepartmentInput {
   description?: string
 }
 
-async function generateUniqueCode(base: string): Promise<string> {
+async function generateUniqueCode(base: string, client: PrismaClientOrTransaction): Promise<string> {
   const slug =
     base
       .toUpperCase()
@@ -18,7 +18,7 @@ async function generateUniqueCode(base: string): Promise<string> {
       .slice(0, 24) || "DEPT"
   let code = slug
   let suffix = 2
-  while (await prisma.department.findUnique({ where: { code } })) {
+  while (await client.department.findUnique({ where: { code } })) {
     code = `${slug}-${suffix}`
     suffix += 1
   }
@@ -37,9 +37,12 @@ export function findDepartmentById(id: string): Promise<DepartmentModel | null> 
   return prisma.department.findUnique({ where: { id } })
 }
 
-export async function createDepartment(input: DepartmentInput): Promise<DepartmentModel> {
-  const code = input.code?.trim() ? input.code.trim().toUpperCase() : await generateUniqueCode(input.name)
-  return prisma.department.create({
+export async function createDepartment(
+  input: DepartmentInput,
+  client: PrismaClientOrTransaction = prisma
+): Promise<DepartmentModel> {
+  const code = input.code?.trim() ? input.code.trim().toUpperCase() : await generateUniqueCode(input.name, client)
+  return client.department.create({
     data: { name: input.name, code, description: input.description || null },
   })
 }

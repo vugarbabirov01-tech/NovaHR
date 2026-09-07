@@ -30,8 +30,8 @@ function formatWorkDuration(duration: { years: number; months: number; days: num
 /**
  * The inverse of Import's row-mapper — and considerably simpler, since
  * EmployeeProfile.employment already stores department/position/company/
- * branch/manager/workSchedule as plain display names, not ids. No
- * master-data lookup is needed on the way out, only on the way in.
+ * manager/workSchedule as plain display names, not ids. No master-data
+ * lookup is needed on the way out, only on the way in.
  *
  * Only ever reads personal/employment (+ a few labourLaw/payroll fields for
  * the Full Report) — documents, education, assets, notes, auditLog,
@@ -64,11 +64,12 @@ export function profileToExportRow(profile: EmployeeProfile, exportType: ExportT
     department: profile.employment.department ?? "",
     position: profile.employment.position ?? "",
     company: profile.employment.company ?? "",
-    branch: profile.employment.branch ?? "",
     manager: profile.employment.managerName ?? "",
     workSchedule: profile.employment.workSchedule ?? "",
     workLocationType: WORK_LOCATION_TYPE_VALUE_LABELS[profile.employment.workLocationType] ?? "",
     workLocation: profile.employment.workLocation ?? "",
+    salary: profile.payroll.baseSalary ? String(profile.payroll.baseSalary) : "",
+    salaryStartDate: profile.payroll.salaryEffectiveDate ?? "",
   }
 
   if (exportType === "fullReport") {

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import { prisma, type PrismaClientOrTransaction } from "@/lib/prisma"
 import type { CompanyModel } from "@/generated/prisma/models"
 
 export type { CompanyModel as Company }
@@ -9,7 +9,7 @@ export interface CompanyInput {
   description?: string
 }
 
-async function generateUniqueCode(base: string): Promise<string> {
+async function generateUniqueCode(base: string, client: PrismaClientOrTransaction): Promise<string> {
   const slug =
     base
       .toUpperCase()
@@ -18,7 +18,7 @@ async function generateUniqueCode(base: string): Promise<string> {
       .slice(0, 24) || "CO"
   let code = slug
   let suffix = 2
-  while (await prisma.company.findUnique({ where: { code } })) {
+  while (await client.company.findUnique({ where: { code } })) {
     code = `${slug}-${suffix}`
     suffix += 1
   }
@@ -37,9 +37,12 @@ export function findCompanyById(id: string): Promise<CompanyModel | null> {
   return prisma.company.findUnique({ where: { id } })
 }
 
-export async function createCompany(input: CompanyInput): Promise<CompanyModel> {
-  const code = input.code?.trim() ? input.code.trim().toUpperCase() : await generateUniqueCode(input.name)
-  return prisma.company.create({
+export async function createCompany(
+  input: CompanyInput,
+  client: PrismaClientOrTransaction = prisma
+): Promise<CompanyModel> {
+  const code = input.code?.trim() ? input.code.trim().toUpperCase() : await generateUniqueCode(input.name, client)
+  return client.company.create({
     data: { name: input.name, code, description: input.description || null },
   })
 }

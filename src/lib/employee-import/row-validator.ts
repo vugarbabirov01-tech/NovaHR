@@ -4,14 +4,19 @@ import { defaultWizardData, type EmployeeWizardData } from "@/types/employee-wiz
 import { CUSTOM_WORK_SCHEDULE_ID, type WizardMasterData } from "@/lib/employee-wizard-mapper"
 import { mapRawRow } from "@/lib/employee-import/row-mapper"
 import {
-  resolveBranch,
   resolveCompany,
   resolveDepartment,
   resolveManager,
   resolvePosition,
   resolveWorkSchedule,
 } from "@/lib/employee-import/master-data-resolver"
-import type { ImportRow, ImportRowMessage, ImportSeverity, RawImportRow } from "@/lib/employee-import/types"
+import type {
+  ImportRow,
+  ImportRowMessage,
+  ImportSettings,
+  ImportSeverity,
+  RawImportRow,
+} from "@/lib/employee-import/types"
 import type { ColumnMapping } from "@/lib/employee-import/types"
 import { ImportValidationMessages } from "@/lib/employee-import/validation-messages"
 
@@ -31,6 +36,12 @@ function highestSeverity(messages: ImportRowMessage[]): ImportSeverity {
   )
 }
 
+/** What Validate needs to know about an employee already in the directory — enough for FIN idempotency (§14) and the Existing-vs-Excel salary comparison (§13), without handing the validator the whole live profile. */
+export interface ExistingEmployeeSummary {
+  id: string
+  baseSalary: number
+}
+
 /**
  * Validates every row of an uploaded file in one pass. Reuses
  * validateWizardStep (Personal + Employment only — Payroll/Labour Law stay
@@ -38,13 +49,22 @@ function highestSeverity(messages: ImportRowMessage[]): ImportSeverity {
  * isEmployeeNumberTaken exactly as Employee Create/Edit do; nothing here
  * duplicates that logic. Import-specific checks (FIN/master-data
  * existence, idempotency) are the only new rules.
+ *
+ * `masterData` is expected to already be the post-auto-create snapshot
+ * (reference-data-auto-resolver.ts has run) — so a DEPARTMENT/POSITION/
+ * COMPANY "not found" here is only ever a defensive fallback path, not
+ * the normal case. Email is deliberately excluded from
+ * REQUIRED_FIELD_MISSING (a real email can't be fabricated the way a
+ * default department/employment type can) — row-mapper already recorded a
+ * non-blocking EMAIL_MISSING warning for a blank cell.
  */
 export function validateImportRows(
   rawRows: RawImportRow[],
   columnMapping: ColumnMapping[],
   masterData: WizardMasterData,
-  existingFins: ReadonlySet<string>,
+  existingEmployeesByFin: ReadonlyMap<string, ExistingEmployeeSummary>,
   existingEmployeeNumbers: ReadonlySet<string>,
+  settings: ImportSettings,
   onProgress?: (processed: number, total: number) => void
 ): ImportRow[] {
   const mappedRows = rawRows.map((row) => ({ row, ...mapRawRow(row, columnMapping) }))
@@ -66,10 +86,10 @@ export function validateImportRows(
     const department = mapped.department ? resolveDepartment(mapped.department, masterData) : undefined
     if (mapped.department && !department) {
       messages.push({
-        code: "DEPARTMENT_NOT_FOUND",
-        severity: "error",
+        code: "DEPARTMENT_WILL_BE_CREATED",
+        severity: "info",
         field: "department",
-        message: ImportValidationMessages.departmentNotFound(mapped.department),
+        message: ImportValidationMessages.departmentWillBeCreated(mapped.department),
       })
     }
 
@@ -78,30 +98,20 @@ export function validateImportRows(
       : undefined
     if (mapped.position && !position) {
       messages.push({
-        code: "POSITION_NOT_FOUND",
-        severity: "error",
+        code: "POSITION_WILL_BE_CREATED",
+        severity: "info",
         field: "position",
-        message: ImportValidationMessages.positionNotFound(mapped.position, Boolean(department)),
+        message: ImportValidationMessages.positionWillBeCreated(mapped.position, Boolean(department)),
       })
     }
 
     const company = mapped.company ? resolveCompany(mapped.company, masterData) : undefined
     if (mapped.company && !company) {
       messages.push({
-        code: "COMPANY_NOT_FOUND",
-        severity: "error",
+        code: "COMPANY_WILL_BE_CREATED",
+        severity: "info",
         field: "company",
-        message: ImportValidationMessages.companyNotFound(mapped.company),
-      })
-    }
-
-    const branch = mapped.branch ? resolveBranch(mapped.branch, company?.id, masterData) : undefined
-    if (mapped.branch && !branch) {
-      messages.push({
-        code: "BRANCH_NOT_FOUND",
-        severity: "error",
-        field: "branch",
-        message: ImportValidationMessages.branchNotFound(mapped.branch, Boolean(company)),
+        message: ImportValidationMessages.companyWillBeCreated(mapped.company),
       })
     }
 
@@ -109,7 +119,7 @@ export function validateImportRows(
     if (mapped.manager && !manager) {
       messages.push({
         code: "MANAGER_NOT_FOUND",
-        severity: "error",
+        severity: "warning",
         field: "manager",
         message: ImportValidationMessages.managerNotFound(mapped.manager),
       })
@@ -127,11 +137,11 @@ export function validateImportRows(
 
     // FIN uniqueness — in-file duplicates block every row that shares the
     // value (we can't know which is authoritative); a match against the
-    // live directory is not an error, it's the idempotency path: the row
-    // is skipped at import time rather than creating a duplicate employee.
+    // live directory is not an error — it's the Skip/Update-existing path
+    // (§14), resolved against `settings` at import time by import-service.
     const finCode = mapped.finCode
     const finIsDuplicateInFile = Boolean(finCode && (finOccurrences.get(finCode) ?? 0) > 1)
-    const finMatchesExistingEmployee = Boolean(finCode && existingFins.has(finCode))
+    const existingEmployee = finCode ? existingEmployeesByFin.get(finCode) : undefined
 
     if (mapped.finCode) {
       if (finIsDuplicateInFile) {
@@ -141,24 +151,40 @@ export function validateImportRows(
           field: "finCode",
           message: ImportValidationMessages.duplicateFinInFile(mapped.finCode),
         })
-      } else if (finMatchesExistingEmployee) {
+      } else if (existingEmployee) {
         messages.push({
           code: "DUPLICATE_FIN_EXISTING",
           severity: "warning",
           field: "finCode",
           message: ImportValidationMessages.duplicateFinExisting(mapped.finCode),
         })
+
+        const excelSalary = typeof mapped.baseSalary === "number" ? mapped.baseSalary : undefined
+        if (settings.existingEmployeeStrategy === "update" && excelSalary && existingEmployee.baseSalary > 0) {
+          messages.push(
+            settings.salaryStrategy === "updateFromExcel"
+              ? {
+                  code: "SALARY_WILL_UPDATE",
+                  severity: "info",
+                  field: "salary",
+                  message: ImportValidationMessages.salaryWillUpdate(existingEmployee.baseSalary, excelSalary, mapped.currency ?? "AZN"),
+                }
+              : {
+                  code: "SALARY_EXISTING_KEPT",
+                  severity: "info",
+                  field: "salary",
+                  message: ImportValidationMessages.salaryExistingKept(existingEmployee.baseSalary, excelSalary, mapped.currency ?? "AZN"),
+                }
+          )
+        }
       }
     }
 
     // Employee Number — same generate-or-validate rule as Create/Edit,
     // with the pool growing as each row in the file is assigned one so
-    // two rows in the same file can never collide. When the row's own FIN
-    // already matches an existing employee, the row is going to be skipped
-    // regardless (FIN is the idempotency key) — so a match against the
-    // EXISTING directory here isn't a real conflict, just that employee's
-    // own number coming back around on a re-import/re-export, and flagging
-    // it as an error would be pure noise. In-file duplicates still matter.
+    // two rows in the same file can never collide. An existing employee's
+    // own number, or an update-mode row, is not a real conflict — that
+    // employee already legitimately holds it.
     let employeeNumber = mapped.employeeNumber
     if (!employeeNumber) {
       employeeNumber = generateNextEmployeeNumber(Array.from(employeeNumberPool))
@@ -175,7 +201,7 @@ export function validateImportRows(
         field: "employeeNumber",
         message: ImportValidationMessages.duplicateEmployeeNumberInFile(employeeNumber),
       })
-    } else if (!finMatchesExistingEmployee && existingNumberSet.has(employeeNumber)) {
+    } else if (!existingEmployee && existingNumberSet.has(employeeNumber)) {
       messages.push({
         code: "DUPLICATE_EMPLOYEE_NUMBER_EXISTING",
         severity: "error",
@@ -193,13 +219,14 @@ export function validateImportRows(
       departmentId: department?.id ?? "",
       positionId: position?.id ?? "",
       companyId: company?.id ?? "",
-      branchId: branch?.id ?? "",
       managerId: manager?.id ?? "",
       scheduleId: workSchedule ? workSchedule.id : mapped.workSchedule ? CUSTOM_WORK_SCHEDULE_ID : "",
       customWorkScheduleLabel: workSchedule ? "" : (mapped.workSchedule ?? ""),
+      salaryEffectiveDate: mapped.salaryEffectiveDate || settings.defaultSalaryStartDate,
     }
 
     const personalErrors = validateWizardStep(0, wizardData, VALIDATION_MESSAGES)
+    delete personalErrors.email // blank email is EMAIL_MISSING (warning), never blocking — see file header.
     const employmentErrors = validateWizardStep(1, wizardData, VALIDATION_MESSAGES)
     for (const field of Object.keys({ ...personalErrors, ...employmentErrors })) {
       messages.push({
@@ -211,7 +238,7 @@ export function validateImportRows(
     }
 
     const severity = highestSeverity(messages)
-    const willSkipAsDuplicate = messages.some((m) => m.code === "DUPLICATE_FIN_EXISTING")
+    const willSkipAsDuplicate = Boolean(existingEmployee) && settings.existingEmployeeStrategy === "skip"
 
     results.push({
       rowNumber: row.rowNumber,
@@ -221,6 +248,8 @@ export function validateImportRows(
       severity,
       willImport: severity !== "error",
       willSkipAsDuplicate,
+      existingEmployeeId: existingEmployee?.id,
+      existingSalary: existingEmployee?.baseSalary,
     })
 
     if (onProgress && (index % 200 === 0 || index === mappedRows.length - 1)) {
