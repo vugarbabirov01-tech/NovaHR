@@ -80,6 +80,44 @@ export async function sumLeaveLedgerAmountsByEntryType(
   return sums
 }
 
+export interface GroupedLedgerAmountSum {
+  employeeId: string
+  leaveTypeId: string
+  entryType: LeaveEntryType
+  amount: number
+}
+
+/**
+ * The bulk counterpart to sumLeaveLedgerAmountsByEntryType — one query
+ * covering every employee at once instead of one query per employee, for
+ * callers (getOrganizationLeaveDaysSummary) that need the same per-entryType
+ * sums for every employee/leaveType pair rather than a single one. Grouping
+ * by employeeId+leaveTypeId+entryType in one groupBy is what makes this a
+ * single round trip regardless of how many employees exist.
+ */
+export async function sumLeaveLedgerAmountsByEmployeeAndType(filter: {
+  leaveTypeIds: string[]
+  asOfDate?: Date
+}): Promise<GroupedLedgerAmountSum[]> {
+  if (filter.leaveTypeIds.length === 0) return []
+
+  const grouped = await prisma.leaveLedgerEntry.groupBy({
+    by: ["employeeId", "leaveTypeId", "entryType"],
+    _sum: { amount: true },
+    where: {
+      leaveTypeId: { in: filter.leaveTypeIds },
+      ...(filter.asOfDate ? { effectiveDate: { lte: filter.asOfDate } } : {}),
+    },
+  })
+
+  return grouped.map((row) => ({
+    employeeId: row.employeeId,
+    leaveTypeId: row.leaveTypeId,
+    entryType: row.entryType,
+    amount: row._sum.amount ?? 0,
+  }))
+}
+
 /** Inserts exactly what's given — does not validate against a policy or
  * compute anything derived. That's Phase 2's job (e.g. a balance-check
  * before allowing LEAVE_TAKEN). Safe for Opening Balance / Manual

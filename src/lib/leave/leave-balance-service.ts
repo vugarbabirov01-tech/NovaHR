@@ -1,5 +1,5 @@
 import { findActiveLeaveTypes, findLeaveTypeById } from "@/repositories/leave-type-repository"
-import { sumLeaveLedgerAmountsByEntryType } from "@/repositories/leave-ledger-repository"
+import { sumLeaveLedgerAmountsByEntryType, sumLeaveLedgerAmountsByEmployeeAndType } from "@/repositories/leave-ledger-repository"
 import { sumPendingRequestedUnits } from "@/repositories/leave-request-repository"
 import { resolveAnnualLeaveEntitlement } from "@/lib/leave/leave-policy-resolution-service"
 import { normalizeLeaveAmount as normalizeZero } from "@/lib/leave/normalize-leave-amount"
@@ -153,37 +153,73 @@ export async function getEmployeeLeaveSummary(
  * excluded: summing across incompatible units would silently produce a
  * meaningless total.
  *
- * Sums computeLeaveBalance per employee × leave type rather than running
- * its own separate ledger aggregate query — that used to be two different
- * code paths that could silently drift apart (the org total ignoring the
- * ANNUAL entitlement fallback an individual employee's balance already
- * used, for one). This is the single source of truth every other Leave
- * balance surface (Employee Profile, the request wizard's Review step)
- * already goes through; the org-wide dashboard is now just a sum over it,
- * not a competing implementation. The employee count here is small enough
- * (a demo/dev-scale directory) that O(employees × leaveTypes) balance
- * calls is the right tradeoff for correctness; a real-scale deployment
- * would want a batched/materialized version of the same rule, not a
- * second rule.
+ * Applies the exact same rule computeLeaveBalance uses per employee — same
+ * mapEntryTypeSumsToBuckets bucket mapping, same "no recorded opening
+ * balance -> fall back to the resolved ANNUAL entitlement" rule — but as a
+ * bulk computation: one groupBy across every employee/leave type instead
+ * of a separate query per (employee, leaveType) pair. That per-pair
+ * version (still what computeLeaveBalance itself does, for the Employee
+ * Profile/Review-step single-employee case) was fine at the original
+ * demo-scale directory size, but O(employees x leaveTypes) individual
+ * queries stopped being a "small" number the moment a real import brought
+ * the directory to 237+ employees — it was taking long enough to
+ * starve the single dev-server process and make unrelated pages (e.g. an
+ * Employee Profile navigation) appear to hang. `pending` is also fetched
+ * once here (not per statement) since this function never used the
+ * per-employee pending figure anyway — computeLeaveBalance still computes
+ * it because single-employee callers need it.
  */
 export async function getOrganizationLeaveDaysSummary(
   asOfDate: Date = new Date()
 ): Promise<OrgLeaveDaysSummary> {
   const leaveTypes = (await findActiveLeaveTypes()).filter((leaveType) => leaveType.unit === "DAYS")
-  const statements = await Promise.all(
-    employeeDirectory.flatMap((employee) =>
-      leaveTypes.map((leaveType) => computeLeaveBalance(employee.id, leaveType.id, asOfDate))
-    )
-  )
+  const leaveTypeIds = leaveTypes.map((leaveType) => leaveType.id)
+  const annualLeaveTypeId = leaveTypes.find((leaveType) => leaveType.code === "ANNUAL")?.id
+
+  const grouped = await sumLeaveLedgerAmountsByEmployeeAndType({ leaveTypeIds, asOfDate })
+
+  const sumsByEmployeeAndType = new Map<string, Partial<Record<LeaveEntryType, number>>>()
+  for (const row of grouped) {
+    const key = `${row.employeeId}:${row.leaveTypeId}`
+    const bucket = sumsByEmployeeAndType.get(key) ?? {}
+    bucket[row.entryType] = row.amount
+    sumsByEmployeeAndType.set(key, bucket)
+  }
+
+  let totalOpeningBalance = 0
+  let totalCarriedForward = 0
+  let totalTaken = 0
+  let totalRemaining = 0
+
+  for (const employee of employeeDirectory) {
+    for (const leaveType of leaveTypes) {
+      const sums = sumsByEmployeeAndType.get(`${employee.id}:${leaveType.id}`) ?? {}
+      const buckets = mapEntryTypeSumsToBuckets(sums)
+
+      const hasRecordedOpeningBalance = sums.OPENING_BALANCE !== undefined || sums.IMPORTED_BALANCE !== undefined
+      if (!hasRecordedOpeningBalance && leaveType.id === annualLeaveTypeId) {
+        const entitlementDays = resolveAnnualLeaveEntitlement(employee, asOfDate).totalDays
+        if (entitlementDays) {
+          buckets.opening = normalizeZero(buckets.opening + entitlementDays)
+          buckets.remaining = normalizeZero(buckets.remaining + entitlementDays)
+        }
+      }
+
+      totalOpeningBalance += buckets.opening
+      totalCarriedForward += buckets.carriedForward
+      totalTaken += buckets.taken
+      totalRemaining += buckets.remaining
+    }
+  }
 
   const totalPending = await sumPendingRequestedUnits({ unit: "DAYS" })
 
   return {
     asOfDate: toDateOnlyIso(asOfDate),
-    totalOpeningBalance: normalizeZero(statements.reduce((total, s) => total + s.opening, 0)),
-    totalCarriedForward: normalizeZero(statements.reduce((total, s) => total + s.carriedForward, 0)),
-    totalTaken: normalizeZero(statements.reduce((total, s) => total + s.taken, 0)),
-    totalRemaining: normalizeZero(statements.reduce((total, s) => total + s.remaining, 0)),
+    totalOpeningBalance: normalizeZero(totalOpeningBalance),
+    totalCarriedForward: normalizeZero(totalCarriedForward),
+    totalTaken: normalizeZero(totalTaken),
+    totalRemaining: normalizeZero(totalRemaining),
     totalPending: normalizeZero(totalPending),
   }
 }
