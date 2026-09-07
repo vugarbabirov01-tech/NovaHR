@@ -3,7 +3,6 @@ import type { EmploymentStatus } from "@/types/employee-profile"
 export interface EmployeeFilters {
   search: string
   company: string
-  branch: string
   workLocation: string
   department: string
   position: string
@@ -33,7 +32,6 @@ export const DEFAULT_VISIBLE_STATUSES: EmploymentStatus[] = ["active", "probatio
 export const defaultEmployeeFilters: EmployeeFilters = {
   search: "",
   company: ALL_VALUE,
-  branch: ALL_VALUE,
   workLocation: ALL_VALUE,
   department: ALL_VALUE,
   position: ALL_VALUE,

@@ -69,15 +69,14 @@ export function EmploymentTab({ profile }: EmploymentTabProps) {
             <InfoField label={t("department")} value={employment.department} />
             <InfoField label={t("position")} value={employment.position} />
             <InfoField label={t("grade")} value={employment.grade} />
-            <InfoField label={t("branch")} value={employment.branch} />
             <InfoField label={t("company")} value={employment.company} />
-            <InfoField label={t("manager")} value={employment.managerName} />
-            <InfoField label={t("workSchedule")} value={employment.workSchedule} />
             <InfoField
               label={t("workLocationType")}
               value={tLocation(workLocationTypeMessageKeys[employment.workLocationType])}
             />
-            <InfoField label={t("workLocation")} value={employment.workLocation} span="2" />
+            <InfoField label={t("workLocation")} value={employment.workLocation} />
+            <InfoField label={t("manager")} value={employment.managerName} />
+            <InfoField label={t("workSchedule")} value={employment.workSchedule} />
           </InfoGrid>
         </CardContent>
       </Card>

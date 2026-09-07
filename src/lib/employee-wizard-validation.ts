@@ -32,7 +32,6 @@ function validateEmploymentStep(
   if (!data.departmentId) errors.departmentId = messages.required
   if (!data.positionId) errors.positionId = messages.required
   if (!data.companyId) errors.companyId = messages.required
-  if (!data.branchId) errors.branchId = messages.required
   if (!data.workLocationType) errors.workLocationType = messages.required
   return errors
 }

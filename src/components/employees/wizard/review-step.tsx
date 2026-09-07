@@ -49,7 +49,6 @@ export function ReviewStep({ data, masterData, mode = "create" }: StepProps) {
   const department = masterData.departments.find((d) => d.id === data.departmentId)
   const position = masterData.positions.find((p) => p.id === data.positionId)
   const company = masterData.companies.find((c) => c.id === data.companyId)
-  const branch = masterData.branches.find((b) => b.id === data.branchId)
   const schedule = masterData.workSchedules.find((s) => s.id === data.scheduleId)
   const manager = masterData.managers.find((m) => m.id === data.managerId)
   const workScheduleLabel =
@@ -115,13 +114,13 @@ export function ReviewStep({ data, masterData, mode = "create" }: StepProps) {
             <InfoField label={tEmployment("department")} value={department?.name} />
             <InfoField label={tEmployment("position")} value={position?.title} />
             <InfoField label={tEmployment("company")} value={company?.name} />
-            <InfoField label={tEmployment("branch")} value={branch?.name} />
-            <InfoField label={tEmployment("manager")} value={manager?.name} />
-            <InfoField label={tEmployment("workSchedule")} value={workScheduleLabel} />
             <InfoField
               label={tEmployment("workLocationType")}
               value={data.workLocationType ? tLocation(workLocationTypeMessageKeys[data.workLocationType]) : ""}
             />
+            <InfoField label={tEmployment("workLocation")} value={data.workLocation} />
+            <InfoField label={tEmployment("manager")} value={manager?.name} />
+            <InfoField label={tEmployment("workSchedule")} value={workScheduleLabel} />
           </InfoGrid>
         </CardContent>
       </Card>

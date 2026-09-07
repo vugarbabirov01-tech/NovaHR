@@ -83,13 +83,6 @@ export function EmployeeWizard({
     }))
   }
 
-  function addBranch(branch: WizardMasterData["branches"][number]) {
-    setMasterData((prev) => ({
-      ...prev,
-      branches: [...prev.branches, branch].sort((a, b) => a.name.localeCompare(b.name)),
-    }))
-  }
-
   function addWorkSchedule(schedule: WizardMasterData["workSchedules"][number]) {
     setMasterData((prev) => ({
       ...prev,
@@ -224,7 +217,6 @@ export function EmployeeWizard({
               onAddDepartment={addDepartment}
               onAddPosition={addPosition}
               onAddCompany={addCompany}
-              onAddBranch={addBranch}
               onAddWorkSchedule={addWorkSchedule}
             />
           ) : null}

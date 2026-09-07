@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/select"
 import { Field } from "@/components/common/field"
 import {
-  branches,
   companies,
   departments,
   positions,
@@ -58,7 +57,6 @@ export function EmployeeFiltersPanel({
   const counts = useMemo(
     () => ({
       company: countBy(employees, (e) => e.company),
-      branch: countBy(employees, (e) => e.branch),
       workLocation: countBy(employees, (e) => e.workLocation),
       department: countBy(employees, (e) => e.department),
       position: countBy(employees, (e) => e.position),
@@ -133,24 +131,7 @@ export function EmployeeFiltersPanel({
               </SelectContent>
             </Select>
           </Field>
-          <Field label={t("branch")}>
-            <Select value={filters.branch} onValueChange={(v) => set("branch", v)}>
-              <SelectTrigger className="w-full">
-                <SelectValue>
-                  {(value: string) => (value === ALL_VALUE ? t("allBranches") : value)}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_VALUE}>{t("allBranches")}</SelectItem>
-                {branches.map((b) => (
-                  <SelectItem key={b} value={b}>
-                    {b} ({counts.branch[b] ?? 0})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label={t("workLocation")} className="sm:col-span-2">
+          <Field label={t("workLocation")}>
             <Select value={filters.workLocation} onValueChange={(v) => set("workLocation", v)}>
               <SelectTrigger className="w-full">
                 <SelectValue>
