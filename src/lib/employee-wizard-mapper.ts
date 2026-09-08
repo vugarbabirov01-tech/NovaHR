@@ -49,6 +49,7 @@ export function wizardDataToProfile(data: EmployeeWizardData, masterData: Wizard
   const manager = masterData.managers.find((m) => m.id === data.managerId)
 
   const departmentName = department?.name ?? ""
+  const companyName = company?.name ?? ""
   const positionTitle = position?.title ?? ""
   const workScheduleLabel =
     data.scheduleId === CUSTOM_WORK_SCHEDULE_ID
@@ -68,7 +69,7 @@ export function wizardDataToProfile(data: EmployeeWizardData, masterData: Wizard
       position: positionTitle,
       grade: "",
       branch: branch?.name ?? "",
-      company: company?.name ?? "",
+      company: companyName,
       managerId: data.managerId || undefined,
       managerName: manager?.name || undefined,
       workSchedule: workScheduleLabel,
@@ -80,7 +81,7 @@ export function wizardDataToProfile(data: EmployeeWizardData, masterData: Wizard
           date: data.hireDate,
           type: "hire",
           title: `Hired as ${positionTitle}`,
-          description: `Joined the ${departmentName} team.`,
+          description: companyName ? `Joined the ${companyName} team.` : `Hired as ${positionTitle}.`,
         },
       ],
     },

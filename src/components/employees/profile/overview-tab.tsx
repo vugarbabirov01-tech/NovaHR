@@ -36,6 +36,7 @@ const historyIcons: Record<EmploymentHistoryEventType, typeof Briefcase> = {
 export function OverviewTab({ profile }: OverviewTabProps) {
   const t = useTranslations("Employees.profile.overview")
   const tPersonal = useTranslations("Employees.profile.personal")
+  const tEmployment = useTranslations("Employees.profile.employment")
   const tHistoryTypes = useTranslations("Employees.profile.employment.historyTypes")
 
   const stats = [
@@ -99,11 +100,11 @@ export function OverviewTab({ profile }: OverviewTabProps) {
                 }
               />
               <InfoField
-                label={t("department")}
+                label={tEmployment("company")}
                 value={
                   <span className="flex items-center gap-1.5">
                     <Building2 className="size-3.5 text-muted-foreground" />
-                    {profile.employment.department}
+                    {profile.employment.company || t("noCompany")}
                   </span>
                 }
               />

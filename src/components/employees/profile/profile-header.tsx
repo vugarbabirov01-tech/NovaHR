@@ -50,7 +50,8 @@ export function ProfileHeader({ profile, workStatus }: ProfileHeaderProps) {
               <WorkStatusBadge status={workStatus} />
             </div>
             <p className="text-sm text-muted-foreground">
-              {profile.employment.position} · {profile.employment.department}
+              {profile.employment.position}
+              {profile.employment.company ? ` · ${profile.employment.company}` : ""}
             </p>
             <p className="text-xs text-muted-foreground tabular-nums">
               {profile.employment.employeeNumber}

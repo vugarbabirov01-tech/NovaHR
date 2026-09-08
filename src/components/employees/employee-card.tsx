@@ -78,8 +78,8 @@ export function EmployeeCard({ employee, workStatus, onEditEmployee, activeSmart
 
         <div className="grid w-full grid-cols-2 gap-x-3 gap-y-2.5 border-t border-border pt-3 text-left text-xs">
           <div className="flex flex-col gap-0.5">
-            <span className="text-muted-foreground">{tTable("columnDepartment")}</span>
-            <span className="truncate font-medium text-foreground">{employee.department}</span>
+            <span className="text-muted-foreground">{t("company")}</span>
+            <span className="truncate font-medium text-foreground">{employee.company || t("noCompany")}</span>
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-muted-foreground">{tTable("columnWorkLocation")}</span>
@@ -109,35 +109,29 @@ export function EmployeeCard({ employee, workStatus, onEditEmployee, activeSmart
           </div>
         </div>
 
-        <div className="flex w-full items-center justify-end border-t border-border pt-3">
-          <div className="flex items-center gap-1">
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <a
-                    href={`mailto:${employee.email}`}
-                    className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }))}
-                  />
-                }
-              >
-                <Mail className="size-3.5" strokeWidth={1.75} />
-              </TooltipTrigger>
-              <TooltipContent>{employee.email}</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <a
-                    href={`tel:${employee.phone}`}
-                    className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }))}
-                  />
-                }
-              >
-                <Phone className="size-3.5" strokeWidth={1.75} />
-              </TooltipTrigger>
-              <TooltipContent>{employee.phone}</TooltipContent>
-            </Tooltip>
-          </div>
+        <div className="flex w-full items-center justify-end gap-3 border-t border-border pt-3">
+          {employee.phone ? (
+            <a
+              href={`tel:${employee.phone}`}
+              className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Phone className="size-3.5 shrink-0" strokeWidth={1.75} />
+              <span className="truncate tabular-nums">{employee.phone}</span>
+            </a>
+          ) : null}
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <a
+                  href={`mailto:${employee.email}`}
+                  className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "shrink-0")}
+                />
+              }
+            >
+              <Mail className="size-3.5" strokeWidth={1.75} />
+            </TooltipTrigger>
+            <TooltipContent>{employee.email}</TooltipContent>
+          </Tooltip>
         </div>
       </CardContent>
     </Card>
