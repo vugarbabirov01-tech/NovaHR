@@ -5,10 +5,13 @@ import { revalidatePath } from "next/cache"
 import {
   archivePosition as archivePositionRepo,
   createPosition as createPositionRepo,
+  deletePosition as deletePositionRepo,
+  findPositionById,
   restorePosition as restorePositionRepo,
   updatePosition as updatePositionRepo,
   type Position,
 } from "@/repositories/position-repository"
+import { findAllEmployees } from "@/repositories/employee-repository"
 import { positionInputSchema, idSchema } from "@/lib/validation/master-data"
 import type { MasterDataActionResult } from "@/lib/actions/master-data-result"
 
@@ -78,4 +81,41 @@ export async function restorePositionAction(id: string): Promise<MasterDataActio
   }
   revalidatePositions()
   return { success: true, data: position }
+}
+
+export interface DeletePositionResult {
+  success: boolean
+  /** "in-use" means the block is real referential integrity, not a transient failure — the client shows employeeCount instead of a generic error. */
+  error?: "not-found" | "in-use" | "unknown"
+  employeeCount?: number
+}
+
+/**
+ * Permanent delete — archive/restore never destroys data, this does.
+ * Employee only stores the position's plain title (no live FK — see
+ * employee-repository.ts), so the reference check has to happen here, in
+ * application code, or a delete would silently strand real employee
+ * records pointing at a position that no longer exists.
+ */
+export async function deletePositionAction(id: string): Promise<DeletePositionResult> {
+  const parsedId = idSchema.safeParse(id)
+  if (!parsedId.success) return { success: false, error: "not-found" }
+
+  const position = await findPositionById(parsedId.data)
+  if (!position) return { success: false, error: "not-found" }
+
+  const employees = await findAllEmployees()
+  const employeeCount = employees.filter((employee) => employee.employment.position === position.title).length
+
+  if (employeeCount > 0) {
+    return { success: false, error: "in-use", employeeCount }
+  }
+
+  try {
+    await deletePositionRepo(parsedId.data)
+  } catch {
+    return { success: false, error: "unknown" }
+  }
+  revalidatePositions()
+  return { success: true }
 }

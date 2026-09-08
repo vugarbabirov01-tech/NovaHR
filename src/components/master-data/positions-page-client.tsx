@@ -8,9 +8,11 @@ import { AlertTriangle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { MasterDataList, type MasterDataListLabels } from "@/components/master-data/master-data-list"
 import { PositionFormDialog } from "@/components/master-data/position-form-dialog"
+import { ConfirmDeleteDialog } from "@/components/master-data/confirm-delete-dialog"
 import {
   archivePositionAction,
   createPositionAction,
+  deletePositionAction,
   restorePositionAction,
   updatePositionAction,
 } from "@/app/[locale]/(app)/positions/actions"
@@ -20,6 +22,7 @@ import type { Department } from "@/repositories/department-repository"
 type OptimisticAction =
   | { type: "upsert"; position: Position }
   | { type: "setActive"; id: string; active: boolean }
+  | { type: "remove"; id: string }
 
 function reducer(state: Position[], action: OptimisticAction): Position[] {
   switch (action.type) {
@@ -31,6 +34,8 @@ function reducer(state: Position[], action: OptimisticAction): Position[] {
     }
     case "setActive":
       return state.map((p) => (p.id === action.id ? { ...p, active: action.active } : p))
+    case "remove":
+      return state.filter((p) => p.id !== action.id)
   }
 }
 
@@ -47,6 +52,10 @@ export function PositionsPageClient({ initialPositions, departments }: Positions
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Position | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deletingPosition, setDeletingPosition] = useState<Position | undefined>(undefined)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [blockedReason, setBlockedReason] = useState<string | null>(null)
 
   const departmentById = useMemo(() => new Map(departments.map((d) => [d.id, d])), [departments])
 
@@ -60,6 +69,7 @@ export function PositionsPageClient({ initialPositions, departments }: Positions
     edit: tCommon("edit"),
     archive: tCommon("archive"),
     restore: tCommon("restore"),
+    delete: tCommon("delete"),
     emptyTitle: t("emptyTitle"),
     emptyDescription: t("emptyDescription"),
   }
@@ -94,6 +104,37 @@ export function PositionsPageClient({ initialPositions, departments }: Positions
       dispatchOptimistic({ type: "setActive", id: position.id, active: true })
       const result = await restorePositionAction(position.id)
       if (!result.success) setError(result.error ?? tCommon("genericError"))
+    })
+  }
+
+  function handleDeleteRequest(position: Position) {
+    setBlockedReason(null)
+    setDeletingPosition(position)
+    setDeleteDialogOpen(true)
+  }
+
+  function handleDeleteConfirm() {
+    if (!deletingPosition) return
+    const position = deletingPosition
+    setIsDeleting(true)
+    setBlockedReason(null)
+    startTransition(async () => {
+      const result = await deletePositionAction(position.id)
+      setIsDeleting(false)
+      if (result.success) {
+        dispatchOptimistic({ type: "remove", id: position.id })
+        setDeleteDialogOpen(false)
+        setDeletingPosition(undefined)
+      } else if (result.error === "in-use") {
+        setBlockedReason(
+          t("deleteBlocked", {
+            name: position.title,
+            employeeCount: result.employeeCount ?? 0,
+          })
+        )
+      } else {
+        setBlockedReason(tCommon("genericError"))
+      }
     })
   }
 
@@ -155,6 +196,7 @@ export function PositionsPageClient({ initialPositions, departments }: Positions
         }}
         onArchive={handleArchive}
         onRestore={handleRestore}
+        onDelete={handleDeleteRequest}
       />
       <PositionFormDialog
         open={dialogOpen}
@@ -163,6 +205,21 @@ export function PositionsPageClient({ initialPositions, departments }: Positions
         departments={departments}
         onSubmit={handleSubmit}
         isSaving={isPending}
+      />
+      <ConfirmDeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open)
+          if (!open) {
+            setDeletingPosition(undefined)
+            setBlockedReason(null)
+          }
+        }}
+        title={t("deleteConfirmTitle")}
+        description={deletingPosition ? t("deleteConfirmDescription", { name: deletingPosition.title }) : ""}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={isDeleting}
+        blockedReason={blockedReason}
       />
     </div>
   )

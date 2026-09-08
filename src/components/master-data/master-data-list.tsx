@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
-import { Archive, ArchiveRestore, MoreHorizontal, Pencil, Plus } from "lucide-react"
+import { Archive, ArchiveRestore, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -31,6 +31,8 @@ export interface MasterDataListLabels {
   edit: string
   archive: string
   restore: string
+  /** Only required when onDelete is provided — see MasterDataListProps. */
+  delete?: string
   emptyTitle: string
   emptyDescription: string
 }
@@ -44,6 +46,13 @@ interface MasterDataListProps<T extends MasterDataRow> {
   onEdit: (record: T) => void
   onArchive: (record: T) => void
   onRestore: (record: T) => void
+  /**
+   * Optional — most master-data screens don't offer permanent delete yet.
+   * Only shown for archived records (delete is a step past archive, never
+   * a shortcut around it), and only when provided at all, so consumers that
+   * don't wire it up (Companies, Grades, ...) keep their exact current menu.
+   */
+  onDelete?: (record: T) => void
 }
 
 export function MasterDataList<T extends MasterDataRow>({
@@ -55,6 +64,7 @@ export function MasterDataList<T extends MasterDataRow>({
   onEdit,
   onArchive,
   onRestore,
+  onDelete,
 }: MasterDataListProps<T>) {
   const [tab, setTab] = useState<"active" | "archived">("active")
   const [search, setSearch] = useState("")
@@ -97,17 +107,25 @@ export function MasterDataList<T extends MasterDataRow>({
                   {labels.archive}
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onClick={() => onRestore(row.original)}>
-                  <ArchiveRestore className="size-4" strokeWidth={1.75} />
-                  {labels.restore}
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuItem onClick={() => onRestore(row.original)}>
+                    <ArchiveRestore className="size-4" strokeWidth={1.75} />
+                    {labels.restore}
+                  </DropdownMenuItem>
+                  {onDelete ? (
+                    <DropdownMenuItem variant="destructive" onClick={() => onDelete(row.original)}>
+                      <Trash2 className="size-4" strokeWidth={1.75} />
+                      {labels.delete}
+                    </DropdownMenuItem>
+                  ) : null}
+                </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
         ),
       },
     ],
-    [columns, labels, onEdit, onArchive, onRestore]
+    [columns, labels, onEdit, onArchive, onRestore, onDelete]
   )
 
   return (

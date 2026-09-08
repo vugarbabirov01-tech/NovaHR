@@ -65,3 +65,13 @@ export function archiveDepartment(id: string): Promise<DepartmentModel> {
 export function restoreDepartment(id: string): Promise<DepartmentModel> {
   return prisma.department.update({ where: { id }, data: { active: true } })
 }
+
+/** How many Position rows still point at this department — Position.departmentId is required, so a department can never be deleted while this is above 0. */
+export function countPositionsInDepartment(departmentId: string): Promise<number> {
+  return prisma.position.count({ where: { departmentId } })
+}
+
+/** Permanent removal — unlike archive, this can't be undone. The caller (deleteDepartmentAction) is responsible for confirming nothing still references this department (positions, employees) before calling it. */
+export function deleteDepartment(id: string): Promise<DepartmentModel> {
+  return prisma.department.delete({ where: { id } })
+}

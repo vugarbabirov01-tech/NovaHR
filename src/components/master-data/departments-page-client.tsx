@@ -8,9 +8,11 @@ import { AlertTriangle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { MasterDataList, type MasterDataListLabels } from "@/components/master-data/master-data-list"
 import { AddDepartmentDialog } from "@/components/master-data/add-department-dialog"
+import { ConfirmDeleteDialog } from "@/components/master-data/confirm-delete-dialog"
 import {
   archiveDepartmentAction,
   createDepartmentAction,
+  deleteDepartmentAction,
   restoreDepartmentAction,
   updateDepartmentAction,
 } from "@/app/[locale]/(app)/departments/actions"
@@ -19,6 +21,7 @@ import type { Department, DepartmentInput } from "@/repositories/department-repo
 type OptimisticAction =
   | { type: "upsert"; department: Department }
   | { type: "setActive"; id: string; active: boolean }
+  | { type: "remove"; id: string }
 
 function reducer(state: Department[], action: OptimisticAction): Department[] {
   switch (action.type) {
@@ -30,6 +33,8 @@ function reducer(state: Department[], action: OptimisticAction): Department[] {
     }
     case "setActive":
       return state.map((d) => (d.id === action.id ? { ...d, active: action.active } : d))
+    case "remove":
+      return state.filter((d) => d.id !== action.id)
   }
 }
 
@@ -45,6 +50,10 @@ export function DepartmentsPageClient({ initialDepartments }: DepartmentsPageCli
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Department | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deletingDepartment, setDeletingDepartment] = useState<Department | undefined>(undefined)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [blockedReason, setBlockedReason] = useState<string | null>(null)
 
   const labels: MasterDataListLabels = {
     searchPlaceholder: t("searchPlaceholder"),
@@ -56,6 +65,7 @@ export function DepartmentsPageClient({ initialDepartments }: DepartmentsPageCli
     edit: tCommon("edit"),
     archive: tCommon("archive"),
     restore: tCommon("restore"),
+    delete: tCommon("delete"),
     emptyTitle: t("emptyTitle"),
     emptyDescription: t("emptyDescription"),
   }
@@ -85,6 +95,38 @@ export function DepartmentsPageClient({ initialDepartments }: DepartmentsPageCli
       dispatchOptimistic({ type: "setActive", id: department.id, active: true })
       const result = await restoreDepartmentAction(department.id)
       if (!result.success) setError(result.error ?? tCommon("genericError"))
+    })
+  }
+
+  function handleDeleteRequest(department: Department) {
+    setBlockedReason(null)
+    setDeletingDepartment(department)
+    setDeleteDialogOpen(true)
+  }
+
+  function handleDeleteConfirm() {
+    if (!deletingDepartment) return
+    const department = deletingDepartment
+    setIsDeleting(true)
+    setBlockedReason(null)
+    startTransition(async () => {
+      const result = await deleteDepartmentAction(department.id)
+      setIsDeleting(false)
+      if (result.success) {
+        dispatchOptimistic({ type: "remove", id: department.id })
+        setDeleteDialogOpen(false)
+        setDeletingDepartment(undefined)
+      } else if (result.error === "in-use") {
+        setBlockedReason(
+          t("deleteBlocked", {
+            name: department.name,
+            employeeCount: result.employeeCount ?? 0,
+            positionCount: result.positionCount ?? 0,
+          })
+        )
+      } else {
+        setBlockedReason(tCommon("genericError"))
+      }
     })
   }
 
@@ -143,6 +185,7 @@ export function DepartmentsPageClient({ initialDepartments }: DepartmentsPageCli
         }}
         onArchive={handleArchive}
         onRestore={handleRestore}
+        onDelete={handleDeleteRequest}
       />
       <AddDepartmentDialog
         open={dialogOpen}
@@ -150,6 +193,23 @@ export function DepartmentsPageClient({ initialDepartments }: DepartmentsPageCli
         department={editing}
         onSubmit={handleSubmit}
         isSaving={isPending}
+      />
+      <ConfirmDeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open)
+          if (!open) {
+            setDeletingDepartment(undefined)
+            setBlockedReason(null)
+          }
+        }}
+        title={t("deleteConfirmTitle")}
+        description={
+          deletingDepartment ? t("deleteConfirmDescription", { name: deletingDepartment.name }) : ""
+        }
+        onConfirm={handleDeleteConfirm}
+        isDeleting={isDeleting}
+        blockedReason={blockedReason}
       />
     </div>
   )

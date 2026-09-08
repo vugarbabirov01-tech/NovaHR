@@ -76,3 +76,8 @@ export function archivePosition(id: string): Promise<PositionModel> {
 export function restorePosition(id: string): Promise<PositionModel> {
   return prisma.position.update({ where: { id }, data: { active: true } })
 }
+
+/** Permanent removal — unlike archive, this can't be undone. The caller (deletePositionAction) is responsible for confirming no employee still references this position before calling it. */
+export function deletePosition(id: string): Promise<PositionModel> {
+  return prisma.position.delete({ where: { id } })
+}
