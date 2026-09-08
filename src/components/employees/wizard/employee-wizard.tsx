@@ -227,7 +227,7 @@ export function EmployeeWizard({
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-between">
+      <div className="sticky bottom-0 z-10 -mx-4 flex items-center justify-between border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <Button variant="outline" onClick={handleBack} disabled={stepIndex === 0 || isPending}>
           <ChevronLeft className="size-4" strokeWidth={1.75} />
           {t("back")}

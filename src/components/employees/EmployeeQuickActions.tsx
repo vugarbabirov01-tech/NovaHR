@@ -45,16 +45,7 @@ export interface EmployeeQuickActionsTarget {
   fullName: string
 }
 
-export interface EmployeeQuickActionHandlers {
-  /**
-   * Edit Employee opens the shared EmployeeWizard (Sheet-hosted) owned by
-   * the caller — the same wizard component /employees/new uses — so state
-   * (editingEmployeeId, the fetched EmployeeProfile) has to live there.
-   */
-  onEditEmployee?: (employee: EmployeeQuickActionsTarget) => void
-}
-
-interface EmployeeQuickActionsProps extends EmployeeQuickActionHandlers {
+interface EmployeeQuickActionsProps {
   employee: EmployeeQuickActionsTarget
   align?: "start" | "end"
   className?: string
@@ -72,7 +63,6 @@ export function EmployeeQuickActions({
   employee,
   align = "end",
   className,
-  onEditEmployee,
 }: EmployeeQuickActionsProps) {
   const t = useTranslations("Employees.quickActions")
   const isMobile = useMediaQuery("(max-width: 767px)")
@@ -89,7 +79,7 @@ export function EmployeeQuickActions({
       key: "editEmployee",
       icon: Pencil,
       label: t("editEmployee"),
-      onSelect: () => onEditEmployee?.(employee),
+      href: `/employees/${employee.id}/edit`,
     },
     {
       // No standalone Leave module exists yet, so this deep-links into the

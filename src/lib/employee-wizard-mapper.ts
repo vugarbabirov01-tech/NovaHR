@@ -21,6 +21,62 @@ export interface WizardMasterData {
 }
 
 /**
+ * Edit's one exception to "master data is always active-only": an
+ * employee's current department/position/company/work schedule may have
+ * been archived (or renamed) since they were assigned to it, which would
+ * otherwise make that field — and Position, scoped under Department — come
+ * back empty (see wizard-master-data.ts's own doc comment). The fix isn't
+ * "show every archived record as a choice" — that dumps HR's whole archived
+ * catalog back into every dropdown for every employee, which is exactly the
+ * confusing regression this function exists to avoid. Instead: only the
+ * handful of specific archived records THIS employee is actually currently
+ * assigned to (at most one department, one position, one company, one work
+ * schedule) get appended to the active-only lists — nothing else archived
+ * becomes selectable, and it never affects any other employee's Edit
+ * session or Create at all.
+ */
+export function includeEmployeesCurrentArchivedAssignments(
+  profile: EmployeeProfile,
+  activeMasterData: WizardMasterData,
+  fullMasterData: WizardMasterData
+): WizardMasterData {
+  function appendIfMissing<T>(active: T[], full: T[], currentName: string | undefined, getName: (item: T) => string): T[] {
+    if (!currentName) return active
+    if (active.some((item) => getName(item) === currentName)) return active
+    const archived = full.find((item) => getName(item) === currentName)
+    return archived ? [...active, archived] : active
+  }
+
+  return {
+    ...activeMasterData,
+    departments: appendIfMissing(
+      activeMasterData.departments,
+      fullMasterData.departments,
+      profile.employment.department,
+      (d) => d.name
+    ),
+    positions: appendIfMissing(
+      activeMasterData.positions,
+      fullMasterData.positions,
+      profile.employment.position,
+      (p) => p.title
+    ),
+    companies: appendIfMissing(
+      activeMasterData.companies,
+      fullMasterData.companies,
+      profile.employment.company,
+      (c) => c.name
+    ),
+    workSchedules: appendIfMissing(
+      activeMasterData.workSchedules,
+      fullMasterData.workSchedules,
+      profile.employment.workSchedule,
+      (s) => s.label
+    ),
+  }
+}
+
+/**
  * Maps the flat wizard form state onto the master EmployeeProfile record.
  *
  * The wizard stores master-data selections (department, position, company,

@@ -31,9 +31,9 @@ interface LeaveTabProps {
   profile: EmployeeProfile
 }
 
-// Same lazy-loading reasoning as EmployeeWizardModal — the wizard (and the
-// FileDropzone it pulls in) is one button away from never being opened in a
-// given tab visit, so it's code-split out of this tab's own bundle.
+// The wizard (and the FileDropzone it pulls in) is one button away from
+// never being opened in a given tab visit, so it's code-split out of this
+// tab's own bundle.
 const LeaveRequestWizardModal = dynamic(
   () =>
     import("@/components/employees/leave/leave-request-wizard-modal").then(

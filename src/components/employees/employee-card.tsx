@@ -26,14 +26,13 @@ interface EmployeeCardProps {
   /** Resolved once per page load by resolveWorkStatus (see
    * employees/page.tsx) — this component never computes it itself. */
   workStatus: WorkStatus
-  onEditEmployee?: (employee: { id: string; fullName: string }) => void
   /** The currently-active HR Action Center card, if any — shown as a
    * temporary badge above the name. Not persisted anywhere; it only reflects
    * why this employee is in the current, already-filtered result set. */
   activeSmartFilter?: SmartFilterDefinition | null
 }
 
-export function EmployeeCard({ employee, workStatus, onEditEmployee, activeSmartFilter }: EmployeeCardProps) {
+export function EmployeeCard({ employee, workStatus, activeSmartFilter }: EmployeeCardProps) {
   const t = useTranslations("Employees.card")
   const tTable = useTranslations("Employees.table")
   const fullName = getFullName(employee)
@@ -41,10 +40,7 @@ export function EmployeeCard({ employee, workStatus, onEditEmployee, activeSmart
   return (
     <Card className="group relative transition-all hover:-translate-y-0.5 hover:shadow-md">
       <div className="absolute top-2 right-2 z-10 print:hidden">
-        <EmployeeQuickActions
-          employee={{ id: employee.id, fullName }}
-          onEditEmployee={onEditEmployee}
-        />
+        <EmployeeQuickActions employee={{ id: employee.id, fullName }} />
       </div>
 
       <CardContent className="flex flex-col gap-3 pt-1">

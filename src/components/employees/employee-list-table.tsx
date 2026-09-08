@@ -74,7 +74,6 @@ interface EmployeeListTableProps {
   /** Resolved once per page load by resolveWorkStatus (see
    * employees/page.tsx) — this component never computes it itself. */
   workStatusByEmployeeId: Record<string, WorkStatus>
-  onEditEmployee?: (employee: { id: string; fullName: string }) => void
   onSelectionChange?: (ids: string[]) => void
   /** The currently-active HR Action Center card, if any — shown as a
    * temporary badge above each row's name while it's active. */
@@ -90,7 +89,6 @@ const groupColumnIds: Record<Exclude<EmployeeGroupBy, "none">, string> = {
 export function EmployeeListTable({
   data,
   workStatusByEmployeeId,
-  onEditEmployee,
   onSelectionChange,
   activeSmartFilter,
 }: EmployeeListTableProps) {
@@ -253,15 +251,12 @@ export function EmployeeListTable({
           // this is also how List view gets Terminate Employment (and every
           // other quick action), which its previous 2-item dropdown never had.
           <div onClick={(event) => event.stopPropagation()}>
-            <EmployeeQuickActions
-              employee={{ id: row.original.id, fullName: getFullName(row.original) }}
-              onEditEmployee={onEditEmployee}
-            />
+            <EmployeeQuickActions employee={{ id: row.original.id, fullName: getFullName(row.original) }} />
           </div>
         ),
       },
     ],
-    [t, tType, tCommon, onEditEmployee, activeSmartFilter, workStatusByEmployeeId]
+    [t, tType, tCommon, activeSmartFilter, workStatusByEmployeeId]
   )
 
   const table = useReactTable({

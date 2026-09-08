@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useMemo, useState } from "react"
 import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -36,13 +36,11 @@ import { EmployeeCard } from "@/components/employees/employee-card"
 import { EmployeeFiltersPanel } from "@/components/employees/employee-filters-panel"
 import { EmployeeListTable } from "@/components/employees/employee-list-table"
 import { ViewToggle } from "@/components/employees/view-toggle"
-import { getEmployeeProfileAction, getWizardMasterDataAction } from "@/app/[locale]/(app)/employees/actions"
 import { usePersistedState } from "@/hooks/use-persisted-state"
 import { getFullName, statusMessageKeys } from "@/lib/employees"
 import { computeSmartFilterMatches, getEmployeeSmartFilters } from "@/lib/employee-smart-filters"
 import { HR_SETTINGS } from "@/lib/hr-settings"
 import { cn } from "@/lib/utils"
-import type { WizardMasterData } from "@/lib/employee-wizard-mapper"
 import type { WorkStatus } from "@/lib/employee-work-status"
 import {
   ALL_VALUE,
@@ -52,7 +50,7 @@ import {
   type EmployeeFilters,
   type EmployeeView,
 } from "@/types/employee-filters"
-import type { EmployeeListItem, EmployeeProfile, EmploymentStatus } from "@/types/employee-profile"
+import type { EmployeeListItem, EmploymentStatus } from "@/types/employee-profile"
 
 const statusFilterOptions: EmploymentStatus[] = [
   "active",
@@ -62,32 +60,14 @@ const statusFilterOptions: EmploymentStatus[] = [
   "terminated",
 ]
 
-// The Edit wizard (its Sheet chrome, all six steps, validation) is only ever
-// needed once HR actually clicks Edit — code-split it out of the Employees
-// list's own bundle so visiting the list never ships that JS up front. No
-// ssr:false: editingEmployeeId starts at null, so this never renders during
-// the server pass anyway — nothing to opt out of, and keeping SSR on means
-// no extra client/server behavior split to reason about. The fallback below
-// reuses Sheet's own overlay tone (bg-black/10) so the moment between "Edit
-// clicked" and "chunk downloaded" reads as the same drawer opening, not a
-// different, unrelated loading state.
-const EmployeeWizardModal = dynamic(
-  () =>
-    import("@/components/employees/wizard/employee-wizard-modal").then(
-      (mod) => mod.EmployeeWizardModal
-    ),
-  {
-    loading: () => (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" strokeWidth={1.75} />
-      </div>
-    ),
-  }
-)
+// Edit Employee is now its own full page (/employees/[id]/edit) — the exact
+// same EmployeeWizard component Create already runs full-page, reached via
+// EmployeeQuickActions' ordinary href, not a Sheet this component has to
+// own the open/loading/error state for.
 
-// Same reasoning as the wizard above — Export is one menu item away from
-// never being clicked in a given visit, so its dialog (and the xlsx/export
-// plumbing it pulls in) is code-split out of the list's own bundle too.
+// Export is one menu item away from never being clicked in a given visit,
+// so its dialog (and the xlsx/export plumbing it pulls in) is code-split
+// out of the list's own bundle too.
 const ExportEmployeesDialog = dynamic(
   () =>
     import("@/components/employees/export/export-employees-dialog").then(
@@ -129,24 +109,6 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
     return { ...defaultEmployeeFilters, smartFilter: isValidSmartFilter ? smartFilterParam! : "" }
   })
 
-  // Edit Employee reuses the exact same EmployeeWizard component as Create
-  // (/employees/new, a full page — long-form data entry earns the full
-  // content area), just hosted in a Sheet instead, since edits are shorter
-  // interruptions that benefit from staying in list context. Editing needs
-  // the employee's full EmployeeProfile (personal, labourLaw, payroll,
-  // documents...), which this page only ever fetches as the slim
-  // EmployeeListItem summary, so it's loaded on demand the moment Edit is
-  // chosen.
-  const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null)
-  const [editingProfile, setEditingProfile] = useState<EmployeeProfile | null>(null)
-  // The wizard's master data (departments/positions/companies/branches/
-  // schedules/managers) isn't needed to show the list, only to edit or
-  // create — so it's fetched here on demand, the first time Edit is
-  // clicked, and kept around afterward as a simple in-memory cache: every
-  // later edit in this session reuses it instead of re-fetching.
-  const [masterData, setMasterData] = useState<WizardMasterData | null>(null)
-  const [editLoadError, setEditLoadError] = useState(false)
-  const [, startProfileFetch] = useTransition()
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
@@ -177,62 +139,6 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
     }
   }
 
-  function loadEditData(employeeId: string) {
-    setEditingProfile(null)
-    setEditLoadError(false)
-    startProfileFetch(async () => {
-      try {
-        // masterData rarely changes within a session, so once it's loaded
-        // once it's reused for every subsequent edit — only the profile
-        // (which differs per employee) is fetched every time.
-        const [profile, freshMasterData] = await Promise.all([
-          getEmployeeProfileAction(employeeId),
-          masterData ?? getWizardMasterDataAction(),
-        ])
-        setEditingProfile(profile)
-        if (!masterData) setMasterData(freshMasterData)
-      } catch {
-        // Either request failing (network blip, DB hiccup) must not leave
-        // the modal spinning forever — surface a retry instead.
-        setEditLoadError(true)
-      }
-    })
-  }
-
-  function handleEditEmployee(employee: { id: string; fullName: string }) {
-    setEditingEmployeeId(employee.id)
-    loadEditData(employee.id)
-  }
-
-  function handleRetryEditLoad() {
-    if (editingEmployeeId) loadEditData(editingEmployeeId)
-  }
-
-  function handleWizardOpenChange(open: boolean) {
-    if (!open) {
-      setEditingEmployeeId(null)
-      setEditingProfile(null)
-      setEditLoadError(false)
-    }
-  }
-
-  function handleWizardSuccess() {
-    // The wizard's own success screen stays open (inside the drawer) so HR
-    // can still choose "View Profile" — this only makes sure the list
-    // behind it is already showing the new/updated record by the time they
-    // close it, since Server Actions revalidate the cache but this page
-    // itself doesn't re-fetch until told to.
-    router.refresh()
-  }
-
-  const managerNames = useMemo(
-    () =>
-      Array.from(
-        new Set(employees.map((e) => e.managerName).filter((name): name is string => Boolean(name)))
-      ).sort(),
-    [employees]
-  )
-
   // One pass over `employees` computes every Smart Filter's matches — only
   // recomputed when the employee list itself changes, never on Search/
   // Status/Advanced Filters keystrokes or Smart Filter selection.
@@ -250,6 +156,26 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
     [filters.smartFilter]
   )
   const activeSmartFilterCount = activeSmartFilter ? smartFilterMatches[activeSmartFilter.id]?.length ?? 0 : 0
+
+  // Same Smart Filter + Status narrowing `filtered` applies below, minus the
+  // Advanced Filters themselves — this is the base set EmployeeFiltersPanel
+  // builds its options and counts from, so switching "Aktiv Əməkdaşlar" ↔
+  // "Hamısı" updates every option's count accordingly, without each Advanced
+  // Filter field collapsing every other field's options as it's chosen.
+  const statusFilteredEmployees = useMemo(() => {
+    return employees.filter((employee) => {
+      if (selectedSmartFilterIds && !selectedSmartFilterIds.has(employee.id)) return false
+      if (filters.employmentStatus === DEFAULT_STATUS_FILTER) {
+        if (!DEFAULT_VISIBLE_STATUSES.includes(employee.employmentStatus)) return false
+      } else if (
+        filters.employmentStatus !== ALL_VALUE &&
+        employee.employmentStatus !== filters.employmentStatus
+      ) {
+        return false
+      }
+      return true
+    })
+  }, [employees, filters.employmentStatus, selectedSmartFilterIds])
 
   const filtered = useMemo(() => {
     const query = filters.search.trim().toLowerCase()
@@ -275,7 +201,7 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
       if (filters.workLocation !== ALL_VALUE && employee.workLocation !== filters.workLocation) return false
       if (filters.department !== ALL_VALUE && employee.department !== filters.department) return false
       if (filters.position !== ALL_VALUE && employee.position !== filters.position) return false
-      if (filters.manager !== ALL_VALUE && employee.managerName !== filters.manager) return false
+      if (filters.manager !== ALL_VALUE && employee.managerId !== filters.manager) return false
       if (filters.employmentType !== ALL_VALUE && employee.employmentType !== filters.employmentType)
         return false
       // Terminated (and Suspended/Inactive) employees stay out of the
@@ -327,10 +253,9 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
             </SelectContent>
           </Select>
           <EmployeeFiltersPanel
-            employees={employees}
+            employees={statusFilteredEmployees}
             filters={filters}
             onChange={setFilters}
-            managerNames={managerNames}
           />
           <span className="text-sm text-muted-foreground">
             {t("resultsCount", { count: filtered.length })}
@@ -401,7 +326,6 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
                 key={employee.id}
                 employee={employee}
                 workStatus={workStatusByEmployeeId[employee.id] ?? "AT_WORK"}
-                onEditEmployee={handleEditEmployee}
                 activeSmartFilter={activeSmartFilter}
               />
             ))}
@@ -410,25 +334,11 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
           <EmployeeListTable
             data={filtered}
             workStatusByEmployeeId={workStatusByEmployeeId}
-            onEditEmployee={handleEditEmployee}
             onSelectionChange={setSelectedIds}
             activeSmartFilter={activeSmartFilter}
           />
         )}
       </div>
-
-      {editingEmployeeId ? (
-        <EmployeeWizardModal
-          open={editingEmployeeId !== null}
-          onOpenChange={handleWizardOpenChange}
-          employeeId={editingEmployeeId}
-          editingProfile={editingProfile}
-          masterData={masterData}
-          loadError={editLoadError}
-          onRetry={handleRetryEditLoad}
-          onSuccess={handleWizardSuccess}
-        />
-      ) : null}
 
       {isExportDialogOpen ? (
         <ExportEmployeesDialog
