@@ -19,16 +19,15 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Field } from "@/components/common/field"
-import {
-  companies,
-  departments,
-  positions,
-  workLocations,
-} from "@/data/employee-options"
 import { countBy, employmentTypeMessageKeys } from "@/lib/employees"
 import { ALL_VALUE, defaultEmployeeFilters, type EmployeeFilters } from "@/types/employee-filters"
 import type { EmployeeListItem, EmploymentType } from "@/types/employee-profile"
 
+// The full closed set from the EmploymentType union itself, not master data
+// — every value is always offered (even at 0 results) same as every other
+// enum filter in the app. Company/department/position/work location below
+// are the opposite: open-ended catalogs, so their options are derived from
+// `employees` instead of listed here.
 const employmentTypes: EmploymentType[] = [
   "full-time",
   "part-time",
@@ -39,17 +38,24 @@ const employmentTypes: EmploymentType[] = [
 ]
 
 interface EmployeeFiltersPanelProps {
+  /** The same list EmployeeCard/EmployeeListTable render from, already
+   * narrowed to the current Status filter (see employee-list-client.tsx) —
+   * every option, count and match below reads company/department/position/
+   * workLocation/managerId straight off these records, never a separate
+   * catalog, so a filter option can never show something a card doesn't. */
   employees: EmployeeListItem[]
   filters: EmployeeFilters
   onChange: (filters: EmployeeFilters) => void
-  managerNames: string[]
+}
+
+function uniqueSorted(values: (string | undefined)[]): string[] {
+  return Array.from(new Set(values.filter((v): v is string => Boolean(v)))).sort((a, b) => a.localeCompare(b))
 }
 
 export function EmployeeFiltersPanel({
   employees,
   filters,
   onChange,
-  managerNames,
 }: EmployeeFiltersPanelProps) {
   const t = useTranslations("Employees.list")
   const tType = useTranslations("EmploymentType")
@@ -60,11 +66,26 @@ export function EmployeeFiltersPanel({
       workLocation: countBy(employees, (e) => e.workLocation),
       department: countBy(employees, (e) => e.department),
       position: countBy(employees, (e) => e.position),
-      manager: countBy(employees, (e) => e.managerName),
+      manager: countBy(employees, (e) => e.managerId),
       employmentType: countBy(employees, (e) => e.employmentType),
     }),
     [employees]
   )
+
+  const companyOptions = useMemo(() => uniqueSorted(employees.map((e) => e.company)), [employees])
+  const workLocationOptions = useMemo(() => uniqueSorted(employees.map((e) => e.workLocation)), [employees])
+  const departmentOptions = useMemo(() => uniqueSorted(employees.map((e) => e.department)), [employees])
+  const positionOptions = useMemo(() => uniqueSorted(employees.map((e) => e.position)), [employees])
+
+  // Managers are matched by managerId, not managerName — two different
+  // managers can share a name, and only the id is guaranteed unique.
+  const managerOptions = useMemo(() => {
+    const byId = new Map<string, string>()
+    for (const e of employees) {
+      if (e.managerId && e.managerName) byId.set(e.managerId, e.managerName)
+    }
+    return Array.from(byId, ([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name))
+  }, [employees])
 
   // employmentStatus is owned by the primary Status filter and smartFilter
   // by the Smart Filters panel, not this popover — excluded from both the
@@ -123,7 +144,7 @@ export function EmployeeFiltersPanel({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL_VALUE}>{t("allCompanies")}</SelectItem>
-                {companies.map((c) => (
+                {companyOptions.map((c) => (
                   <SelectItem key={c} value={c}>
                     {c} ({counts.company[c] ?? 0})
                   </SelectItem>
@@ -140,7 +161,7 @@ export function EmployeeFiltersPanel({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL_VALUE}>{t("allWorkLocations")}</SelectItem>
-                {workLocations.map((w) => (
+                {workLocationOptions.map((w) => (
                   <SelectItem key={w} value={w}>
                     {w} ({counts.workLocation[w] ?? 0})
                   </SelectItem>
@@ -157,7 +178,7 @@ export function EmployeeFiltersPanel({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL_VALUE}>{t("allDepartments")}</SelectItem>
-                {departments.map((d) => (
+                {departmentOptions.map((d) => (
                   <SelectItem key={d} value={d}>
                     {d} ({counts.department[d] ?? 0})
                   </SelectItem>
@@ -174,7 +195,7 @@ export function EmployeeFiltersPanel({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL_VALUE}>{t("allPositions")}</SelectItem>
-                {positions.map((p) => (
+                {positionOptions.map((p) => (
                   <SelectItem key={p} value={p}>
                     {p} ({counts.position[p] ?? 0})
                   </SelectItem>
@@ -186,14 +207,18 @@ export function EmployeeFiltersPanel({
             <Select value={filters.manager} onValueChange={(v) => set("manager", v)}>
               <SelectTrigger className="w-full">
                 <SelectValue>
-                  {(value: string) => (value === ALL_VALUE ? t("allManagers") : value)}
+                  {(value: string) =>
+                    value === ALL_VALUE
+                      ? t("allManagers")
+                      : (managerOptions.find((m) => m.id === value)?.name ?? value)
+                  }
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL_VALUE}>{t("allManagers")}</SelectItem>
-                {managerNames.map((name) => (
-                  <SelectItem key={name} value={name}>
-                    {name} ({counts.manager[name] ?? 0})
+                {managerOptions.map((manager) => (
+                  <SelectItem key={manager.id} value={manager.id}>
+                    {manager.name} ({counts.manager[manager.id] ?? 0})
                   </SelectItem>
                 ))}
               </SelectContent>
