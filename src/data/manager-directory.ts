@@ -2,7 +2,7 @@
 // autocomplete — only the fields a search/select needs, never the full
 // profile. Does not modify employee-directory.ts in any way.
 
-import { employeeDirectory } from "@/data/employee-directory"
+import { findAllEmployees } from "@/repositories/employee-repository"
 import { getFullName } from "@/lib/employees"
 
 export interface ManagerOption {
@@ -12,15 +12,15 @@ export interface ManagerOption {
 }
 
 /**
- * A function, not a computed-once constant — employeeDirectory is mutated in
- * place (hires, terminations) over the life of the process, and a plain
- * `const` snapshot taken at first import would never see those changes. A
- * terminated employee can no longer be anyone's manager going forward —
- * excluded here, at the single source every manager selector reads from,
- * rather than in each individual consumer.
+ * Reads fresh from the Employee table every call — never cached — so a
+ * termination is reflected immediately: a terminated employee can no
+ * longer be anyone's manager going forward, excluded here, at the single
+ * source every manager selector reads from, rather than in each individual
+ * consumer.
  */
-export function getManagerOptions(): ManagerOption[] {
-  return employeeDirectory
+export async function getManagerOptions(): Promise<ManagerOption[]> {
+  const employees = await findAllEmployees()
+  return employees
     .filter((employee) => employee.employmentStatus !== "terminated")
     .map((employee) => ({
       id: employee.id,

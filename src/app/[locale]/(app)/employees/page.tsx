@@ -5,7 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { PageTitle } from "@/components/common/page-title"
 import { EmployeeListClient } from "@/components/employees/employee-list-client"
-import { employeeDirectory } from "@/data/employee-directory"
+import { findAllEmployees } from "@/repositories/employee-repository"
 import { toListItem } from "@/types/employee-profile"
 import { resolveWorkStatus, type WorkStatus } from "@/lib/employee-work-status"
 import { loadWorkStatusContext } from "@/lib/employee-work-status-loader"
@@ -27,7 +27,7 @@ export default async function EmployeesPage({ params }: Props) {
   setRequestLocale(locale)
 
   const t = await getTranslations("Employees.list")
-  const employees = employeeDirectory.map(toListItem)
+  const employees = (await findAllEmployees()).map(toListItem)
 
   // One fetch for every employee's current work status, instead of one
   // per row — see loadWorkStatusContext's own doc comment. Plain Record,

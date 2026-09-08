@@ -3,13 +3,13 @@
 import { revalidatePath } from "next/cache"
 
 import {
-  addEmployeeProfile,
-  employeeDirectory,
-  getEmployeeById,
+  createEmployee,
+  findAllEmployees,
+  findEmployeeById,
   isEmployeeIdTaken,
   isFinTaken,
-  updateEmployeeProfile,
-} from "@/data/employee-directory"
+  updateEmployee,
+} from "@/repositories/employee-repository"
 import { generateNextEmployeeNumber, isEmployeeNumberTaken } from "@/lib/employees"
 import {
   applyEditableFields,
@@ -64,11 +64,13 @@ export async function createEmployeeAction(
   profile: EmployeeProfile
 ): Promise<CreateEmployeeResult> {
   try {
-    if (isFinTaken(profile.personal.finCode)) {
+    if (await isFinTaken(profile.personal.finCode)) {
       return { success: false, error: "duplicate-fin" }
     }
 
-    const existingEmployeeNumbers = employeeDirectory.map((employee) => employee.employment.employeeNumber)
+    const existingEmployeeNumbers = (await findAllEmployees()).map(
+      (employee) => employee.employment.employeeNumber
+    )
     const manualEmployeeNumber = profile.employment.employeeNumber.trim()
 
     let employeeNumber: string
@@ -91,11 +93,11 @@ export async function createEmployeeAction(
       },
     }
 
-    if (isEmployeeIdTaken(finalProfile.id)) {
+    if (await isEmployeeIdTaken(finalProfile.id)) {
       return { success: false, error: "duplicate-id" }
     }
 
-    addEmployeeProfile(finalProfile)
+    await createEmployee(finalProfile)
 
     // Bust both the list and the profile-detail cache for every locale so
     // the new employee shows up immediately — in the list, card view,
@@ -117,7 +119,7 @@ export async function createEmployeeAction(
  * round-trip to get the nested personal/labourLaw/payroll/documents data.
  */
 export async function getEmployeeProfileAction(id: string): Promise<EmployeeProfile | null> {
-  return getEmployeeById(id) ?? null
+  return findEmployeeById(id)
 }
 
 /**
@@ -148,12 +150,12 @@ export async function updateEmployeeAction(
   draftProfile: EmployeeProfile
 ): Promise<UpdateEmployeeResult> {
   try {
-    const existingProfile = getEmployeeById(originalId)
+    const existingProfile = await findEmployeeById(originalId)
     if (!existingProfile) {
       return { success: false, error: "not-found" }
     }
 
-    if (isFinTaken(draftProfile.personal.finCode, originalId)) {
+    if (await isFinTaken(draftProfile.personal.finCode, originalId)) {
       return { success: false, error: "duplicate-fin" }
     }
 
@@ -171,7 +173,7 @@ export async function updateEmployeeAction(
 
     const updatedProfile = applyEditableFields(existingProfile, newValues)
 
-    updateEmployeeProfile(originalId, updatedProfile)
+    await updateEmployee(originalId, updatedProfile)
 
     revalidatePath("/[locale]/employees", "page")
     revalidatePath("/[locale]/employees/[id]", "page")

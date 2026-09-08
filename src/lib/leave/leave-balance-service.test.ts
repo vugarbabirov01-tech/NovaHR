@@ -5,7 +5,7 @@ import { computeLeaveBalance, getOrganizationLeaveDaysSummary } from "@/lib/leav
 import { findActiveLeaveTypes } from "@/repositories/leave-type-repository"
 import { createLeaveRequest } from "@/repositories/leave-request-repository"
 import { resolveAnnualLeaveEntitlement } from "@/lib/leave/leave-policy-resolution-service"
-import { getEmployeeById } from "@/data/employee-directory"
+import { findEmployeeById } from "@/repositories/employee-repository"
 
 // Pending-request tests below create their own fixture rather than reading
 // whatever real requests happen to exist for a given employee — an earlier
@@ -52,7 +52,7 @@ describe("computeLeaveBalance — Annual Leave entitlement fallback", () => {
 
   it("falls back to the employee's computed entitlement when no opening-balance ledger row exists", async () => {
     const annual = (await findActiveLeaveTypes()).find((t) => t.code === "ANNUAL")
-    const employee = getEmployeeById("EMP-1042")
+    const employee = await findEmployeeById("EMP-1042")
     expect(annual).toBeDefined()
     expect(employee).toBeDefined()
 

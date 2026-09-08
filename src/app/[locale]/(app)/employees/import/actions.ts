@@ -2,14 +2,19 @@
 
 import { revalidatePath } from "next/cache"
 
-import { employeeDirectory, addEmployeeProfile, updateEmployeeProfile, isFinTaken, getEmployeeByFin } from "@/data/employee-directory"
+import {
+  findAllEmployees,
+  createEmployee,
+  updateEmployee,
+  isFinTaken,
+  findEmployeeByFin,
+} from "@/repositories/employee-repository"
 import {
   deleteImportDraft,
   getImportDraft,
   listImportDrafts,
   saveImportDraft,
 } from "@/data/import-draft-store"
-import { isEmployeeNumberTaken } from "@/lib/employees"
 import { getWizardMasterData } from "@/lib/wizard-master-data"
 import { importRows } from "@/lib/employee-import/import-service"
 import { mapRawRow } from "@/lib/employee-import/row-mapper"
@@ -44,8 +49,9 @@ export async function getExistingEmployeeKeysAction(): Promise<{
   employeesByFin: Record<string, ExistingEmployeeSummary>
   employeeNumbers: string[]
 }> {
+  const employees = await findAllEmployees()
   const employeesByFin: Record<string, ExistingEmployeeSummary> = {}
-  for (const employee of employeeDirectory) {
+  for (const employee of employees) {
     employeesByFin[employee.personal.finCode.trim().toUpperCase()] = {
       id: employee.id,
       baseSalary: employee.payroll.baseSalary,
@@ -53,7 +59,7 @@ export async function getExistingEmployeeKeysAction(): Promise<{
   }
   return {
     employeesByFin,
-    employeeNumbers: employeeDirectory.map((employee) => employee.employment.employeeNumber),
+    employeeNumbers: employees.map((employee) => employee.employment.employeeNumber),
   }
 }
 
@@ -144,16 +150,24 @@ export async function runImportChunkAction(
 
   const verifiedRows = rows.map((row) => (hasUnknownId(row) ? { ...row, severity: "error" as const, willImport: false } : row))
 
-  const results = importRows(verifiedRows, masterData, settings, {
+  // Fetched once per chunk, not once per row (the old in-memory version got
+  // this for free — mutating the array in place made the next row's check
+  // see it immediately — a real DB round trip per row would turn a 237-row
+  // chunk into 237 full-table reads). A number is "reserved" into this set
+  // the instant a row is confirmed free, so a later row in the SAME chunk
+  // that happens to carry the same number still correctly sees it as taken.
+  const existingNumbers = new Set((await findAllEmployees()).map((employee) => employee.employment.employeeNumber))
+
+  const results = await importRows(verifiedRows, masterData, settings, {
     isFinTaken,
-    getEmployeeByFin,
-    isEmployeeNumberTaken: (employeeNumber) =>
-      isEmployeeNumberTaken(
-        employeeNumber,
-        employeeDirectory.map((employee) => employee.employment.employeeNumber)
-      ),
-    addEmployeeProfile,
-    updateEmployeeProfile,
+    getEmployeeByFin: findEmployeeByFin,
+    isEmployeeNumberTaken: async (employeeNumber) => {
+      if (existingNumbers.has(employeeNumber)) return true
+      existingNumbers.add(employeeNumber)
+      return false
+    },
+    addEmployeeProfile: createEmployee,
+    updateEmployeeProfile: updateEmployee,
   })
 
   revalidatePath("/[locale]/employees", "page")

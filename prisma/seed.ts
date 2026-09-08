@@ -4,6 +4,7 @@
 
 import { PrismaLibSql } from "@prisma/adapter-libsql"
 import { PrismaClient } from "../src/generated/prisma/client.ts"
+import { seedEmployeeDirectory } from "../src/data/employee-directory.ts"
 
 const adapter = new PrismaLibSql({ url: process.env.DATABASE_URL ?? "file:./dev.db" })
 const prisma = new PrismaClient({ adapter })
@@ -306,6 +307,25 @@ async function main() {
       })
     }
   }
+
+  // Employee used to live purely in memory (src/data/employee-directory.ts),
+  // reset on every dev-server restart. Now that it's a real table, seed it
+  // from that same original demo dataset the first time — upserted by `id`
+  // like every other table above, so re-running this script never
+  // duplicates or wipes out real employees a later import/create added.
+  await Promise.all(
+    seedEmployeeDirectory.map((employee) =>
+      prisma.employee.upsert({
+        where: { id: employee.id },
+        update: {},
+        create: {
+          id: employee.id,
+          finCode: employee.personal.finCode.trim().toUpperCase(),
+          data: employee,
+        },
+      })
+    )
+  )
 
   console.log("Seed complete.")
 }

@@ -10,7 +10,7 @@ import { RecentEmployees } from "@/components/dashboard/recent-employees"
 import { UpcomingBirthdays } from "@/components/dashboard/upcoming-birthdays"
 import { RecentActivities } from "@/components/dashboard/recent-activities"
 import { QuickActions } from "@/components/dashboard/quick-actions"
-import { employeeDirectory } from "@/data/employee-directory"
+import { findAllEmployees } from "@/repositories/employee-repository"
 import { toListItem } from "@/types/employee-profile"
 import { resolveWorkStatus, type WorkStatus } from "@/lib/employee-work-status"
 import { loadWorkStatusContext } from "@/lib/employee-work-status-loader"
@@ -34,10 +34,11 @@ export default async function DashboardPage({ params }: Props) {
 
   const t = await getTranslations("Dashboard")
 
-  // Real employeeDirectory data, most recently hired first — replaces the
+  // Real Employee table data, most recently hired first — replaces the
   // old disconnected mock array (src/data/employees.ts) this widget used to
   // read from, which could never agree with the rest of the app.
-  const recentEmployees = [...employeeDirectory]
+  const employees = await findAllEmployees()
+  const recentEmployees = [...employees]
     .sort((a, b) => new Date(b.employment.hireDate).getTime() - new Date(a.employment.hireDate).getTime())
     .slice(0, 5)
     .map(toListItem)

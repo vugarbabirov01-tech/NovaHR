@@ -1,4 +1,4 @@
-import { employeeDirectory } from "@/data/employee-directory"
+import { findAllEmployees } from "@/repositories/employee-repository"
 import { findAllLeaveRequests } from "@/repositories/leave-request-repository"
 import { findActiveLeaveByEmployee } from "@/lib/leave/leave-active-status"
 
@@ -27,10 +27,11 @@ export interface DashboardKpis {
  * either of them.
  */
 export async function getDashboardKpis(): Promise<DashboardKpis> {
-  const totalEmployees = employeeDirectory.filter(
+  const employees = await findAllEmployees()
+  const totalEmployees = employees.filter(
     (employee) => employee.employmentStatus !== "terminated"
   ).length
-  const activeEmployees = employeeDirectory.filter(
+  const activeEmployees = employees.filter(
     (employee) => employee.employmentStatus === "active"
   ).length
 
@@ -38,7 +39,7 @@ export async function getDashboardKpis(): Promise<DashboardKpis> {
   const onLeave = findActiveLeaveByEmployee(requests).size
 
   const now = new Date()
-  const newHires = employeeDirectory.filter((employee) => {
+  const newHires = employees.filter((employee) => {
     const hireDate = new Date(employee.employment.hireDate)
     return hireDate.getFullYear() === now.getFullYear() && hireDate.getMonth() === now.getMonth()
   }).length

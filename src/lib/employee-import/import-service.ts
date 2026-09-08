@@ -12,11 +12,11 @@ import type { ImportRow, ImportRowResult, ImportSettings, ImportSummary } from "
  * without this file changing at all.
  */
 export interface ImportServiceDependencies {
-  isFinTaken: (finCode: string) => boolean
-  getEmployeeByFin: (finCode: string) => EmployeeProfile | undefined
-  isEmployeeNumberTaken: (employeeNumber: string) => boolean
-  addEmployeeProfile: (profile: EmployeeProfile) => void
-  updateEmployeeProfile: (id: string, profile: EmployeeProfile) => void
+  isFinTaken: (finCode: string) => Promise<boolean>
+  getEmployeeByFin: (finCode: string) => Promise<EmployeeProfile | null>
+  isEmployeeNumberTaken: (employeeNumber: string) => Promise<boolean>
+  addEmployeeProfile: (profile: EmployeeProfile) => Promise<void>
+  updateEmployeeProfile: (id: string, profile: EmployeeProfile) => Promise<void>
 }
 
 /**
@@ -27,24 +27,33 @@ export interface ImportServiceDependencies {
  * id/employeeNumber are kept (an import never reassigns either), and its
  * payroll is kept or replaced per `settings.salaryStrategy` (§13). Rows
  * blocked by a validation error are never attempted.
+ *
+ * Rows are written one at a time, not in parallel — the dependencies now
+ * read/write a real database, and an "is this employee number already
+ * taken" check has to observe every row written before it in the same
+ * chunk, not just the pre-chunk snapshot.
  */
-export function importRows(
+export async function importRows(
   rows: ImportRow[],
   masterData: WizardMasterData,
   settings: ImportSettings,
   deps: ImportServiceDependencies
-): ImportRowResult[] {
-  return rows.map((row) => {
+): Promise<ImportRowResult[]> {
+  const results: ImportRowResult[] = []
+
+  for (const row of rows) {
     if (row.severity === "error") {
-      return { ...row, outcome: "blocked" }
+      results.push({ ...row, outcome: "blocked" })
+      continue
     }
 
     const finCode = row.mapped.finCode
-    const existing = finCode ? deps.getEmployeeByFin(finCode) : undefined
+    const existing = finCode ? await deps.getEmployeeByFin(finCode) : null
 
     if (existing) {
       if (settings.existingEmployeeStrategy === "skip") {
-        return { ...row, outcome: "skipped" }
+        results.push({ ...row, outcome: "skipped" })
+        continue
       }
 
       const incoming = wizardDataToProfile(
@@ -57,20 +66,34 @@ export function importRows(
         id: existing.id,
         payroll: keepSalary ? existing.payroll : incoming.payroll,
       }
-      deps.updateEmployeeProfile(existing.id, profile)
-      return { ...row, outcome: "updated", employeeNumber: profile.employment.employeeNumber, employeeId: profile.id }
+      await deps.updateEmployeeProfile(existing.id, profile)
+      results.push({
+        ...row,
+        outcome: "updated",
+        employeeNumber: profile.employment.employeeNumber,
+        employeeId: profile.id,
+      })
+      continue
     }
 
     const employeeNumber = row.mapped.employeeNumber ?? ""
-    if (employeeNumber && deps.isEmployeeNumberTaken(employeeNumber)) {
-      return { ...row, outcome: "skipped" }
+    if (employeeNumber && (await deps.isEmployeeNumberTaken(employeeNumber))) {
+      results.push({ ...row, outcome: "skipped" })
+      continue
     }
 
     const profile = wizardDataToProfile(row.mapped as EmployeeWizardData, masterData)
-    deps.addEmployeeProfile(profile)
+    await deps.addEmployeeProfile(profile)
 
-    return { ...row, outcome: "imported", employeeNumber: profile.employment.employeeNumber, employeeId: profile.id }
-  })
+    results.push({
+      ...row,
+      outcome: "imported",
+      employeeNumber: profile.employment.employeeNumber,
+      employeeId: profile.id,
+    })
+  }
+
+  return results
 }
 
 function salaryOutcome(result: ImportRowResult): "created" | "updated" | "skipped" | "missing" {

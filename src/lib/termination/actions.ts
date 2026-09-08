@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 
-import { getEmployeeById, updateEmployeeProfile } from "@/data/employee-directory"
+import { findEmployeeById, updateEmployee } from "@/repositories/employee-repository"
 import { addOffboardingRecord } from "@/data/offboarding-directory"
 import { assetProvider } from "@/lib/integrations/asset-management-provider"
 import { payrollProvider } from "@/lib/integrations/payroll-provider"
@@ -74,7 +74,7 @@ export async function terminateEmployeeAction(
   employeeId: string,
   payload: TerminateEmployeePayload
 ): Promise<TerminateEmployeeResult> {
-  const profile = getEmployeeById(employeeId)
+  const profile = await findEmployeeById(employeeId)
   if (!profile) {
     return { success: false, error: "not-found" }
   }
@@ -121,7 +121,7 @@ export async function terminateEmployeeAction(
 
   // Employee module owns only status + the reference — every termination
   // detail above lives exclusively on the OffboardingRecord just created.
-  updateEmployeeProfile(employeeId, {
+  await updateEmployee(employeeId, {
     ...profile,
     employmentStatus: "terminated",
     terminationRecordId: offboardingRecordId,

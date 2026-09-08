@@ -1,4 +1,4 @@
-import { getEmployeeById } from "@/data/employee-directory"
+import { findEmployeeById } from "@/repositories/employee-repository"
 import {
   calculateReturnToWork,
   resolveLeaveEligibility,
@@ -73,7 +73,7 @@ export async function evaluateLeaveRequest(
   numberOfDays: number,
   context: LeaveRequestEvaluationContext = {}
 ): Promise<LeaveRequestEvaluation> {
-  const profile = getEmployeeById(employeeId)
+  const profile = await findEmployeeById(employeeId)
   if (!profile) throw new Error("Employee not found.")
 
   // The wizard's dropdown already only lists active types

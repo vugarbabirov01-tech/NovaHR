@@ -3,7 +3,7 @@ import { sumLeaveLedgerAmountsByEntryType, sumLeaveLedgerAmountsByEmployeeAndTyp
 import { sumPendingRequestedUnits } from "@/repositories/leave-request-repository"
 import { resolveAnnualLeaveEntitlement } from "@/lib/leave/leave-policy-resolution-service"
 import { normalizeLeaveAmount as normalizeZero } from "@/lib/leave/normalize-leave-amount"
-import { employeeDirectory, getEmployeeById } from "@/data/employee-directory"
+import { findAllEmployees, findEmployeeById } from "@/repositories/employee-repository"
 import type { LeaveEntryType } from "@/generated/prisma/enums"
 import type { LeaveBalanceStatement, OrgLeaveDaysSummary } from "@/types/leave"
 
@@ -88,7 +88,7 @@ async function resolveFallbackAnnualEntitlementDays(
 ): Promise<number | null> {
   const leaveType = await findLeaveTypeById(leaveTypeId)
   if (leaveType?.code !== "ANNUAL") return null
-  const profile = getEmployeeById(employeeId)
+  const profile = await findEmployeeById(employeeId)
   if (!profile) return null
   return resolveAnnualLeaveEntitlement(profile, asOfDate).totalDays
 }
@@ -176,7 +176,10 @@ export async function getOrganizationLeaveDaysSummary(
   const leaveTypeIds = leaveTypes.map((leaveType) => leaveType.id)
   const annualLeaveTypeId = leaveTypes.find((leaveType) => leaveType.code === "ANNUAL")?.id
 
-  const grouped = await sumLeaveLedgerAmountsByEmployeeAndType({ leaveTypeIds, asOfDate })
+  const [grouped, employees] = await Promise.all([
+    sumLeaveLedgerAmountsByEmployeeAndType({ leaveTypeIds, asOfDate }),
+    findAllEmployees(),
+  ])
 
   const sumsByEmployeeAndType = new Map<string, Partial<Record<LeaveEntryType, number>>>()
   for (const row of grouped) {
@@ -191,7 +194,7 @@ export async function getOrganizationLeaveDaysSummary(
   let totalTaken = 0
   let totalRemaining = 0
 
-  for (const employee of employeeDirectory) {
+  for (const employee of employees) {
     for (const leaveType of leaveTypes) {
       const sums = sumsByEmployeeAndType.get(`${employee.id}:${leaveType.id}`) ?? {}
       const buckets = mapEntryTypeSumsToBuckets(sums)

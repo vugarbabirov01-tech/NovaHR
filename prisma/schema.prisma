@@ -127,6 +127,30 @@ model WorkSchedule {
   @@map("work_schedules")
 }
 
+/// The Employee module's real table — was purely in-memory
+/// (src/data/employee-directory.ts, reset on every process restart) until
+/// this model. `data` holds the entire nested EmployeeProfile
+/// (personal/employment/labourLaw/leave/payroll/documents/education/assets/
+/// notes/auditLog/quickStats) as-is — a full relational breakdown of every
+/// nested section is a separate, much larger project than "stop losing
+/// employee data on restart," so this is deliberately one row per employee,
+/// not one row per sub-section. `id` and `finCode` are pulled out as real
+/// columns (not just paths into `data`) because they're the two things
+/// actually queried/uniqued by: `id` is the same value as
+/// employment.employeeNumber by existing convention (see wizardDataToProfile
+/// in employee-wizard-mapper.ts), `finCode` is personal.finCode. Every other
+/// model's employeeId stays a bare String, not a @relation, until that
+/// larger relational project happens — this table doesn't change that.
+model Employee {
+  id        String   @id
+  finCode   String   @unique
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("employees")
+}
+
 model EmploymentType {
   id          String   @id @default(cuid())
   code        String   @unique

@@ -146,7 +146,13 @@ function history(...events: EmploymentHistoryEvent[]): EmploymentHistoryEvent[] 
   return events
 }
 
-const seedEmployeeDirectory: EmployeeProfile[] = [
+/**
+ * The original demo dataset — now used only to seed the real `Employee`
+ * table (prisma/seed.ts) the first time it's empty, not as live data.
+ * Employee reads/writes go through src/repositories/employee-repository.ts
+ * now; this file no longer exports a live directory or any mutator.
+ */
+export const seedEmployeeDirectory: EmployeeProfile[] = [
   {
     id: "EMP-1042",
     employmentStatus: "active",
@@ -1220,72 +1226,3 @@ const seedEmployeeDirectory: EmployeeProfile[] = [
   },
 ]
 
-/**
- * Next.js's dev server (Turbopack) can re-instantiate this module in a
- * different execution context than the one a Server Action just mutated it
- * in — the same reason src/lib/prisma.ts pins its client to `globalThis`
- * instead of a plain module-level const. A plain `export const
- * employeeDirectory = [...]` would silently reset to the seed data on the
- * next request whenever that happens, even though the mutation itself
- * (addEmployeeProfile/updateEmployeeProfile) succeeded. Pinning the array
- * to `globalThis` the same way makes every execution context share the
- * one array instance for the lifetime of the dev server process.
- */
-const globalForEmployeeDirectory = globalThis as unknown as {
-  employeeDirectory?: EmployeeProfile[]
-}
-
-export const employeeDirectory: EmployeeProfile[] =
-  globalForEmployeeDirectory.employeeDirectory ?? seedEmployeeDirectory
-
-if (process.env.NODE_ENV !== "production") {
-  globalForEmployeeDirectory.employeeDirectory = employeeDirectory
-}
-
-export function getEmployeeById(id: string): EmployeeProfile | undefined {
-  return employeeDirectory.find((employee) => employee.id === id)
-}
-
-export function isEmployeeIdTaken(id: string): boolean {
-  return employeeDirectory.some((employee) => employee.id === id)
-}
-
-/** Used by Import's Skip/Update-existing flow (§14) to find the actual record a matching FIN belongs to, not just whether one exists. */
-export function getEmployeeByFin(finCode: string): EmployeeProfile | undefined {
-  const normalized = finCode.trim().toUpperCase()
-  return employeeDirectory.find((employee) => employee.personal.finCode.trim().toUpperCase() === normalized)
-}
-
-/**
- * Used by Import for FIN-based idempotency, and by Create/Edit to enforce
- * global FIN uniqueness. excludeId lets Edit ignore the employee's own
- * current record — Import never passes it, since every imported row is a
- * new employee.
- */
-export function isFinTaken(finCode: string, excludeId?: string): boolean {
-  const normalized = finCode.trim().toUpperCase()
-  return employeeDirectory.some(
-    (employee) => employee.id !== excludeId && employee.personal.finCode.trim().toUpperCase() === normalized
-  )
-}
-
-/**
- * Adds a newly created profile to the in-memory directory. This stands in
- * for a database insert — swapping it for a real PostgreSQL write later
- * only means changing this one function's body, not any of its callers.
- */
-export function addEmployeeProfile(profile: EmployeeProfile): void {
-  employeeDirectory.unshift(profile)
-}
-
-/**
- * Replaces an existing profile in-place, preserving its position in the
- * directory. Stands in for a database update the same way addEmployeeProfile
- * stands in for an insert.
- */
-export function updateEmployeeProfile(id: string, profile: EmployeeProfile): void {
-  const index = employeeDirectory.findIndex((employee) => employee.id === id)
-  if (index !== -1) {
-    employeeDirectory[index] = profile
-  }
-}

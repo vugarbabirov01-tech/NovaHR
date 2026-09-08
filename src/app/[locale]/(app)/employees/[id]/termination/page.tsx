@@ -4,7 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { PageTitle } from "@/components/common/page-title"
 import { TerminationPageContent } from "@/components/employees/termination/termination-page-content"
-import { getEmployeeById } from "@/data/employee-directory"
+import { findEmployeeById } from "@/repositories/employee-repository"
 
 type Props = {
   params: Promise<{ locale: string; id: string }>
@@ -22,7 +22,7 @@ export default async function EmployeeTerminationPage({ params }: Props) {
   const { locale, id } = await params
   setRequestLocale(locale)
 
-  const profile = getEmployeeById(id)
+  const profile = await findEmployeeById(id)
   if (!profile) notFound()
 
   const t = await getTranslations("Employees.termination")

@@ -1,16 +1,16 @@
-import { getEmployeeById, updateEmployeeProfile } from "@/data/employee-directory"
+import { findEmployeeById, updateEmployee } from "@/repositories/employee-repository"
 import type { AssetAssignment, AssetProvider, AssetReturnUpdate } from "@/types/integrations/asset-management"
 
 /**
  * Temporary adapter — Asset Management doesn't exist as its own module yet,
- * so this reads/writes the same mock employeeDirectory everything else in
- * this demo uses. It is the ONLY file that does so for asset data. When a
- * real Asset Management module ships, only this file gets replaced; nothing
- * in Termination (or any other consumer of AssetProvider) changes.
+ * so this reads/writes the same Employee table everything else in this demo
+ * uses. It is the ONLY file that does so for asset data. When a real Asset
+ * Management module ships, only this file gets replaced; nothing in
+ * Termination (or any other consumer of AssetProvider) changes.
  */
 class MockAssetManagementProvider implements AssetProvider {
   async getAssignedAssets(employeeId: string): Promise<AssetAssignment[]> {
-    const profile = getEmployeeById(employeeId)
+    const profile = await findEmployeeById(employeeId)
     if (!profile) return []
     return profile.assets.map((asset) => ({
       id: asset.id,
@@ -23,13 +23,13 @@ class MockAssetManagementProvider implements AssetProvider {
   }
 
   async recordAssetReturns(employeeId: string, updates: AssetReturnUpdate[]): Promise<void> {
-    const profile = getEmployeeById(employeeId)
+    const profile = await findEmployeeById(employeeId)
     if (!profile || updates.length === 0) return
 
     const today = new Date().toISOString().slice(0, 10)
     const updatesById = new Map(updates.map((update) => [update.assetId, update.status]))
 
-    updateEmployeeProfile(employeeId, {
+    await updateEmployee(employeeId, {
       ...profile,
       assets: profile.assets.map((asset) => {
         const nextStatus = updatesById.get(asset.id)

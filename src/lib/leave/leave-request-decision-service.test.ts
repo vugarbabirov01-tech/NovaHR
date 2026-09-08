@@ -10,7 +10,7 @@ import {
   cancelLeaveRequest,
 } from "@/lib/leave/leave-request-decision-service"
 import { resolveAnnualLeaveEntitlement } from "@/lib/leave/leave-policy-resolution-service"
-import { getEmployeeById } from "@/data/employee-directory"
+import { findEmployeeById } from "@/repositories/employee-repository"
 
 /**
  * Regression coverage for the exact scenario in the bug report:
@@ -48,7 +48,7 @@ describe("Leave Request decision flow — Pending -> Approved", () => {
   it("Initial Balance, Used, and Current reflect the approval; Pending returns to 0", async () => {
     const annualLeaveTypeId = await findAnnualLeaveTypeId()
     const employeeId = "EMP-1039"
-    const employee = getEmployeeById(employeeId)
+    const employee = await findEmployeeById(employeeId)
     expect(employee).toBeDefined()
     const entitlement = resolveAnnualLeaveEntitlement(employee!, new Date()).totalDays
     const requestedUnits = 10
@@ -108,7 +108,7 @@ describe("Leave Request decision flow — Pending -> Rejected", () => {
   it("balances return exactly to the pre-request baseline; Pending returns to 0", async () => {
     const annualLeaveTypeId = await findAnnualLeaveTypeId()
     const employeeId = "EMP-1038"
-    const employee = getEmployeeById(employeeId)
+    const employee = await findEmployeeById(employeeId)
     expect(employee).toBeDefined()
     const entitlement = resolveAnnualLeaveEntitlement(employee!, new Date()).totalDays
     const requestedUnits = 10
@@ -140,7 +140,7 @@ describe("Leave Request decision flow — cancellation", () => {
   it("cancelling an APPROVED request reverses the ledger (LEAVE_CANCELLED) and restores the balance", async () => {
     const annualLeaveTypeId = await findAnnualLeaveTypeId()
     const employeeId = "EMP-0871"
-    const employee = getEmployeeById(employeeId)
+    const employee = await findEmployeeById(employeeId)
     expect(employee).toBeDefined()
     const entitlement = resolveAnnualLeaveEntitlement(employee!, new Date()).totalDays
     const requestedUnits = 4
@@ -170,7 +170,7 @@ describe("Leave Request decision flow — cancellation", () => {
   it("cancelling a still-PENDING request needs no ledger reversal — it never wrote one", async () => {
     const annualLeaveTypeId = await findAnnualLeaveTypeId()
     const employeeId = "EMP-1011"
-    const employee = getEmployeeById(employeeId)
+    const employee = await findEmployeeById(employeeId)
     expect(employee).toBeDefined()
     const entitlement = resolveAnnualLeaveEntitlement(employee!, new Date()).totalDays
     const requestedUnits = 6

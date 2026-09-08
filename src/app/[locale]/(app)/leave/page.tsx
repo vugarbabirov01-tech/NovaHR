@@ -12,7 +12,7 @@ import { getActiveLeaveTypesAction } from "@/lib/leave/leave-balance-actions"
 import { calculateReturnToWork } from "@/lib/leave/leave-policy-resolution-service"
 import { computeLeaveDashboardKpis } from "@/lib/leave/leave-dashboard-kpis"
 import { findActiveLeaveByEmployee, calendarDaysUntil } from "@/lib/leave/leave-active-status"
-import { employeeDirectory, getEmployeeById } from "@/data/employee-directory"
+import { findAllEmployees, findEmployeeById } from "@/repositories/employee-repository"
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -66,7 +66,7 @@ export default async function LeavePage({ params }: Props) {
 
   const onLeaveRows: CurrentlyOnLeaveRow[] = await Promise.all(
     activeLeaveRequests.map(async (request) => {
-      const profile = getEmployeeById(request.employeeId)
+      const profile = await findEmployeeById(request.employeeId)
       const leaveType = leaveTypeById.get(request.leaveTypeId)
       // Same Leave Policy Resolution engine the request wizard's Review
       // step and the old requests table both called — returnDate is the
@@ -101,7 +101,7 @@ export default async function LeavePage({ params }: Props) {
   // change (submission validation itself is unchanged). finCode (not
   // department) travels with each option — department is no longer a
   // search field or a displayed hint in the Employee step's picker.
-  const employeeOptions = employeeDirectory
+  const employeeOptions = (await findAllEmployees())
     .filter((employee) => employee.employmentStatus !== "terminated")
     .map((employee) => ({
       id: employee.id,

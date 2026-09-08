@@ -3,7 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { PageTitle } from "@/components/common/page-title"
 import { OrgChartClient } from "@/components/organization/org-chart-client"
-import { employeeDirectory } from "@/data/employee-directory"
+import { findAllEmployees } from "@/repositories/employee-repository"
 import { toListItem } from "@/types/employee-profile"
 import { buildOrganizationTree } from "@/lib/organization/build-tree"
 
@@ -35,7 +35,7 @@ export default async function OrganizationPage({ params }: Props) {
 
   const t = await getTranslations("Pages.organization")
 
-  const employees = employeeDirectory.map(toListItem)
+  const employees = (await findAllEmployees()).map(toListItem)
   const tree = buildOrganizationTree(employees)
   const managerNames = Array.from(
     new Set(employees.map((employee) => employee.managerName).filter((name): name is string => Boolean(name)))

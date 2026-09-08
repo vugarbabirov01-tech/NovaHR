@@ -1,4 +1,4 @@
-import { getEmployeeById } from "@/data/employee-directory"
+import { findEmployeeById } from "@/repositories/employee-repository"
 import type { LeaveBalanceSummary, LeaveProvider } from "@/types/integrations/leave"
 
 /**
@@ -9,7 +9,7 @@ import type { LeaveBalanceSummary, LeaveProvider } from "@/types/integrations/le
  */
 class MockLeaveProvider implements LeaveProvider {
   async getLeaveBalance(employeeId: string): Promise<LeaveBalanceSummary | null> {
-    const profile = getEmployeeById(employeeId)
+    const profile = await findEmployeeById(employeeId)
     if (!profile) return null
 
     return {

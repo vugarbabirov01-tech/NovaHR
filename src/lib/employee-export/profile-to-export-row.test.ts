@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { profileToExportRow } from "@/lib/employee-export/profile-to-export-row"
-import { getEmployeeById } from "@/data/employee-directory"
+import { findEmployeeById } from "@/repositories/employee-repository"
 
 /**
  * Regression coverage for the "Import Template export gives English"
@@ -13,8 +13,8 @@ import { getEmployeeById } from "@/data/employee-directory"
  * calculations.test.ts already uses.
  */
 describe("profileToExportRow", () => {
-  it("writes the canonical Azerbaijani label for every closed-choice field, not the raw internal code", () => {
-    const profile = getEmployeeById("EMP-1042")
+  it("writes the canonical Azerbaijani label for every closed-choice field, not the raw internal code", async () => {
+    const profile = await findEmployeeById("EMP-1042")
     expect(profile).toBeDefined()
     expect(profile!.personal.gender).toBe("female")
     expect(profile!.personal.maritalStatus).toBe("married")
@@ -36,8 +36,8 @@ describe("profileToExportRow", () => {
     }
   })
 
-  it("applies the same translation for the fullReport export type", () => {
-    const profile = getEmployeeById("EMP-1042")
+  it("applies the same translation for the fullReport export type", async () => {
+    const profile = await findEmployeeById("EMP-1042")
     const row = profileToExportRow(profile!, "fullReport")
     expect(row.gender).toBe("Qadın")
     expect(row.employmentType).toBe("Tam ştat")

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { calculateReturnToWork } from "@/lib/leave/leave-policy-resolution-service"
 import { evaluateLeaveRequest } from "@/lib/leave/leave-request-service"
-import { getEmployeeById } from "@/data/employee-directory"
+import { findEmployeeById } from "@/repositories/employee-repository"
 import { findActiveLeaveTypes, findAllLeaveTypes } from "@/repositories/leave-type-repository"
 
 /**
@@ -76,7 +76,7 @@ describe("evaluateLeaveRequest — balance preview reflects the request being su
   })
 
   it("recomputes the balance and date fields per-request rather than reusing stale values", async () => {
-    const employee = getEmployeeById("EMP-1042")
+    const employee = await findEmployeeById("EMP-1042")
     expect(employee).toBeDefined()
     const annual = (await findActiveLeaveTypes()).find((t) => t.code === "ANNUAL")
     expect(annual).toBeDefined()

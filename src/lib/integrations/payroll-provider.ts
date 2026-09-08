@@ -1,4 +1,4 @@
-import { getEmployeeById } from "@/data/employee-directory"
+import { findEmployeeById } from "@/repositories/employee-repository"
 import type {
   LeavePaymentSummary,
   PayrollProvider,
@@ -30,7 +30,7 @@ class MockPayrollProvider implements PayrollProvider {
     employeeId: string,
     _context: PayrollSettlementContext
   ): Promise<PayrollSettlementItem[]> {
-    const profile = getEmployeeById(employeeId)
+    const profile = await findEmployeeById(employeeId)
     const currency = profile?.payroll.currency ?? "AZN"
     const allowancesTotal = profile?.payroll.allowances.reduce((sum, a) => sum + a.amount, 0) ?? 0
 
@@ -53,7 +53,7 @@ class MockPayrollProvider implements PayrollProvider {
    * engine's statutory rules — this adapter never fabricates them.
    */
   async getLeavePaymentSummary(employeeId: string, leaveDays: number): Promise<LeavePaymentSummary> {
-    const profile = getEmployeeById(employeeId)
+    const profile = await findEmployeeById(employeeId)
     const currency = profile?.payroll.currency ?? "AZN"
     const averageMonthlySalary = profile?.payroll.baseSalary ?? null
     const averageDailySalary =
