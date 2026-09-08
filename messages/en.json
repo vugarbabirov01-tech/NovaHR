@@ -11,6 +11,7 @@
     "archived": "Archived",
     "archive": "Archive",
     "restore": "Restore",
+    "delete": "Delete",
     "genericError": "Something went wrong. Please try again.",
     "monthsShort": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
     "datePicker": {
@@ -224,7 +225,10 @@
       "fieldCodeHint": "Leave blank to generate one automatically.",
       "fieldDescription": "Description",
       "emptyTitle": "No departments found",
-      "emptyDescription": "Try a different search, or add a new department."
+      "emptyDescription": "Try a different search, or add a new department.",
+      "deleteConfirmTitle": "Delete Department",
+      "deleteConfirmDescription": "Are you sure you want to permanently delete \"{name}\"? This cannot be undone.",
+      "deleteBlocked": "\"{name}\" can't be deleted — {employeeCount} employees and {positionCount} positions are still assigned to it. Move them to another department first."
     },
     "positions": {
       "title": "Positions",
@@ -245,7 +249,10 @@
       "fieldDescription": "Description",
       "addNewDepartment": "Add New Department",
       "emptyTitle": "No positions found",
-      "emptyDescription": "Try a different search, or add a new position."
+      "emptyDescription": "Try a different search, or add a new position.",
+      "deleteConfirmTitle": "Delete Position",
+      "deleteConfirmDescription": "Are you sure you want to permanently delete \"{name}\"? This cannot be undone.",
+      "deleteBlocked": "\"{name}\" can't be deleted — {employeeCount} employees are still assigned to it. Move them to another position first."
     },
     "companies": {
       "title": "Companies",
@@ -505,7 +512,9 @@
       "salary": "Salary",
       "viewProfile": "View Profile",
       "quickActions": "Quick actions",
-      "noManager": "No manager assigned"
+      "noManager": "No manager assigned",
+      "company": "Company",
+      "noCompany": "Not assigned"
     },
     "quickActions": {
       "triggerLabel": "Quick actions",
@@ -578,7 +587,8 @@
         "directReports": "Direct Reports",
         "completedTrainings": "Completed Trainings",
         "openTasks": "Open Tasks",
-        "contact": "Contact"
+        "contact": "Contact",
+        "noCompany": "No company assigned"
       },
       "employment": {
         "employeeNumber": "Employee Number",

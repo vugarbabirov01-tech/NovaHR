@@ -11,6 +11,7 @@
     "archived": "Arxivləndi",
     "archive": "Arxivləşdir",
     "restore": "Bərpa Et",
+    "delete": "Sil",
     "genericError": "Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.",
     "monthsShort": ["yan", "fev", "mar", "apr", "may", "iyn", "iyl", "avq", "sen", "okt", "noy", "dek"],
     "datePicker": {
@@ -224,7 +225,10 @@
       "fieldCodeHint": "Boş buraxsanız avtomatik yaradılacaq.",
       "fieldDescription": "Təsvir",
       "emptyTitle": "Şöbə tapılmadı",
-      "emptyDescription": "Fərqli axtarış edin və ya yeni şöbə əlavə edin."
+      "emptyDescription": "Fərqli axtarış edin və ya yeni şöbə əlavə edin.",
+      "deleteConfirmTitle": "Şöbəni Sil",
+      "deleteConfirmDescription": "\"{name}\" şöbəsini həmişəlik silmək istədiyinizə əminsiniz? Bu əməliyyat geri qaytarıla bilməz.",
+      "deleteBlocked": "\"{name}\" şöbəsini silmək mümkün deyil — {employeeCount} əməkdaş və {positionCount} vəzifə hələ bu şöbəyə aiddir. Əvvəlcə onları başqa şöbəyə köçürün."
     },
     "positions": {
       "title": "Vəzifələr",
@@ -245,7 +249,10 @@
       "fieldDescription": "Təsvir",
       "addNewDepartment": "Yeni Şöbə Əlavə Et",
       "emptyTitle": "Vəzifə tapılmadı",
-      "emptyDescription": "Fərqli axtarış edin və ya yeni vəzifə əlavə edin."
+      "emptyDescription": "Fərqli axtarış edin və ya yeni vəzifə əlavə edin.",
+      "deleteConfirmTitle": "Vəzifəni Sil",
+      "deleteConfirmDescription": "\"{name}\" vəzifəsini həmişəlik silmək istədiyinizə əminsiniz? Bu əməliyyat geri qaytarıla bilməz.",
+      "deleteBlocked": "\"{name}\" vəzifəsini silmək mümkün deyil — {employeeCount} əməkdaş hələ bu vəzifəyə aiddir. Əvvəlcə onları başqa vəzifəyə keçirin."
     },
     "companies": {
       "title": "Şirkətlər",
@@ -505,7 +512,9 @@
       "salary": "Əmək haqqı",
       "viewProfile": "Profilə Bax",
       "quickActions": "Sürətli əməliyyatlar",
-      "noManager": "Rəhbər təyin edilməyib"
+      "noManager": "Rəhbər təyin edilməyib",
+      "company": "Şirkət",
+      "noCompany": "Təyin edilməyib"
     },
     "quickActions": {
       "triggerLabel": "Sürətli əməliyyatlar",
@@ -578,7 +587,8 @@
         "directReports": "Tabeliyində olanlar",
         "completedTrainings": "Tamamlanmış Təlimlər",
         "openTasks": "Açıq Tapşırıqlar",
-        "contact": "Əlaqə"
+        "contact": "Əlaqə",
+        "noCompany": "Şirkət təyin edilməyib"
       },
       "employment": {
         "employeeNumber": "Əməkdaş Nömrəsi",
