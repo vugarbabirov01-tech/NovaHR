@@ -32,9 +32,45 @@ interface SearchableSelectProps {
 }
 
 interface PopupPosition {
-  top: number
   left: number
   width: number
+  placement: "top" | "bottom"
+  /** Set when placement is "bottom" — distance from the viewport top to the popup's top edge. */
+  top?: number
+  /** Set when placement is "top" — distance from the viewport bottom to the popup's bottom edge. */
+  bottom?: number
+  /** Clamped to whatever space is actually available on the chosen side, so the popup can never push past the viewport edge or the app's sticky header/footer. */
+  maxHeight: number
+}
+
+const VIEWPORT_EDGE_PADDING = 8
+const PREFERRED_POPUP_HEIGHT = 320
+const MIN_POPUP_HEIGHT = 120
+
+/**
+ * Finds the true top/bottom boundary of visible space, accounting for any
+ * fixed/sticky chrome pinned to that edge (e.g. the app header, or a wizard's
+ * sticky action bar) — those cover real pixels even though they're not part
+ * of the normal document flow, so window.innerHeight/0 alone would let the
+ * popup render underneath them. Generic: works for any such element anywhere
+ * in the app, not just one page's specific footer.
+ */
+function findEdgeBoundary(edge: "top" | "bottom"): number {
+  const viewportHeight = window.innerHeight
+  const probeY = edge === "bottom" ? viewportHeight - 1 : 1
+  const probeX = window.innerWidth / 2
+  let boundary = edge === "bottom" ? viewportHeight : 0
+  for (const el of document.elementsFromPoint(probeX, probeY)) {
+    const style = window.getComputedStyle(el)
+    if (style.position !== "fixed" && style.position !== "sticky") continue
+    const rect = el.getBoundingClientRect()
+    if (edge === "bottom" && rect.bottom >= viewportHeight - 2 && rect.top < boundary) {
+      boundary = rect.top
+    } else if (edge === "top" && rect.top <= 2 && rect.bottom > boundary) {
+      boundary = rect.bottom
+    }
+  }
+  return boundary
 }
 
 /**
@@ -72,7 +108,27 @@ export function SearchableSelect({
     const trigger = triggerRef.current
     if (!trigger) return
     const rect = trigger.getBoundingClientRect()
-    setPosition({ top: rect.bottom + 4, left: rect.left, width: rect.width })
+
+    const viewportTop = findEdgeBoundary("top")
+    const viewportBottom = findEdgeBoundary("bottom")
+    const spaceBelow = viewportBottom - rect.bottom - VIEWPORT_EDGE_PADDING
+    const spaceAbove = rect.top - viewportTop - VIEWPORT_EDGE_PADDING
+
+    // Prefer opening downward, as before — flip up only when there isn't
+    // enough room below AND the space above is actually bigger, so a select
+    // near the top of the screen still opens down like it always did.
+    const openUpward = spaceBelow < PREFERRED_POPUP_HEIGHT && spaceAbove > spaceBelow
+    const available = openUpward ? spaceAbove : spaceBelow
+    const maxHeight = Math.max(Math.min(PREFERRED_POPUP_HEIGHT, available), Math.min(MIN_POPUP_HEIGHT, available))
+
+    setPosition({
+      left: rect.left,
+      width: rect.width,
+      placement: openUpward ? "top" : "bottom",
+      top: openUpward ? undefined : rect.bottom + 4,
+      bottom: openUpward ? window.innerHeight - rect.top + 4 : undefined,
+      maxHeight,
+    })
   }, [])
 
   useLayoutEffect(() => {
@@ -151,10 +207,18 @@ export function SearchableSelect({
         ? createPortal(
             <div
               ref={popupRef}
-              style={{ position: "fixed", top: position.top, left: position.left, width: position.width }}
-              className="z-50 min-w-56 overflow-hidden rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10"
+              style={{
+                position: "fixed",
+                top: position.top,
+                bottom: position.bottom,
+                left: position.left,
+                width: position.width,
+                maxHeight: position.maxHeight,
+              }}
+              data-placement={position.placement}
+              className="z-50 flex min-w-56 flex-col overflow-hidden rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10"
             >
-              <div className="border-b border-border p-1.5">
+              <div className="shrink-0 border-b border-border p-1.5">
                 <input
                   autoFocus
                   value={query}
@@ -163,7 +227,7 @@ export function SearchableSelect({
                   className="h-7 w-full rounded-md border-none bg-transparent px-1.5 text-sm outline-none placeholder:text-muted-foreground"
                 />
               </div>
-              <div className="max-h-56 overflow-y-auto p-1">
+              <div className="min-h-0 flex-1 overflow-y-auto p-1">
                 {filtered.length === 0 ? (
                   <p className="px-2 py-1.5 text-xs text-muted-foreground">{emptyText}</p>
                 ) : (
@@ -192,7 +256,7 @@ export function SearchableSelect({
                 )}
               </div>
               {footer ? (
-                <div className="border-t border-border p-1" onClick={() => setOpen(false)}>
+                <div className="shrink-0 border-t border-border p-1" onClick={() => setOpen(false)}>
                   {footer}
                 </div>
               ) : null}
