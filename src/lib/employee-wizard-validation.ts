@@ -17,7 +17,6 @@ function validatePersonalStep(
   if (!data.dateOfBirth) errors.dateOfBirth = messages.required
   if (!data.finCode.trim()) errors.finCode = messages.required
   if (!data.phone.trim()) errors.phone = messages.required
-  if (!data.email.trim()) errors.email = messages.required
   return errors
 }
 

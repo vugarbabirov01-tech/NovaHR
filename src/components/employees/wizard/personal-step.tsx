@@ -103,7 +103,7 @@ export function PersonalStep({ data, onChange, errors = {} }: StepProps) {
           <Field label={t("phone")} htmlFor="phone" required error={errors.phone}>
             <Input id="phone" value={data.phone} onChange={(e) => onChange({ phone: e.target.value })} />
           </Field>
-          <Field label={t("email")} htmlFor="email" required error={errors.email}>
+          <Field label={t("email")} htmlFor="email" error={errors.email}>
             <Input
               id="email"
               type="email"
