@@ -78,6 +78,42 @@ export function flattenOrganizationTree(nodes: OrganizationTreeNode[]): Organiza
   return result
 }
 
+/**
+ * The Employee Profile page's "Organizational Hierarchy" card — the
+ * reporting chain from the company's top down to `employeeId`, inclusive,
+ * each with its real descendantCount already computed by the tree above
+ * (never a separately-counted "direct reports" figure, so the two features
+ * can never disagree). Walks employee.managerId upward independently of
+ * the tree's own parent/child structure, with its own `visited` guard —
+ * buildOrganizationTree's cycle protection only covers descending through
+ * `children`, not this upward walk, so a managerId cycle here needs its
+ * own stop condition or it would loop forever. A managerId that doesn't
+ * resolve to another employee in `employees` (already left the company, or
+ * simply wasn't included in a scoped call) just ends the chain there
+ * rather than throwing — the chain renders however far it can be traced.
+ */
+export function buildManagerChain(employeeId: string, employees: EmployeeListItem[]): OrganizationTreeNode[] {
+  const byId = new Map(employees.map((employee) => [employee.id, employee]))
+  if (!byId.has(employeeId)) return []
+
+  const tree = buildOrganizationTree(employees)
+  const nodeById = new Map(flattenOrganizationTree(tree).map((node) => [node.employee.id, node]))
+
+  const chainIdsBottomUp: string[] = []
+  const visited = new Set<string>()
+  let currentId: string | undefined = employeeId
+  while (currentId && byId.has(currentId) && !visited.has(currentId)) {
+    visited.add(currentId)
+    chainIdsBottomUp.push(currentId)
+    currentId = byId.get(currentId)!.managerId
+  }
+
+  return chainIdsBottomUp
+    .reverse()
+    .map((id) => nodeById.get(id))
+    .filter((node): node is OrganizationTreeNode => node !== undefined)
+}
+
 /** employeeId -> the chain of ancestor ids from the root down to (but not
  * including) that employee — what Search/Filter expand along to reveal a
  * match. Built once per tree, alongside the flattened list. */

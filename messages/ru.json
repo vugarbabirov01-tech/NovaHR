@@ -443,12 +443,16 @@
       "exportPdf": "Экспорт в PDF",
       "print": "Печать",
       "importEmployees": "Импорт сотрудников",
+      "importSalaries": "Импорт зарплат",
       "addEmployee": "Добавить сотрудника",
       "cardView": "Вид карточек",
       "listView": "Вид списка",
       "resultsCount": "{count, plural, =0 {Нет сотрудников} =1 {1 сотрудник} other {# сотрудников}}",
       "emptyTitle": "Сотрудники не найдены",
-      "emptyDescription": "Попробуйте изменить поиск или фильтры."
+      "emptyDescription": "Попробуйте изменить поиск или фильтры.",
+      "bulkDeleteConfirmTitle": "Удалить сотрудников",
+      "bulkDeleteConfirmDescription": "Вы уверены, что хотите безвозвратно удалить {count} выбранных сотрудников из системы? Это действие нельзя отменить.",
+      "bulkDeleteSuccess": "{count} сотрудников успешно удалено."
     },
     "smartFilters": {
       "sectionTitle": "HR-оповещения",
@@ -588,7 +592,9 @@
         "completedTrainings": "Пройденные тренинги",
         "openTasks": "Открытые задачи",
         "contact": "Контакты",
-        "noCompany": "Компания не назначена"
+        "noCompany": "Компания не назначена",
+        "organizationHierarchy": "Организационная иерархия",
+        "currentEmployeeBadge": "Текущий сотрудник"
       },
       "employment": {
         "employeeNumber": "Номер сотрудника",
@@ -1165,6 +1171,54 @@
           "skipped": "Пропущено",
           "missing": "Отсутствует"
         }
+      }
+    },
+    "salaryImport": {
+      "title": "Массовый импорт зарплат",
+      "description": "Добавьте или обновите зарплаты существующих сотрудников по ФИН из Excel-файла.",
+      "steps": {
+        "upload": "Файл",
+        "preview": "Предпросмотр",
+        "result": "Результат"
+      },
+      "upload": {
+        "dropzoneLabel": "Перетащите Excel-файл сюда или нажмите, чтобы выбрать",
+        "dropzoneHint": ".xlsx или .csv — требуются столбцы ФИН и Зарплата",
+        "downloadTemplate": "Скачать шаблон"
+      },
+      "errors": {
+        "emptyFile": "Файл пуст или не может быть прочитан.",
+        "columnsNotDetected": "Столбцы ФИН и Зарплата не найдены. Проверьте заголовки столбцов (напр. «ФИН», «Зарплата»).",
+        "parseFailed": "При чтении файла произошла ошибка. Проверьте формат файла и попробуйте снова."
+      },
+      "columnFin": "ФИН",
+      "columnEmployee": "Сотрудник",
+      "columnCurrentSalary": "Текущая зарплата",
+      "columnNewSalary": "Новая зарплата",
+      "columnStatus": "Статус",
+      "preview": {
+        "loading": "Сопоставление с сотрудниками...",
+        "totalRows": "Всего строк",
+        "matched": "Найдено сотрудников",
+        "notFound": "ФИН не найден",
+        "errors": "Ошибочные строки",
+        "filterAll": "Все ({count})",
+        "filterNotFound": "Не найдено ({count})",
+        "filterErrors": "Ошибки ({count})",
+        "emptyTitle": "Строки не найдены",
+        "emptyDescription": "Нет строк, соответствующих выбранному фильтру.",
+        "pageIndicator": "Страница {current} из {total}",
+        "startOver": "Начать заново",
+        "confirmButton": "Импортировать зарплаты"
+      },
+      "resultToastTitle": "Импорт завершён",
+      "resultToastDescription": "Зарплата {count} сотрудников успешно обновлена.",
+      "result": {
+        "updated": "{count, plural, =0 {Ни одна зарплата не была обновлена.} =1 {Зарплата 1 сотрудника успешно обновлена.} other {Зарплата # сотрудников успешно обновлена.}}",
+        "notFound": "{count, plural, =1 {1 сотрудник не найден.} other {# сотрудников не найдено.}}",
+        "errors": "{count, plural, =1 {В 1 строке есть ошибка.} other {В # строках есть ошибки.}}",
+        "downloadErrors": "Экспортировать ошибочные строки",
+        "importAnother": "Импортировать другой файл"
       }
     },
     "export": {

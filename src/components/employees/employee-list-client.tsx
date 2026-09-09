@@ -1,10 +1,11 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import {
+  Banknote,
   Download,
   FileText,
   Loader2,
@@ -36,9 +37,17 @@ import { EmployeeCard } from "@/components/employees/employee-card"
 import { EmployeeFiltersPanel } from "@/components/employees/employee-filters-panel"
 import { EmployeeListTable } from "@/components/employees/employee-list-table"
 import { ViewToggle } from "@/components/employees/view-toggle"
+import { ConfirmDeleteDialog } from "@/components/master-data/confirm-delete-dialog"
+import { toast } from "@/components/ui/toast"
+import { deleteEmployeesAction } from "@/app/[locale]/(app)/employees/actions"
 import { usePersistedState } from "@/hooks/use-persisted-state"
 import { getFullName, statusMessageKeys } from "@/lib/employees"
 import { computeSmartFilterMatches, getEmployeeSmartFilters } from "@/lib/employee-smart-filters"
+import {
+  buildEmployeesReturnUrl,
+  filtersToSearchParams,
+  searchParamsToFilters,
+} from "@/lib/employee-filters-url"
 import { HR_SETTINGS } from "@/lib/hr-settings"
 import { cn } from "@/lib/utils"
 import type { WorkStatus } from "@/lib/employee-work-status"
@@ -46,7 +55,6 @@ import {
   ALL_VALUE,
   DEFAULT_STATUS_FILTER,
   DEFAULT_VISIBLE_STATUSES,
-  defaultEmployeeFilters,
   type EmployeeFilters,
   type EmployeeView,
 } from "@/types/employee-filters"
@@ -93,25 +101,46 @@ interface EmployeeListClientProps {
 
 export function EmployeeListClient({ employees, workStatusByEmployeeId }: EmployeeListClientProps) {
   const t = useTranslations("Employees.list")
+  const tCommon = useTranslations("Common")
   const tStatus = useTranslations("Status")
   const tSmartFilters = useTranslations("Employees.smartFilters")
   const router = useRouter()
   const searchParams = useSearchParams()
   const [view, setView] = usePersistedState<EmployeeView>("employees-view", "list")
-  // Smart Filter selection is the one filter dimension that deep-links —
-  // read once from ?smartFilter= on load, same idea as the Employee
-  // Profile's ?tab= deep link.
+  // The URL is the source of truth for every filter (search, status,
+  // Advanced Filters, Smart Filter) — hydrated once here from whatever
+  // query string the page loaded with, then kept in sync below so
+  // navigating to an Employee Profile and back (or the browser's own Back
+  // button) restores exactly what was active, instead of resetting to
+  // defaults the way a plain useState would on remount.
   const [filters, setFilters] = useState<EmployeeFilters>(() => {
-    const smartFilterParam = searchParams.get("smartFilter")
+    const hydrated = searchParamsToFilters(searchParams)
     const isValidSmartFilter = Boolean(
-      smartFilterParam && getEmployeeSmartFilters().some((filter) => filter.id === smartFilterParam)
+      hydrated.smartFilter && getEmployeeSmartFilters().some((filter) => filter.id === hydrated.smartFilter)
     )
-    return { ...defaultEmployeeFilters, smartFilter: isValidSmartFilter ? smartFilterParam! : "" }
+    return isValidSmartFilter ? hydrated : { ...hydrated, smartFilter: "" }
   })
+
+  useEffect(() => {
+    const query = filtersToSearchParams(filters).toString()
+    router.replace(query ? `/employees?${query}` : "/employees", { scroll: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters])
+
+  // Threaded onto every profile link the list renders (Employee Card,
+  // table rows, "View Profile" in the quick-actions menu) — the one thing
+  // that makes "Back to Employees" reliable regardless of browser history
+  // (a fresh tab, a bookmarked profile link, middle-click-opened tab, ...),
+  // per the same reasoning smartFilter's deep link already relies on.
+  const returnTo = useMemo(() => buildEmployeesReturnUrl("/employees", filters), [filters])
 
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
+  const [bulkDeleteIds, setBulkDeleteIds] = useState<string[]>([])
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null)
 
   function handleViewChange(nextView: EmployeeView) {
     // Selection only exists in the table view's checkboxes — switching away
@@ -122,12 +151,9 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
   }
 
   function handleSmartFilterSelect(id: string) {
+    // The URL-sync effect above picks up this state change and updates
+    // ?smartFilter= on its own — no manual router call needed here anymore.
     setFilters((prev) => ({ ...prev, smartFilter: id }))
-    const params = new URLSearchParams(searchParams.toString())
-    if (id) params.set("smartFilter", id)
-    else params.delete("smartFilter")
-    const query = params.toString()
-    router.replace(query ? `/employees?${query}` : "/employees", { scroll: false })
 
     // Applying a card is meant to feel like jumping straight to the answer —
     // scroll the (already-filtered) results into view instead of leaving HR
@@ -136,6 +162,29 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
       requestAnimationFrame(() => {
         document.getElementById("employee-results")?.scrollIntoView({ behavior: "smooth", block: "start" })
       })
+    }
+  }
+
+  function handleBulkDeleteRequest(ids: string[]) {
+    if (ids.length === 0) return
+    setBulkDeleteError(null)
+    setBulkDeleteIds(ids)
+    setBulkDeleteDialogOpen(true)
+  }
+
+  async function handleBulkDeleteConfirm() {
+    setIsBulkDeleting(true)
+    setBulkDeleteError(null)
+    const result = await deleteEmployeesAction(bulkDeleteIds)
+    setIsBulkDeleting(false)
+
+    if (result.success) {
+      setBulkDeleteDialogOpen(false)
+      setSelectedIds([])
+      toast.success(t("bulkDeleteSuccess", { count: result.deletedCount ?? bulkDeleteIds.length }))
+      router.refresh()
+    } else {
+      setBulkDeleteError(tCommon("genericError"))
     }
   }
 
@@ -269,6 +318,10 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
             <Upload className="size-3.5" strokeWidth={1.75} />
             {t("importEmployees")}
           </Link>
+          <Link href="/employees/salary-import" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+            <Banknote className="size-3.5" strokeWidth={1.75} />
+            {t("importSalaries")}
+          </Link>
           <DropdownMenu>
             <DropdownMenuTrigger render={<Button variant="outline" size="sm" />}>
               <Download className="size-3.5" strokeWidth={1.75} />
@@ -327,6 +380,7 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
                 employee={employee}
                 workStatus={workStatusByEmployeeId[employee.id] ?? "AT_WORK"}
                 activeSmartFilter={activeSmartFilter}
+                returnTo={returnTo}
               />
             ))}
           </div>
@@ -335,7 +389,9 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
             data={filtered}
             workStatusByEmployeeId={workStatusByEmployeeId}
             onSelectionChange={setSelectedIds}
+            onBulkDelete={handleBulkDeleteRequest}
             activeSmartFilter={activeSmartFilter}
+            returnTo={returnTo}
           />
         )}
       </div>
@@ -349,6 +405,22 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
           selectedIds={selectedIds}
         />
       ) : null}
+
+      <ConfirmDeleteDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={(open) => {
+          setBulkDeleteDialogOpen(open)
+          if (!open) {
+            setBulkDeleteIds([])
+            setBulkDeleteError(null)
+          }
+        }}
+        title={t("bulkDeleteConfirmTitle")}
+        description={t("bulkDeleteConfirmDescription", { count: bulkDeleteIds.length })}
+        onConfirm={handleBulkDeleteConfirm}
+        isDeleting={isBulkDeleting}
+        blockedReason={bulkDeleteError}
+      />
     </div>
   )
 }

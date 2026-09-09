@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import { prisma, type PrismaClientOrTransaction } from "@/lib/prisma"
 import type { LeaveRequestModel } from "@/generated/prisma/models"
 import type { LeaveRequestLifecycleStatus, LeaveUnit } from "@/generated/prisma/enums"
 
@@ -38,6 +38,28 @@ export function findAllLeaveRequests(): Promise<LeaveRequestModel[]> {
 
 export function findLeaveRequestById(id: string): Promise<LeaveRequestModel | null> {
   return prisma.leaveRequest.findUnique({ where: { id } })
+}
+
+/** Used by the Employee bulk-delete cascade to find which requests need
+ * their own dependents (LeaveApproval rows, attached Documents) cleaned up
+ * before the requests themselves — and the employees — can go. */
+export function findLeaveRequestsByEmployees(
+  employeeIds: string[],
+  client: PrismaClientOrTransaction = prisma
+): Promise<LeaveRequestModel[]> {
+  return client.leaveRequest.findMany({ where: { employeeId: { in: employeeIds } } })
+}
+
+/** Permanent removal for the same reason as employee-repository.ts's
+ * deleteEmployees: employeeId here is a plain string, not a live FK, so
+ * deleting the employee alone would leave these orphaned rather than
+ * blocked. Callers must delete LeaveApproval rows referencing these
+ * requests first (see leave-approval-repository.ts). */
+export function deleteLeaveRequestsByEmployees(
+  employeeIds: string[],
+  client: PrismaClientOrTransaction = prisma
+): Promise<{ count: number }> {
+  return client.leaveRequest.deleteMany({ where: { employeeId: { in: employeeIds } } })
 }
 
 export interface PendingRequestedUnitsFilter {

@@ -443,12 +443,16 @@
       "exportPdf": "Export PDF",
       "print": "Print",
       "importEmployees": "Import Employees",
+      "importSalaries": "Import Salaries",
       "addEmployee": "Add Employee",
       "cardView": "Card View",
       "listView": "List View",
       "resultsCount": "{count, plural, =0 {No employees} =1 {1 employee} other {# employees}}",
       "emptyTitle": "No employees found",
-      "emptyDescription": "Try adjusting your search or filters."
+      "emptyDescription": "Try adjusting your search or filters.",
+      "bulkDeleteConfirmTitle": "Delete employees",
+      "bulkDeleteConfirmDescription": "Are you sure you want to permanently delete {count} selected employees from the system? This action cannot be undone.",
+      "bulkDeleteSuccess": "{count} employees deleted successfully."
     },
     "smartFilters": {
       "sectionTitle": "HR Alerts",
@@ -588,7 +592,9 @@
         "completedTrainings": "Completed Trainings",
         "openTasks": "Open Tasks",
         "contact": "Contact",
-        "noCompany": "No company assigned"
+        "noCompany": "No company assigned",
+        "organizationHierarchy": "Organizational Hierarchy",
+        "currentEmployeeBadge": "Current employee"
       },
       "employment": {
         "employeeNumber": "Employee Number",
@@ -1165,6 +1171,54 @@
           "skipped": "Skipped",
           "missing": "Missing"
         }
+      }
+    },
+    "salaryImport": {
+      "title": "Bulk Import Salaries",
+      "description": "Add or update existing employees' salaries by FIN from an Excel file.",
+      "steps": {
+        "upload": "File",
+        "preview": "Preview",
+        "result": "Result"
+      },
+      "upload": {
+        "dropzoneLabel": "Drop your Excel file here or click to select",
+        "dropzoneHint": ".xlsx or .csv — FIN and Salary columns are required",
+        "downloadTemplate": "Download Template"
+      },
+      "errors": {
+        "emptyFile": "The file is empty or couldn't be read.",
+        "columnsNotDetected": "FIN and Salary columns weren't found. Check your column headers (e.g. \"FIN\", \"Salary\").",
+        "parseFailed": "Something went wrong reading the file. Check its format and try again."
+      },
+      "columnFin": "FIN",
+      "columnEmployee": "Employee",
+      "columnCurrentSalary": "Current salary",
+      "columnNewSalary": "New salary",
+      "columnStatus": "Status",
+      "preview": {
+        "loading": "Matching against employees...",
+        "totalRows": "Total rows",
+        "matched": "Matched employees",
+        "notFound": "FIN not found",
+        "errors": "Invalid rows",
+        "filterAll": "All ({count})",
+        "filterNotFound": "Not found ({count})",
+        "filterErrors": "Errors ({count})",
+        "emptyTitle": "No rows found",
+        "emptyDescription": "No rows match the selected filter.",
+        "pageIndicator": "Page {current} of {total}",
+        "startOver": "Start Over",
+        "confirmButton": "Import Salaries"
+      },
+      "resultToastTitle": "Import complete",
+      "resultToastDescription": "{count} employees' salaries were updated successfully.",
+      "result": {
+        "updated": "{count, plural, =0 {No employee salaries were updated.} =1 {1 employee's salary was updated successfully.} other {# employees' salaries were updated successfully.}}",
+        "notFound": "{count, plural, =1 {1 employee wasn't found.} other {# employees weren't found.}}",
+        "errors": "{count, plural, =1 {1 row had an error.} other {# rows had errors.}}",
+        "downloadErrors": "Export Failed Rows",
+        "importAnother": "Import Another File"
       }
     },
     "export": {

@@ -17,9 +17,14 @@ import { AssetsTab } from "@/components/employees/profile/assets-tab"
 import { NotesTab } from "@/components/employees/profile/notes-tab"
 import { AuditLogTab } from "@/components/employees/profile/audit-log-tab"
 import type { EmployeeProfile } from "@/types/employee-profile"
+import type { OrganizationTreeNode } from "@/types/organization"
 
 interface EmployeeProfileTabsProps {
   profile: EmployeeProfile
+  /** Root-to-employee reporting chain (see buildManagerChain) — fetched
+   * once, server-side, in page.tsx and only ever consumed by OverviewTab's
+   * Organizational Hierarchy card. */
+  managerChain: OrganizationTreeNode[]
 }
 
 const tabKeys = [
@@ -42,7 +47,7 @@ function isTabKey(value: string | null): value is TabKey {
   return tabKeys.includes(value as TabKey)
 }
 
-export function EmployeeProfileTabs({ profile }: EmployeeProfileTabsProps) {
+export function EmployeeProfileTabs({ profile, managerChain }: EmployeeProfileTabsProps) {
   const t = useTranslations("Employees.profile.tabs")
   const searchParams = useSearchParams()
   const requestedTab = searchParams.get("tab")
@@ -71,7 +76,7 @@ export function EmployeeProfileTabs({ profile }: EmployeeProfileTabsProps) {
       </div>
 
       <TabsContent value="overview">
-        <OverviewTab profile={profile} />
+        <OverviewTab profile={profile} managerChain={managerChain} />
       </TabsContent>
       <TabsContent value="employment">
         <EmploymentTab profile={profile} />

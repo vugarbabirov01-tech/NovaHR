@@ -64,6 +64,29 @@ export function validateWizardStep(
 
 export const WIZARD_STEP_COUNT = 6
 
+/**
+ * Edit's own, deliberately narrower gate — validateAllWizardSteps (Create's
+ * full required-field sweep) would re-flag things Edit never asked the user
+ * to touch: plenty of real imported employees still have baseSalary === 0
+ * (no payroll set up yet), a legitimate state that must stay editable for
+ * an unrelated change like fixing a phone number. Only the fields whose
+ * absence would make the record itself unusable/unidentifiable are checked
+ * here — firstName/lastName so the record still has a name, finCode
+ * because it's this app's whole primary-identifier scheme (see
+ * employee-repository.ts). Server-side duplicate-FIN/duplicate-employee-
+ * number checks (employees/actions.ts) are the real backstop either way.
+ */
+export function validateEditEssentials(
+  data: EmployeeWizardData,
+  messages: WizardValidationMessages
+): WizardValidationErrors {
+  const errors: WizardValidationErrors = {}
+  if (!data.firstName.trim()) errors.firstName = messages.required
+  if (!data.lastName.trim()) errors.lastName = messages.required
+  if (!data.finCode.trim()) errors.finCode = messages.required
+  return errors
+}
+
 export function validateAllWizardSteps(
   data: EmployeeWizardData,
   messages: WizardValidationMessages

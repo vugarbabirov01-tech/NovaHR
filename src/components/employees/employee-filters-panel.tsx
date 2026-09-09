@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useTranslations } from "next-intl"
 import { ListFilter, X } from "lucide-react"
 
@@ -59,6 +59,12 @@ export function EmployeeFiltersPanel({
 }: EmployeeFiltersPanelProps) {
   const t = useTranslations("Employees.list")
   const tType = useTranslations("EmploymentType")
+  // The "Advanced Filters" popover's own open state — deliberately separate
+  // from each <Select>'s internal dropdown-open state below. A Select's
+  // onValueChange only fires once an option is actually picked (browsing
+  // its list never fires it), so closing the popover from inside `set()`
+  // can never trigger while a dropdown is merely open.
+  const [open, setOpen] = useState(false)
 
   const counts = useMemo(
     () => ({
@@ -98,6 +104,7 @@ export function EmployeeFiltersPanel({
 
   function set<K extends keyof EmployeeFilters>(key: K, value: string | null) {
     onChange({ ...filters, [key]: value ?? ALL_VALUE })
+    setOpen(false)
   }
 
   function clear() {
@@ -107,10 +114,11 @@ export function EmployeeFiltersPanel({
       employmentStatus: filters.employmentStatus,
       smartFilter: filters.smartFilter,
     })
+    setOpen(false)
   }
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
           <Button variant="outline" size="sm">

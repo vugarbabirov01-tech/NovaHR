@@ -16,10 +16,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { InfoField } from "@/components/common/info-field"
 import { Timeline, type TimelineEntry } from "@/components/common/timeline"
+import { OrganizationHierarchyCard } from "@/components/employees/profile/organization-hierarchy-card"
 import type { EmployeeProfile, EmploymentHistoryEventType } from "@/types/employee-profile"
+import type { OrganizationTreeNode } from "@/types/organization"
 
 interface OverviewTabProps {
   profile: EmployeeProfile
+  managerChain: OrganizationTreeNode[]
 }
 
 const historyIcons: Record<EmploymentHistoryEventType, typeof Briefcase> = {
@@ -33,7 +36,7 @@ const historyIcons: Record<EmploymentHistoryEventType, typeof Briefcase> = {
   rehire: Briefcase,
 }
 
-export function OverviewTab({ profile }: OverviewTabProps) {
+export function OverviewTab({ profile, managerChain }: OverviewTabProps) {
   const t = useTranslations("Employees.profile.overview")
   const tPersonal = useTranslations("Employees.profile.personal")
   const tEmployment = useTranslations("Employees.profile.employment")
@@ -84,60 +87,64 @@ export function OverviewTab({ profile }: OverviewTabProps) {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("contact")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="flex flex-col gap-4">
-              <InfoField
-                label={t("currentPosition")}
-                value={
-                  <span className="flex items-center gap-1.5">
-                    <Briefcase className="size-3.5 text-muted-foreground" />
-                    {profile.employment.position}
-                  </span>
-                }
-              />
-              <InfoField
-                label={tEmployment("company")}
-                value={
-                  <span className="flex items-center gap-1.5">
-                    <Building2 className="size-3.5 text-muted-foreground" />
-                    {profile.employment.company || t("noCompany")}
-                  </span>
-                }
-              />
-              <InfoField
-                label={t("manager")}
-                value={
-                  <span className="flex items-center gap-1.5">
-                    <User className="size-3.5 text-muted-foreground" />
-                    {profile.employment.managerName ?? "—"}
-                  </span>
-                }
-              />
-              <InfoField
-                label={tPersonal("email")}
-                value={
-                  <span className="flex items-center gap-1.5">
-                    <Mail className="size-3.5 text-muted-foreground" />
-                    {profile.personal.email}
-                  </span>
-                }
-              />
-              <InfoField
-                label={tPersonal("phone")}
-                value={
-                  <span className="flex items-center gap-1.5">
-                    <Phone className="size-3.5 text-muted-foreground" />
-                    {profile.personal.phone}
-                  </span>
-                }
-              />
-            </dl>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("contact")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="flex flex-col gap-4">
+                <InfoField
+                  label={t("currentPosition")}
+                  value={
+                    <span className="flex items-center gap-1.5">
+                      <Briefcase className="size-3.5 text-muted-foreground" />
+                      {profile.employment.position}
+                    </span>
+                  }
+                />
+                <InfoField
+                  label={tEmployment("company")}
+                  value={
+                    <span className="flex items-center gap-1.5">
+                      <Building2 className="size-3.5 text-muted-foreground" />
+                      {profile.employment.company || t("noCompany")}
+                    </span>
+                  }
+                />
+                <InfoField
+                  label={t("manager")}
+                  value={
+                    <span className="flex items-center gap-1.5">
+                      <User className="size-3.5 text-muted-foreground" />
+                      {profile.employment.managerName ?? "—"}
+                    </span>
+                  }
+                />
+                <InfoField
+                  label={tPersonal("email")}
+                  value={
+                    <span className="flex items-center gap-1.5">
+                      <Mail className="size-3.5 text-muted-foreground" />
+                      {profile.personal.email}
+                    </span>
+                  }
+                />
+                <InfoField
+                  label={tPersonal("phone")}
+                  value={
+                    <span className="flex items-center gap-1.5">
+                      <Phone className="size-3.5 text-muted-foreground" />
+                      {profile.personal.phone}
+                    </span>
+                  }
+                />
+              </dl>
+            </CardContent>
+          </Card>
+
+          <OrganizationHierarchyCard chain={managerChain} currentEmployeeId={profile.id} />
+        </div>
       </div>
     </div>
   )

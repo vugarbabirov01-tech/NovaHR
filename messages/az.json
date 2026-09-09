@@ -443,12 +443,16 @@
       "exportPdf": "PDF-ə İxrac Et",
       "print": "Çap Et",
       "importEmployees": "Əməkdaşları İdxal Et",
+      "importSalaries": "Əmək Haqqını İdxal Et",
       "addEmployee": "Əməkdaş Əlavə Et",
       "cardView": "Kart Görünüşü",
       "listView": "Siyahı Görünüşü",
       "resultsCount": "{count, plural, =0 {Əməkdaş yoxdur} =1 {1 əməkdaş} other {# əməkdaş}}",
       "emptyTitle": "Əməkdaş tapılmadı",
-      "emptyDescription": "Axtarış və ya filtrləri dəyişməyi cəhd edin."
+      "emptyDescription": "Axtarış və ya filtrləri dəyişməyi cəhd edin.",
+      "bulkDeleteConfirmTitle": "Əməkdaşları silmək",
+      "bulkDeleteConfirmDescription": "Seçilmiş {count} əməkdaşı sistemdən tam silmək istədiyinizə əminsiniz? Bu əməliyyat geri qaytarıla bilməz.",
+      "bulkDeleteSuccess": "{count} əməkdaş uğurla silindi."
     },
     "smartFilters": {
       "sectionTitle": "HR Xəbərdarlıqları",
@@ -588,7 +592,9 @@
         "completedTrainings": "Tamamlanmış Təlimlər",
         "openTasks": "Açıq Tapşırıqlar",
         "contact": "Əlaqə",
-        "noCompany": "Şirkət təyin edilməyib"
+        "noCompany": "Şirkət təyin edilməyib",
+        "organizationHierarchy": "Təşkilati İyerarxiya",
+        "currentEmployeeBadge": "Cari əməkdaş"
       },
       "employment": {
         "employeeNumber": "Əməkdaş Nömrəsi",
@@ -1165,6 +1171,54 @@
           "skipped": "Keçirildi",
           "missing": "Yoxdur"
         }
+      }
+    },
+    "salaryImport": {
+      "title": "Əmək Haqqını Toplu İdxal Et",
+      "description": "Excel faylı ilə mövcud əməkdaşların əmək haqqını FİN üzrə əlavə edin və ya yeniləyin.",
+      "steps": {
+        "upload": "Fayl",
+        "preview": "Önbaxış",
+        "result": "Nəticə"
+      },
+      "upload": {
+        "dropzoneLabel": "Excel faylını bura buraxın və ya seçin",
+        "dropzoneHint": ".xlsx və ya .csv — FİN və Əmək haqqı sütunları tələb olunur",
+        "downloadTemplate": "Şablonu Yüklə"
+      },
+      "errors": {
+        "emptyFile": "Fayl boşdur və ya oxuna bilmədi.",
+        "columnsNotDetected": "FİN və Əmək haqqı sütunları tapılmadı. Sütun başlıqlarını yoxlayın (məs. \"FİN\", \"Əmək haqqı\").",
+        "parseFailed": "Fayl oxunarkən xəta baş verdi. Faylın formatını yoxlayıb yenidən cəhd edin."
+      },
+      "columnFin": "FİN",
+      "columnEmployee": "Əməkdaş",
+      "columnCurrentSalary": "Cari maaş",
+      "columnNewSalary": "Yeni maaş",
+      "columnStatus": "Status",
+      "preview": {
+        "loading": "Əməkdaşlarla uyğunlaşdırılır...",
+        "totalRows": "Ümumi sətir",
+        "matched": "Uyğun əməkdaş",
+        "notFound": "Tapılmayan FİN",
+        "errors": "Xətalı məlumat",
+        "filterAll": "Hamısı ({count})",
+        "filterNotFound": "Tapılmayan ({count})",
+        "filterErrors": "Xətalı ({count})",
+        "emptyTitle": "Sətir tapılmadı",
+        "emptyDescription": "Seçilmiş filterə uyğun sətir yoxdur.",
+        "pageIndicator": "Səhifə {current} / {total}",
+        "startOver": "Yenidən Başla",
+        "confirmButton": "Əmək Haqlarını İdxal Et"
+      },
+      "resultToastTitle": "İdxal tamamlandı",
+      "resultToastDescription": "{count} əməkdaşın əmək haqqı uğurla yeniləndi.",
+      "result": {
+        "updated": "{count, plural, =0 {Heç bir əməkdaşın əmək haqqı yenilənmədi.} =1 {1 əməkdaşın əmək haqqı uğurla yeniləndi.} other {# əməkdaşın əmək haqqı uğurla yeniləndi.}}",
+        "notFound": "{count, plural, =1 {1 əməkdaş tapılmadı.} other {# əməkdaş tapılmadı.}}",
+        "errors": "{count, plural, =1 {1 sətirdə xəta var.} other {# sətirdə xəta var.}}",
+        "downloadErrors": "Xətalı Sətirləri İxrac Et",
+        "importAnother": "Başqa Fayl İdxal Et"
       }
     },
     "export": {

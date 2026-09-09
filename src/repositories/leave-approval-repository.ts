@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import { prisma, type PrismaClientOrTransaction } from "@/lib/prisma"
 import type { LeaveApprovalModel } from "@/generated/prisma/models"
 import type { LeaveApprovalDecision } from "@/generated/prisma/enums"
 
@@ -24,6 +24,16 @@ export function findLeaveApprovalsByRequest(leaveRequestId: string): Promise<Lea
     where: { leaveRequestId },
     orderBy: { sequence: "asc" },
   })
+}
+
+/** Part of the Employee bulk-delete cascade — must run before the
+ * LeaveRequest rows themselves are deleted (this table's own FK to
+ * LeaveRequest would otherwise block that). */
+export function deleteLeaveApprovalsByRequests(
+  leaveRequestIds: string[],
+  client: PrismaClientOrTransaction = prisma
+): Promise<{ count: number }> {
+  return client.leaveApproval.deleteMany({ where: { leaveRequestId: { in: leaveRequestIds } } })
 }
 
 export function createLeaveApproval(input: LeaveApprovalInput): Promise<LeaveApprovalModel> {

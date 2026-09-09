@@ -49,6 +49,11 @@ interface EmployeeQuickActionsProps {
   employee: EmployeeQuickActionsTarget
   align?: "start" | "end"
   className?: string
+  /** Current Employees list URL (filters/search/status/view all folded in)
+   * — threaded onto "View Profile" only, so the Profile page's own "Back
+   * to Employees" can return here instead of a bare, unfiltered /employees.
+   * See employee-list-client.tsx's buildEmployeesReturnUrl. */
+  returnTo?: string
 }
 
 interface QuickAction {
@@ -63,6 +68,7 @@ export function EmployeeQuickActions({
   employee,
   align = "end",
   className,
+  returnTo,
 }: EmployeeQuickActionsProps) {
   const t = useTranslations("Employees.quickActions")
   const isMobile = useMediaQuery("(max-width: 767px)")
@@ -73,7 +79,9 @@ export function EmployeeQuickActions({
       key: "viewProfile",
       icon: Eye,
       label: t("viewProfile"),
-      href: `/employees/${employee.id}`,
+      href: returnTo
+        ? `/employees/${employee.id}?returnTo=${encodeURIComponent(returnTo)}`
+        : `/employees/${employee.id}`,
     },
     {
       key: "editEmployee",

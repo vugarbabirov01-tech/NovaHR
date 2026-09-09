@@ -130,15 +130,39 @@ export const WORK_LOCATION_TYPE_VALUE_LABELS: Record<WorkLocationType, string> =
 const EXTRA_ALIASES: Partial<Record<ImportableField, string[]>> = {
   gender: ["sex", "m", "f", "kişi", "qadın"],
   dateOfBirth: ["dob"],
+  // The canonical label below is the plain-ASCII "FIN" Export has always
+  // written — kept as-is so existing exported files keep round-tripping.
+  // "FİN", with the correct Azerbaijani dotted İ, is the spelling real HR
+  // spreadsheets actually use (including a salary-only sheet, which never
+  // goes through Export at all) — normalize()'s locale-aware case-folding
+  // means it can't be folded to the same string as "FIN" (İ and I fold
+  // differently under az/tr rules), so it needs its own alias entry rather
+  // than "just working" from the canonical label alone.
+  finCode: ["FİN"],
   nationalId: ["id card", "seriya"],
   employeeNumber: ["emp no", "empno"],
   hireDate: ["start date"],
   passportNumber: ["passport"],
   position: ["title", "job title"],
+  // "Əmək haqqı" is the wording HR actually uses for a salary-only import
+  // sheet (as opposed to "Maaş", the full Employee Import template's own
+  // canonical header) — recognized here so both templates map to the same
+  // field without Salary Import needing its own alias table.
+  salary: ["əmək haqqı", "emek haqqi", "amount"],
+  salaryStartDate: ["qüvvəyə minmə tarixi", "quvveye minme tarixi", "effective date"],
 }
 
+/**
+ * Plain .toLowerCase() mis-cases the Azerbaijani dotted capital İ — it
+ * lowercases to "i" + a combining dot (2 codepoints) instead of plain "i",
+ * so a real-world header spelled "FİN" (the linguistically correct
+ * Azerbaijani spelling) would silently fail to match the "FIN" canonical
+ * label. toLocaleLowerCase("az") applies Azerbaijani/Turkish case-folding
+ * rules instead, where İ → i and I → ı case correctly — every plain-ASCII
+ * header still normalizes identically either way.
+ */
 function normalize(text: string): string {
-  return text.trim().toLowerCase().replace(/[\s_-]+/g, " ")
+  return text.trim().toLocaleLowerCase("az").replace(/[\s_-]+/g, " ")
 }
 
 /** The canonical header text for a field — what Export writes and what Import's UI shows as the "detected" label. */

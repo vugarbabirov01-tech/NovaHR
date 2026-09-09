@@ -42,7 +42,6 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   Select,
   SelectContent,
@@ -63,7 +62,8 @@ import { EmploymentStatusBadge } from "@/components/employees/employment-status-
 import { WorkStatusBadge } from "@/components/employees/work-status-badge"
 import { SmartFilterBadge } from "@/components/employees/smart-filter-badge"
 import { EmployeeQuickActions } from "@/components/employees/EmployeeQuickActions"
-import { employmentTypeMessageKeys, getFullName, getInitials } from "@/lib/employees"
+import { EmployeeAvatarPreview } from "@/components/employees/employee-avatar-preview"
+import { employmentTypeMessageKeys, getFullName } from "@/lib/employees"
 import type { SmartFilterDefinition } from "@/lib/employee-smart-filters"
 import type { WorkStatus } from "@/lib/employee-work-status"
 import type { EmployeeGroupBy } from "@/types/employee-filters"
@@ -75,9 +75,18 @@ interface EmployeeListTableProps {
    * employees/page.tsx) — this component never computes it itself. */
   workStatusByEmployeeId: Record<string, WorkStatus>
   onSelectionChange?: (ids: string[]) => void
+  /** Invoked with the currently-selected employee ids when "Seçilənləri
+   * Sil" is clicked — the caller owns the confirmation dialog and the
+   * actual delete, this component only reports the selection and stays
+   * unaware of what happens after. */
+  onBulkDelete?: (ids: string[]) => void
   /** The currently-active HR Action Center card, if any — shown as a
    * temporary badge above each row's name while it's active. */
   activeSmartFilter?: SmartFilterDefinition | null
+  /** Current Employees list URL (filters/search/status all folded in) —
+   * threaded onto every row's profile navigation so its "Back to
+   * Employees" returns here instead of resetting to a bare /employees. */
+  returnTo?: string
 }
 
 const groupColumnIds: Record<Exclude<EmployeeGroupBy, "none">, string> = {
@@ -90,7 +99,9 @@ export function EmployeeListTable({
   data,
   workStatusByEmployeeId,
   onSelectionChange,
+  onBulkDelete,
   activeSmartFilter,
+  returnTo,
 }: EmployeeListTableProps) {
   const t = useTranslations("Employees.table")
   const tType = useTranslations("EmploymentType")
@@ -168,11 +179,11 @@ export function EmployeeListTable({
         enableGrouping: false,
         cell: ({ row }) => (
           <div className="flex items-center gap-3">
-            <Avatar size="sm">
-              <AvatarFallback className="bg-accent text-[11px] text-accent-foreground">
-                {getInitials(row.original.firstName, row.original.lastName)}
-              </AvatarFallback>
-            </Avatar>
+            <EmployeeAvatarPreview
+              employee={row.original}
+              avatarSize="sm"
+              fallbackClassName="bg-accent text-[11px] text-accent-foreground"
+            />
             <div className="flex flex-col gap-0.5">
               {activeSmartFilter ? <SmartFilterBadge filter={activeSmartFilter} /> : null}
               <span className="font-medium text-foreground">{getFullName(row.original)}</span>
@@ -251,12 +262,15 @@ export function EmployeeListTable({
           // this is also how List view gets Terminate Employment (and every
           // other quick action), which its previous 2-item dropdown never had.
           <div onClick={(event) => event.stopPropagation()}>
-            <EmployeeQuickActions employee={{ id: row.original.id, fullName: getFullName(row.original) }} />
+            <EmployeeQuickActions
+              employee={{ id: row.original.id, fullName: getFullName(row.original) }}
+              returnTo={returnTo}
+            />
           </div>
         ),
       },
     ],
-    [t, tType, tCommon, activeSmartFilter, workStatusByEmployeeId]
+    [t, tType, tCommon, activeSmartFilter, workStatusByEmployeeId, returnTo]
   )
 
   const table = useReactTable({
@@ -300,7 +314,8 @@ export function EmployeeListTable({
   }, [data])
 
   const isGrouped = grouping.length > 0
-  const selectedCount = table.getSelectedRowModel().rows.length
+  const selectedRows = table.getSelectedRowModel().rows
+  const selectedCount = selectedRows.length
   const visibleRows = isGrouped ? table.getExpandedRowModel().rows : table.getRowModel().rows
   const columnCount = table.getVisibleFlatColumns().length
 
@@ -331,7 +346,11 @@ export function EmployeeListTable({
                 <UserCog className="size-3.5" strokeWidth={1.75} />
                 {t("bulkChangeStatus")}
               </Button>
-              <Button variant="destructive" size="sm">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => onBulkDelete?.(selectedRows.map((row) => row.original.id))}
+              >
                 <Trash2 className="size-3.5" strokeWidth={1.75} />
                 {t("bulkDelete")}
               </Button>
@@ -431,7 +450,13 @@ export function EmployeeListTable({
                   key={row.id}
                   data-state={row.getIsSelected() ? "selected" : undefined}
                   className="cursor-pointer"
-                  onClick={() => router.push(`/employees/${row.original.id}`)}
+                  onClick={() =>
+                    router.push(
+                      returnTo
+                        ? `/employees/${row.original.id}?returnTo=${encodeURIComponent(returnTo)}`
+                        : `/employees/${row.original.id}`
+                    )
+                  }
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="px-4 py-3">

@@ -6,7 +6,6 @@ import { Mail, Phone } from "lucide-react"
 import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { buttonVariants } from "@/components/ui/button"
 import {
   Tooltip,
@@ -16,7 +15,8 @@ import {
 import { WorkStatusBadge } from "@/components/employees/work-status-badge"
 import { SmartFilterBadge } from "@/components/employees/smart-filter-badge"
 import { EmployeeQuickActions } from "@/components/employees/EmployeeQuickActions"
-import { calculateAgeFromDateOfBirth, getFullName, getInitials } from "@/lib/employees"
+import { EmployeeAvatarPreview } from "@/components/employees/employee-avatar-preview"
+import { calculateAgeFromDateOfBirth, getFullName } from "@/lib/employees"
 import type { SmartFilterDefinition } from "@/lib/employee-smart-filters"
 import type { WorkStatus } from "@/lib/employee-work-status"
 import type { EmployeeListItem } from "@/types/employee-profile"
@@ -30,30 +30,36 @@ interface EmployeeCardProps {
    * temporary badge above the name. Not persisted anywhere; it only reflects
    * why this employee is in the current, already-filtered result set. */
   activeSmartFilter?: SmartFilterDefinition | null
+  /** Current Employees list URL (filters/search/status all folded in) —
+   * threaded onto the profile link so its "Back to Employees" returns here
+   * instead of resetting to a bare /employees. */
+  returnTo?: string
 }
 
-export function EmployeeCard({ employee, workStatus, activeSmartFilter }: EmployeeCardProps) {
+export function EmployeeCard({ employee, workStatus, activeSmartFilter, returnTo }: EmployeeCardProps) {
   const t = useTranslations("Employees.card")
   const tTable = useTranslations("Employees.table")
   const fullName = getFullName(employee)
+  const profileHref = returnTo
+    ? `/employees/${employee.id}?returnTo=${encodeURIComponent(returnTo)}`
+    : `/employees/${employee.id}`
 
   return (
     <Card className="group relative transition-all hover:-translate-y-0.5 hover:shadow-md">
       <div className="absolute top-2 right-2 z-10 print:hidden">
-        <EmployeeQuickActions employee={{ id: employee.id, fullName }} />
+        <EmployeeQuickActions employee={{ id: employee.id, fullName }} returnTo={returnTo} />
       </div>
 
       <CardContent className="flex flex-col gap-3 pt-1">
         <Link
-          href={`/employees/${employee.id}`}
+          href={profileHref}
           className="flex items-center gap-4 pr-8 outline-none"
         >
-          <Avatar className="size-[72px] shrink-0 shadow-sm ring-4 ring-background transition-transform group-hover:scale-[1.03] md:size-[88px] lg:size-[96px]">
-            <AvatarImage src={employee.photoUrl} alt={fullName} />
-            <AvatarFallback className="bg-accent text-xl font-medium text-accent-foreground md:text-2xl">
-              {getInitials(employee.firstName, employee.lastName)}
-            </AvatarFallback>
-          </Avatar>
+          <EmployeeAvatarPreview
+            employee={employee}
+            avatarClassName="size-[72px] shrink-0 shadow-sm ring-4 ring-background transition-transform group-hover:scale-[1.03] md:size-[88px] lg:size-[96px]"
+            fallbackClassName="bg-accent text-xl font-medium text-accent-foreground md:text-2xl"
+          />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             {activeSmartFilter ? <SmartFilterBadge filter={activeSmartFilter} /> : null}
             <span className="truncate text-base font-semibold text-foreground group-hover:text-primary">

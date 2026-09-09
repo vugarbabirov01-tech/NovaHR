@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import { prisma, type PrismaClientOrTransaction } from "@/lib/prisma"
 import type { LeaveLedgerEntryModel } from "@/generated/prisma/models"
 import type { LeaveEntryReferenceType, LeaveEntryType, LeaveUnit } from "@/generated/prisma/enums"
 
@@ -6,9 +6,11 @@ export type { LeaveLedgerEntryModel as LeaveLedgerEntry }
 
 /**
  * Append-only by design — see the schema.prisma header comment. There is no
- * update/delete function in this file, intentionally: a correction is a new
- * reversing entry (entryType: MANUAL_ADJUSTMENT), never an edit, so a
- * balance is always reconstructable by summing every row that ever existed.
+ * general-purpose update/delete function in this file, intentionally: a
+ * correction is a new reversing entry (entryType: MANUAL_ADJUSTMENT), never
+ * an edit, so a balance is always reconstructable by summing every row that
+ * ever existed. deleteLeaveLedgerEntriesByEmployees below is the one
+ * deliberate exception — see its own doc comment.
  */
 export interface LeaveLedgerEntryInput {
   employeeId: string
@@ -123,6 +125,21 @@ export async function sumLeaveLedgerAmountsByEmployeeAndType(filter: {
  * before allowing LEAVE_TAKEN). Safe for Opening Balance / Manual
  * Adjustment recording today because those are raw data entry, not
  * calculation. */
+/**
+ * NOT a correction mechanism — never call this to fix a mistake on an
+ * employee whose record still exists (write a reversing entry instead, per
+ * this file's own append-only rule above). This exists solely for the
+ * Employee bulk-delete cascade: once the employee row itself is gone,
+ * there is no balance left to reconstruct, so their ledger history has
+ * nothing left to be "append-only" in service of.
+ */
+export function deleteLeaveLedgerEntriesByEmployees(
+  employeeIds: string[],
+  client: PrismaClientOrTransaction = prisma
+): Promise<{ count: number }> {
+  return client.leaveLedgerEntry.deleteMany({ where: { employeeId: { in: employeeIds } } })
+}
+
 export function createLeaveLedgerEntry(input: LeaveLedgerEntryInput): Promise<LeaveLedgerEntryModel> {
   return prisma.leaveLedgerEntry.create({
     data: {

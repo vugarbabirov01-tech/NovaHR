@@ -95,3 +95,19 @@ export async function updateEmployee(
     },
   })
 }
+
+/**
+ * Permanent removal — unlike Terminate (which only changes
+ * employment.employmentStatus and leaves the record in place), this drops
+ * the row entirely. No @relation anywhere in schema.prisma points at
+ * Employee (see the model's own doc comment), so nothing here can ever be
+ * blocked by a foreign key — the caller (deleteEmployeesAction) is
+ * responsible for cleaning up the Leave module rows that reference these
+ * ids as plain strings, or they'd be silently orphaned instead.
+ */
+export function deleteEmployees(
+  ids: string[],
+  client: PrismaClientOrTransaction = prisma
+): Promise<{ count: number }> {
+  return client.employee.deleteMany({ where: { id: { in: ids } } })
+}

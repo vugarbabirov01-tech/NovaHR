@@ -2,14 +2,24 @@
 
 import { revalidatePath } from "next/cache"
 
+import { prisma } from "@/lib/prisma"
 import {
   createEmployee,
+  deleteEmployees,
   findAllEmployees,
   findEmployeeById,
   isEmployeeIdTaken,
   isFinTaken,
   updateEmployee,
 } from "@/repositories/employee-repository"
+import { deleteLeaveApprovalsByRequests } from "@/repositories/leave-approval-repository"
+import { deleteLeaveLedgerEntriesByEmployees } from "@/repositories/leave-ledger-repository"
+import {
+  deleteLeaveRequestsByEmployees,
+  findLeaveRequestsByEmployees,
+} from "@/repositories/leave-request-repository"
+import { deleteDocument, getDocumentsForEntity } from "@/lib/documents/document-service"
+import { DocumentEntityType } from "@/lib/documents/document-entity-types"
 import { generateNextEmployeeNumber, isEmployeeNumberTaken } from "@/lib/employees"
 import {
   applyEditableFields,
@@ -179,6 +189,71 @@ export async function updateEmployeeAction(
     revalidatePath("/[locale]/employees/[id]", "page")
 
     return { success: true, id: updatedProfile.id, changedFields }
+  } catch {
+    return { success: false, error: "unknown" }
+  }
+}
+
+function revalidateEmployeeDelete() {
+  // Best-effort cache invalidation — kept out of the write's try/catch (see
+  // departments/actions.ts's revalidateDepartments for the same reasoning),
+  // so a revalidation hiccup can never get reported back as a failed delete
+  // even though the rows are already gone.
+  try {
+    revalidatePath("/[locale]/employees", "page")
+    revalidatePath("/[locale]/employees/[id]", "page")
+    revalidatePath("/[locale]/dashboard", "page")
+  } catch {
+    // Ignored — the delete already succeeded regardless of revalidation.
+  }
+}
+
+export interface DeleteEmployeesResult {
+  success: boolean
+  deletedCount?: number
+  error?: "not-found" | "unknown"
+}
+
+/**
+ * Permanent deletion — distinct from Terminate (src/lib/termination/
+ * actions.ts), which only sets employment.employmentStatus and keeps the
+ * record. No @relation anywhere in schema.prisma points at Employee, so a
+ * bare `employee.deleteMany` could never be blocked by a foreign key — but
+ * Leave module rows (LeaveRequest/LeaveApproval/LeaveLedgerEntry) reference
+ * employeeId as a plain string, so deleting the employee alone would leave
+ * them silently orphaned. This walks that cascade explicitly: any Documents
+ * attached to the employee's leave requests first (deleteDocument also
+ * removes the stored file bytes, not just the DB row), then everything else
+ * in one atomic transaction.
+ */
+export async function deleteEmployeesAction(ids: string[]): Promise<DeleteEmployeesResult> {
+  const uniqueIds = Array.from(new Set(ids.filter(Boolean)))
+  if (uniqueIds.length === 0) return { success: false, error: "not-found" }
+
+  try {
+    const leaveRequests = await findLeaveRequestsByEmployees(uniqueIds)
+    const leaveRequestIds = leaveRequests.map((request) => request.id)
+
+    for (const leaveRequestId of leaveRequestIds) {
+      const documents = await getDocumentsForEntity(DocumentEntityType.LeaveRequest, leaveRequestId)
+      for (const document of documents) {
+        await deleteDocument(document.id)
+      }
+    }
+
+    const deletedCount = await prisma.$transaction(async (tx) => {
+      if (leaveRequestIds.length > 0) {
+        await deleteLeaveApprovalsByRequests(leaveRequestIds, tx)
+      }
+      await deleteLeaveLedgerEntriesByEmployees(uniqueIds, tx)
+      await deleteLeaveRequestsByEmployees(uniqueIds, tx)
+      const result = await deleteEmployees(uniqueIds, tx)
+      return result.count
+    })
+
+    revalidateEmployeeDelete()
+
+    return { success: true, deletedCount }
   } catch {
     return { success: false, error: "unknown" }
   }

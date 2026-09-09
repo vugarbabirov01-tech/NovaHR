@@ -5,13 +5,14 @@ import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { Link } from "@/i18n/navigation"
 import { PageTitle } from "@/components/common/page-title"
-import { EmployeeWizard } from "@/components/employees/wizard/employee-wizard"
+import { EmployeeEditForm } from "@/components/employees/edit/employee-edit-form"
 import { findEmployeeById } from "@/repositories/employee-repository"
 import { getWizardMasterData } from "@/lib/wizard-master-data"
 import { includeEmployeesCurrentArchivedAssignments, profileToWizardData } from "@/lib/employee-wizard-mapper"
 
 type Props = {
   params: Promise<{ locale: string; id: string }>
+  searchParams: Promise<{ returnTo?: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -23,16 +24,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /**
- * Edit, as its own full page — replaces the old Sheet-hosted EmployeeWizardModal
- * (a narrow side drawer over the still-visible list). Reuses the exact same
- * EmployeeWizard component /employees/new already runs full-page; this route
- * only fetches the profile + master data server-side (matching Create's own
- * page) and hosts the wizard in a wide, centered container instead of a
- * drawer. No wizard business logic (steps, validation, save) lives here.
+ * Edit, as its own full page and its own flow — EmployeeEditForm, not the
+ * multi-step EmployeeWizard /employees/new still uses unchanged. Add is a
+ * multi-step onboarding sequence on purpose; Edit is meant for a quick,
+ * single change (fix a phone number, swap a photo) and showing every
+ * section at once, with one Save at the bottom, is what makes that fast.
+ * This route only fetches the profile + master data server-side (same
+ * shape Create's own page already fetches) — no edit business logic
+ * (fields, validation, save) lives here.
  */
-export default async function EditEmployeePage({ params }: Props) {
+export default async function EditEmployeePage({ params, searchParams }: Props) {
   const { locale, id } = await params
+  const { returnTo } = await searchParams
   setRequestLocale(locale)
+
+  // Same validation as employees/[id]/page.tsx's own backHref — only ever
+  // this app's own Employees list, never an arbitrary URL a crafted link
+  // could supply (an open-redirect vector otherwise).
+  const backHref = returnTo && returnTo.startsWith("/employees") ? returnTo : "/employees"
 
   const [profileResult, activeMasterData] = await Promise.all([findEmployeeById(id), getWizardMasterData()])
   if (!profileResult) notFound()
@@ -70,7 +79,7 @@ export default async function EditEmployeePage({ params }: Props) {
   return (
     <div className="flex flex-col gap-6">
       <Link
-        href="/employees"
+        href={backHref}
         className="flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-3.5" strokeWidth={1.75} />
@@ -78,12 +87,12 @@ export default async function EditEmployeePage({ params }: Props) {
       </Link>
       <PageTitle title={t("editTitle")} description={t("editDescription")} />
       <div className="mx-auto w-full max-w-[1400px]">
-        <EmployeeWizard
+        <EmployeeEditForm
           key={id}
-          mode="edit"
           employeeId={id}
           initialData={profileToWizardData(profile, masterData)}
           masterData={masterData}
+          returnTo={backHref}
         />
       </div>
     </div>

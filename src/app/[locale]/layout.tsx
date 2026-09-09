@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { routing, type AppLocale } from "@/i18n/routing";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/toast";
 import "../globals.css";
 
 const fontSans = Inter({
@@ -57,7 +58,10 @@ export default async function RootLayout({ children, params }: Props) {
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <NextIntlClientProvider>
-          <TooltipProvider delay={200}>{children}</TooltipProvider>
+          <TooltipProvider delay={200}>
+            {children}
+            <Toaster />
+          </TooltipProvider>
         </NextIntlClientProvider>
       </body>
     </html>

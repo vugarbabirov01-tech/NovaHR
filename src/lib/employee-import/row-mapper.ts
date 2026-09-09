@@ -122,7 +122,7 @@ function mapEnum<T extends string>(raw: string, table: Record<string, T>): T | u
  * order. Excel's own date cells arrive as native Date objects (handled in
  * cellToString) and never reach the string branch below.
  */
-function parseImportDate(raw: string): string | null {
+export function parseImportDate(raw: string): string | null {
   const value = raw.trim()
   if (!value) return null
 
@@ -152,7 +152,7 @@ function parseImportDate(raw: string): string | null {
  * for anything that still doesn't parse as a finite number — the caller
  * treats that as SALARY_INVALID rather than silently coercing to 0.
  */
-function parseSalaryAmount(raw: string): number | null {
+export function parseSalaryAmount(raw: string): number | null {
   let value = raw.trim().replace(/[^\d\s.,-]/g, "").replace(/\s+/g, "")
   if (!value) return null
 

@@ -10,9 +10,12 @@ import { findAllEmployees, findEmployeeById } from "@/repositories/employee-repo
 import { getFullName } from "@/lib/employees"
 import { resolveWorkStatus } from "@/lib/employee-work-status"
 import { loadWorkStatusContext } from "@/lib/employee-work-status-loader"
+import { buildManagerChain } from "@/lib/organization/build-tree"
+import { toListItem } from "@/types/employee-profile"
 
 type Props = {
   params: Promise<{ locale: string; id: string }>
+  searchParams: Promise<{ returnTo?: string }>
 }
 
 export async function generateStaticParams() {
@@ -30,8 +33,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: `${getFullName(employee.personal)} | ${common("appName")}` }
 }
 
-export default async function EmployeeProfilePage({ params }: Props) {
+export default async function EmployeeProfilePage({ params, searchParams }: Props) {
   const { locale, id } = await params
+  const { returnTo } = await searchParams
   setRequestLocale(locale)
 
   const employee = await findEmployeeById(id)
@@ -40,9 +44,17 @@ export default async function EmployeeProfilePage({ params }: Props) {
   const workStatusContext = await loadWorkStatusContext()
   const workStatus = resolveWorkStatus(employee.id, workStatusContext)
 
+  // Same real employee.managerId chain the Organization Chart page builds
+  // from — one extra findAllEmployees() call (not per-ancestor), reused
+  // here purely to trace this one employee's reporting line upward.
+  const allEmployees = (await findAllEmployees()).map(toListItem)
+  const managerChain = buildManagerChain(id, allEmployees)
+
+  const backHref = returnTo && returnTo.startsWith("/employees") ? returnTo : "/employees"
+
   return (
     <div className="flex flex-col gap-6">
-      <ProfileHeader profile={employee} workStatus={workStatus} />
+      <ProfileHeader profile={employee} workStatus={workStatus} backHref={backHref} />
       <Suspense
         fallback={
           <div className="flex items-center justify-center py-16">
@@ -50,7 +62,7 @@ export default async function EmployeeProfilePage({ params }: Props) {
           </div>
         }
       >
-        <EmployeeProfileTabs profile={employee} />
+        <EmployeeProfileTabs profile={employee} managerChain={managerChain} />
       </Suspense>
     </div>
   )
