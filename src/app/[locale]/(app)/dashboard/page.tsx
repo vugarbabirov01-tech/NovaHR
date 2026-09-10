@@ -3,7 +3,6 @@ import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { PageTitle } from "@/components/common/page-title"
 import { KpiSection } from "@/components/dashboard/kpi-section"
-import { LeaveSummarySection } from "@/components/dashboard/leave-summary-section"
 import { HeadcountTrendChart } from "@/components/dashboard/headcount-trend-chart"
 import { DepartmentChart } from "@/components/dashboard/department-chart"
 import { RecentEmployees } from "@/components/dashboard/recent-employees"
@@ -14,6 +13,7 @@ import { findAllEmployees } from "@/repositories/employee-repository"
 import { toListItem } from "@/types/employee-profile"
 import { resolveWorkStatus, type WorkStatus } from "@/lib/employee-work-status"
 import { loadWorkStatusContext } from "@/lib/employee-work-status-loader"
+import { getDepartmentHeadcounts, getHeadcountTrend } from "@/lib/dashboard-service"
 
 
 type Props = {
@@ -48,19 +48,22 @@ export default async function DashboardPage({ params }: Props) {
     recentEmployeesWorkStatus[employee.id] = resolveWorkStatus(employee.id, workStatusContext)
   }
 
+  const [departmentHeadcounts, headcountTrend] = await Promise.all([
+    getDepartmentHeadcounts(),
+    getHeadcountTrend(),
+  ])
+
   return (
     <div className="flex flex-col gap-6">
       <PageTitle title={t("title")} description={t("description")} />
 
       <KpiSection />
 
-      <LeaveSummarySection />
-
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="xl:col-span-2">
-          <HeadcountTrendChart />
+          <HeadcountTrendChart data={headcountTrend} />
         </div>
-        <DepartmentChart />
+        <DepartmentChart data={departmentHeadcounts} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">

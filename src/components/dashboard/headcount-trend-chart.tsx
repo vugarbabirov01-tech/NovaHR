@@ -1,5 +1,6 @@
 "use client"
 
+import { TrendingUp } from "lucide-react"
 import { useFormatter, useTranslations } from "next-intl"
 import {
   Area,
@@ -18,9 +19,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { headcountTrend } from "@/data/dashboard-stats"
+import { EmptyState } from "@/components/common/empty-state"
+import type { HeadcountTrendPoint } from "@/lib/dashboard-service"
 
-export function HeadcountTrendChart() {
+interface HeadcountTrendChartProps {
+  /** Real per-month headcount, reconstructed server-side from each
+   * employee's own hireDate/termination history by getHeadcountTrend
+   * (dashboard/page.tsx) — never a fabricated illustrative series. Empty
+   * only when there are no employees at all. */
+  data: HeadcountTrendPoint[]
+}
+
+export function HeadcountTrendChart({ data }: HeadcountTrendChartProps) {
   const t = useTranslations("Charts")
   const tCommon = useTranslations("Common")
   const format = useFormatter()
@@ -61,46 +71,58 @@ export function HeadcountTrendChart() {
         <CardDescription>{t("headcountTrendDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="h-72 pr-4 pl-0">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={headcountTrend} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-            <defs>
-              <linearGradient id="headcountFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.22} />
-                <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid
-              vertical={false}
-              stroke="var(--border)"
-              strokeDasharray="0"
-            />
-            <XAxis
-              dataKey="monthDate"
-              tickFormatter={formatMonth}
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-              dy={8}
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-              width={44}
-              tickFormatter={(value: number) => `${Math.round(value / 1000 * 10) / 10}k`}
-            />
-            <Tooltip content={<ChartTooltip />} cursor={{ stroke: "var(--border)", strokeWidth: 1 }} />
-            <Area
-              type="monotone"
-              dataKey="headcount"
-              stroke="var(--chart-1)"
-              strokeWidth={2}
-              fill="url(#headcountFill)"
-              dot={false}
-              activeDot={{ r: 4, fill: "var(--chart-1)", stroke: "var(--card)", strokeWidth: 2 }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        {data.length === 0 ? (
+          <EmptyState
+            icon={TrendingUp}
+            title={t("headcountEmptyTitle")}
+            description={t("headcountEmptyDescription")}
+            className="h-full justify-center border-none px-0"
+          />
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+              <defs>
+                <linearGradient id="headcountFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.22} />
+                  <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                vertical={false}
+                stroke="var(--border)"
+                strokeDasharray="0"
+              />
+              <XAxis
+                dataKey="monthDate"
+                tickFormatter={formatMonth}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+                dy={8}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+                width={44}
+                allowDecimals={false}
+                tickFormatter={(value: number) =>
+                  value >= 1000 ? `${Math.round((value / 1000) * 10) / 10}k` : format.number(value)
+                }
+              />
+              <Tooltip content={<ChartTooltip />} cursor={{ stroke: "var(--border)", strokeWidth: 1 }} />
+              <Area
+                type="monotone"
+                dataKey="headcount"
+                stroke="var(--chart-1)"
+                strokeWidth={2}
+                fill="url(#headcountFill)"
+                dot={false}
+                activeDot={{ r: 4, fill: "var(--chart-1)", stroke: "var(--card)", strokeWidth: 2 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </CardContent>
     </Card>
   )

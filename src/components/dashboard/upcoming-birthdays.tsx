@@ -8,9 +8,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { EmptyState } from "@/components/common/empty-state"
-import { upcomingBirthdays } from "@/data/employees"
+import { getUpcomingBirthdays } from "@/lib/dashboard-service"
 
 function initials(name: string) {
   return name
@@ -24,6 +24,10 @@ function initials(name: string) {
 export async function UpcomingBirthdays() {
   const t = await getTranslations("UpcomingBirthdays")
   const format = await getFormatter()
+  // Real personal.dateOfBirth for every active employee, within the next
+  // 14 days — see getUpcomingBirthdays' own doc comment. Never the old
+  // static 4-person src/data/employees.ts array.
+  const upcomingBirthdays = await getUpcomingBirthdays(14)
 
   return (
     <Card>
@@ -43,6 +47,7 @@ export async function UpcomingBirthdays() {
             {upcomingBirthdays.map((person) => (
               <li key={person.id} className="flex items-center gap-3">
                 <Avatar size="sm">
+                  <AvatarImage src={person.avatarUrl} alt={person.name} />
                   <AvatarFallback className="bg-accent text-accent-foreground text-[11px]">
                     {initials(person.name)}
                   </AvatarFallback>

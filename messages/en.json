@@ -97,8 +97,12 @@
   "Charts": {
     "headcountTrendTitle": "Headcount Trend",
     "headcountTrendDescription": "Total employees over the last 6 months",
+    "headcountEmptyTitle": "No data yet",
+    "headcountEmptyDescription": "Headcount trend will show up here once there are employees to track.",
     "departmentTitle": "Employees by Department",
     "departmentDescription": "Current headcount distribution",
+    "departmentEmptyTitle": "No department data",
+    "departmentEmptyDescription": "Department headcounts will show up here once active employees have a department assigned.",
     "employeesUnit": "employees"
   },
   "LeaveSummary": {
@@ -175,6 +179,8 @@
   "RecentActivities": {
     "title": "Recent Activities",
     "description": "What's happening across your organization",
+    "emptyTitle": "No recent activity",
+    "emptyDescription": "Recent activity across your organization will show up here.",
     "hire": "<b>{name}</b> joined as {role} in {department}",
     "leaveRequest": "<b>{name}</b> requested {days} days of annual leave",
     "promotion": "<b>{name}</b> was promoted to {role}",

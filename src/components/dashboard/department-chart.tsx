@@ -1,5 +1,6 @@
 "use client"
 
+import { Building2 } from "lucide-react"
 import { useFormatter, useTranslations } from "next-intl"
 import {
   Bar,
@@ -19,9 +20,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { employeesByDepartment } from "@/data/dashboard-stats"
+import { EmptyState } from "@/components/common/empty-state"
+import type { DepartmentHeadcount } from "@/lib/dashboard-service"
 
-export function DepartmentChart() {
+interface DepartmentChartProps {
+  /** Real, active-employees-only headcount per department — computed
+   * server-side by getDepartmentHeadcounts (dashboard/page.tsx), never a
+   * client-side mock. Empty when no active employee has a department set. */
+  data: DepartmentHeadcount[]
+}
+
+export function DepartmentChart({ data }: DepartmentChartProps) {
   const t = useTranslations("Charts")
   const format = useFormatter()
 
@@ -56,41 +65,50 @@ export function DepartmentChart() {
         <CardDescription>{t("departmentDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="h-72 pr-4 pl-0">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={employeesByDepartment}
-            layout="vertical"
-            margin={{ top: 8, right: 24, left: 8, bottom: 0 }}
-            barSize={16}
-          >
-            <CartesianGrid horizontal={false} stroke="var(--border)" />
-            <XAxis
-              type="number"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-            />
-            <YAxis
-              type="category"
-              dataKey="department"
-              axisLine={false}
-              tickLine={false}
-              width={96}
-              tick={{ fill: "var(--foreground)", fontSize: 12.5 }}
-            />
-            <Tooltip
-              content={<ChartTooltip />}
-              cursor={{ fill: "var(--muted)" }}
-            />
-            <Bar dataKey="employees" fill="var(--chart-1)" radius={[0, 4, 4, 0]}>
-              <LabelList
-                dataKey="employees"
-                position="right"
-                className="fill-foreground text-xs font-medium tabular-nums"
+        {data.length === 0 ? (
+          <EmptyState
+            icon={Building2}
+            title={t("departmentEmptyTitle")}
+            description={t("departmentEmptyDescription")}
+            className="h-full justify-center border-none px-0"
+          />
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={data}
+              layout="vertical"
+              margin={{ top: 8, right: 24, left: 8, bottom: 0 }}
+              barSize={16}
+            >
+              <CartesianGrid horizontal={false} stroke="var(--border)" />
+              <XAxis
+                type="number"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
               />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+              <YAxis
+                type="category"
+                dataKey="department"
+                axisLine={false}
+                tickLine={false}
+                width={96}
+                tick={{ fill: "var(--foreground)", fontSize: 12.5 }}
+              />
+              <Tooltip
+                content={<ChartTooltip />}
+                cursor={{ fill: "var(--muted)" }}
+              />
+              <Bar dataKey="employees" fill="var(--chart-1)" radius={[0, 4, 4, 0]}>
+                <LabelList
+                  dataKey="employees"
+                  position="right"
+                  className="fill-foreground text-xs font-medium tabular-nums"
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </CardContent>
     </Card>
   )

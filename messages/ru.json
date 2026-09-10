@@ -97,8 +97,12 @@
   "Charts": {
     "headcountTrendTitle": "Динамика численности",
     "headcountTrendDescription": "Общее число сотрудников за последние 6 месяцев",
+    "headcountEmptyTitle": "Пока нет данных",
+    "headcountEmptyDescription": "Динамика численности появится здесь, как только в системе будут сотрудники.",
     "departmentTitle": "Сотрудники по отделам",
     "departmentDescription": "Текущее распределение численности",
+    "departmentEmptyTitle": "Нет данных по отделам",
+    "departmentEmptyDescription": "Численность по отделам появится здесь, как только у активных сотрудников будет указан отдел.",
     "employeesUnit": "сотрудников"
   },
   "LeaveSummary": {
@@ -175,6 +179,8 @@
   "RecentActivities": {
     "title": "Последние действия",
     "description": "Что происходит в вашей организации",
+    "emptyTitle": "Нет последних действий",
+    "emptyDescription": "Последние действия в организации появятся здесь.",
     "hire": "<b>{name}</b> принят(а) на должность {role} в отдел {department}",
     "leaveRequest": "<b>{name}</b> запросил(а) {days} дн. ежегодного отпуска",
     "promotion": "<b>{name}</b> повышен(а) до {role}",

@@ -97,8 +97,12 @@
   "Charts": {
     "headcountTrendTitle": "Əməkdaş Sayının Dinamikası",
     "headcountTrendDescription": "Son 6 ayda ümumi əməkdaş sayı",
+    "headcountEmptyTitle": "Məlumat yoxdur",
+    "headcountEmptyDescription": "Əməkdaş sayı üzrə dinamika burada görünəcək.",
     "departmentTitle": "Şöbələr üzrə Əməkdaşlar",
     "departmentDescription": "Cari əməkdaş sayının bölgüsü",
+    "departmentEmptyTitle": "Şöbə məlumatı yoxdur",
+    "departmentEmptyDescription": "Aktiv əməkdaşlara şöbə təyin edildikdə burada görünəcək.",
     "employeesUnit": "əməkdaş"
   },
   "LeaveSummary": {
@@ -175,6 +179,8 @@
   "RecentActivities": {
     "title": "Son Fəaliyyətlər",
     "description": "Təşkilatınızda nələr baş verir",
+    "emptyTitle": "Fəaliyyət yoxdur",
+    "emptyDescription": "Təşkilatınızdakı son fəaliyyətlər burada görünəcək.",
     "hire": "<b>{name}</b> {department} şöbəsində {role} vəzifəsinə qəbul olundu",
     "leaveRequest": "<b>{name}</b> {days} gün illik məzuniyyət tələb etdi",
     "promotion": "<b>{name}</b> {role} vəzifəsinə yüksəldi",
