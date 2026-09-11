@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl"
 import { Mail, Phone } from "lucide-react"
 
 import { Link } from "@/i18n/navigation"
-import { cn } from "@/lib/utils"
+import { cn, formatLongDate } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
 import {
@@ -39,6 +39,8 @@ interface EmployeeCardProps {
 export function EmployeeCard({ employee, workStatus, activeSmartFilter, returnTo }: EmployeeCardProps) {
   const t = useTranslations("Employees.card")
   const tTable = useTranslations("Employees.table")
+  const tCommon = useTranslations("Common")
+  const months = tCommon.raw("months") as string[]
   const fullName = getFullName(employee)
   const profileHref = returnTo
     ? `/employees/${employee.id}?returnTo=${encodeURIComponent(returnTo)}`
@@ -89,7 +91,9 @@ export function EmployeeCard({ employee, workStatus, activeSmartFilter, returnTo
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-muted-foreground">{t("hireDate")}</span>
-            <span className="font-medium text-foreground tabular-nums">{employee.hireDate}</span>
+            <span className="font-medium text-foreground tabular-nums">
+              {formatLongDate(employee.hireDate, months)}
+            </span>
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-muted-foreground">{t("manager")}</span>

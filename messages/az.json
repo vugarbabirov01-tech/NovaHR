@@ -14,6 +14,7 @@
     "delete": "Sil",
     "genericError": "Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.",
     "monthsShort": ["yan", "fev", "mar", "apr", "may", "iyn", "iyl", "avq", "sen", "okt", "noy", "dek"],
+    "months": ["Yanvar", "Fevral", "Mart", "Aprel", "May", "İyun", "İyul", "Avqust", "Sentyabr", "Oktyabr", "Noyabr", "Dekabr"],
     "datePicker": {
       "placeholder": "Tarix seçin",
       "today": "Bu gün",
