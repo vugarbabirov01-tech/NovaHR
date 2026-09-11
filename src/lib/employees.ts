@@ -1,6 +1,7 @@
 import type {
   ContractType,
   EmployeeListItem,
+  EmployeePersonal,
   EmploymentStatus,
   EmploymentType,
   Gender,
@@ -97,6 +98,19 @@ export function getInitials(firstName: string, lastName: string) {
 
 export function getFullName(item: Pick<EmployeeListItem, "firstName" | "lastName">) {
   return `${item.firstName} ${item.lastName}`
+}
+
+/**
+ * "Soyad Ad Ata adı" (e.g. "Tahirov Qismət Əli") — the Employee Profile
+ * header's own display order, distinct from getFullName's "Ad Soyad" every
+ * other surface (Employee Card/List/Table, Dashboard, Org Chart, Import)
+ * keeps unchanged. fatherName is optional on EmployeePersonal; filtering
+ * out whichever of the three parts is missing/blank before joining means a
+ * father name that's null/undefined/"" never leaves a stray double space
+ * ("Tahirov Qismət", not "Tahirov Qismət ").
+ */
+export function getFullLegalName(person: Pick<EmployeePersonal, "firstName" | "lastName" | "fatherName">) {
+  return [person.lastName, person.firstName, person.fatherName].filter(Boolean).join(" ")
 }
 
 const AUTO_EMPLOYEE_NUMBER_PATTERN = /^EMP-(\d+)$/i

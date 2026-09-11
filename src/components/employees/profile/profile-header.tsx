@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { buttonVariants } from "@/components/ui/button"
 import { EmploymentStatusBadge } from "@/components/employees/employment-status-badge"
 import { WorkStatusBadge } from "@/components/employees/work-status-badge"
-import { getFullName, getInitials } from "@/lib/employees"
+import { getFullLegalName, getInitials } from "@/lib/employees"
 import { cn } from "@/lib/utils"
 import type { WorkStatus } from "@/lib/employee-work-status"
 import type { EmployeeProfile } from "@/types/employee-profile"
@@ -37,7 +37,11 @@ interface ProfileHeaderProps {
 export function ProfileHeader({ profile, workStatus, backHref }: ProfileHeaderProps) {
   const t = useTranslations("Employees.profile")
   const tQuickActions = useTranslations("Employees.quickActions")
-  const name = getFullName(profile.personal)
+  // "Soyad Ad Ata adı" — the Profile header's own display order (see
+  // getFullLegalName's own doc comment). Every other surface (Employee
+  // Card/List, Dashboard, Org Chart) keeps showing getFullName's "Ad Soyad"
+  // unchanged — this is the one place that doesn't.
+  const name = getFullLegalName(profile.personal)
 
   return (
     <div className="flex flex-col gap-4">
