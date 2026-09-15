@@ -205,6 +205,46 @@
     "comingSoonTitle": "{module} modulu tezliklə",
     "comingSoonDescription": "Bu bölmə hazırlanıb — tam modul növbəti mərhələdə qurulacaq."
   },
+  "Attendance": {
+    "todayDescription": "Bugünkü giriş-çıxış lövhəsi",
+    "checkIns": "Giriş",
+    "checkOuts": "Çıxış",
+    "late": "Gecikən",
+    "absent": "Qayıb",
+    "columnEmployee": "Əməkdaş",
+    "columnLocation": "Obyekt",
+    "columnStatus": "Status",
+    "columnCheckIn": "Giriş vaxtı",
+    "columnCheckOut": "Çıxış vaxtı",
+    "emptyTitle": "Bugün üçün qeyd yoxdur",
+    "emptyDescription": "Əməkdaşlar QR skan etdikcə bu siyahı avtomatik yenilənəcək.",
+    "unavailable": {
+      "not-configured": {
+        "title": "Qoşulma hələ konfiqurasiya edilməyib",
+        "description": "Bu şirkət üçün AttendanceQR giriş məlumatları .env faylında təyin olunmayıb."
+      },
+      "login-failed": {
+        "title": "Giriş uğursuz oldu",
+        "description": "AttendanceQR admin giriş məlumatları qəbul edilmədi — .env-dəki dəyərləri yoxlayın."
+      },
+      "unreachable": {
+        "title": "Qoşulma mümkün olmadı",
+        "description": "AttendanceQR serverinə hazırda müraciət edilə bilmədi. Bir az sonra yenidən cəhd edin."
+      }
+    },
+    "status": {
+      "OnTime": "Vaxtında",
+      "Late": "Gecikib",
+      "Absent": "Qayıb",
+      "Incomplete": "Hazırda işdə",
+      "DayOff": "İstirahət günü",
+      "OnLeave": "Məzuniyyətdə",
+      "Permission": "İcazəli",
+      "Pending": "Növbə hələ başlamayıb",
+      "Field": "Sahədə",
+      "Onboarding": "Qeydiyyat mərhələsində"
+    }
+  },
   "Pages": {
     "employees": {
       "title": "Əməkdaşlar",

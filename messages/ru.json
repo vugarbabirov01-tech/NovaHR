@@ -205,6 +205,46 @@
     "comingSoonTitle": "Модуль «{module}» скоро появится",
     "comingSoonDescription": "Этот раздел подготовлен — полноценный модуль будет реализован на следующем этапе."
   },
+  "Attendance": {
+    "todayDescription": "Сегодняшняя доска прихода/ухода",
+    "checkIns": "Приходы",
+    "checkOuts": "Уходы",
+    "late": "Опоздания",
+    "absent": "Отсутствуют",
+    "columnEmployee": "Сотрудник",
+    "columnLocation": "Объект",
+    "columnStatus": "Статус",
+    "columnCheckIn": "Время прихода",
+    "columnCheckOut": "Время ухода",
+    "emptyTitle": "Записей за сегодня нет",
+    "emptyDescription": "Список обновится автоматически по мере сканирования QR-кода сотрудниками.",
+    "unavailable": {
+      "not-configured": {
+        "title": "Подключение ещё не настроено",
+        "description": "Учётные данные AttendanceQR для этой компании не заданы в .env."
+      },
+      "login-failed": {
+        "title": "Не удалось войти",
+        "description": "AttendanceQR отклонил данные администратора — проверьте значения в .env."
+      },
+      "unreachable": {
+        "title": "Не удалось подключиться",
+        "description": "Сервер AttendanceQR сейчас недоступен. Попробуйте ещё раз чуть позже."
+      }
+    },
+    "status": {
+      "OnTime": "Вовремя",
+      "Late": "Опоздал(а)",
+      "Absent": "Отсутствует",
+      "Incomplete": "Сейчас на работе",
+      "DayOff": "Выходной",
+      "OnLeave": "В отпуске",
+      "Permission": "По разрешению",
+      "Pending": "Смена ещё не началась",
+      "Field": "На выезде",
+      "Onboarding": "В процессе оформления"
+    }
+  },
   "Pages": {
     "employees": {
       "title": "Сотрудники",

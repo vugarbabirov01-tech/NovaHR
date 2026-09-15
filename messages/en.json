@@ -205,6 +205,46 @@
     "comingSoonTitle": "{module} module is coming soon",
     "comingSoonDescription": "This area is scaffolded and ready — the full module will be built in an upcoming phase."
   },
+  "Attendance": {
+    "todayDescription": "Today's check-in/check-out board",
+    "checkIns": "Check-ins",
+    "checkOuts": "Check-outs",
+    "late": "Late",
+    "absent": "Absent",
+    "columnEmployee": "Employee",
+    "columnLocation": "Location",
+    "columnStatus": "Status",
+    "columnCheckIn": "Check-in time",
+    "columnCheckOut": "Check-out time",
+    "emptyTitle": "No records for today",
+    "emptyDescription": "This list updates automatically as employees scan the QR code.",
+    "unavailable": {
+      "not-configured": {
+        "title": "Connection not configured yet",
+        "description": "AttendanceQR login credentials for this company aren't set in .env yet."
+      },
+      "login-failed": {
+        "title": "Login failed",
+        "description": "AttendanceQR rejected the admin credentials — check the values in .env."
+      },
+      "unreachable": {
+        "title": "Couldn't connect",
+        "description": "The AttendanceQR server couldn't be reached right now. Try again shortly."
+      }
+    },
+    "status": {
+      "OnTime": "On time",
+      "Late": "Late",
+      "Absent": "Absent",
+      "Incomplete": "Still at work",
+      "DayOff": "Day off",
+      "OnLeave": "On leave",
+      "Permission": "Excused",
+      "Pending": "Shift not started",
+      "Field": "In the field",
+      "Onboarding": "Onboarding"
+    }
+  },
   "Pages": {
     "employees": {
       "title": "Employees",
