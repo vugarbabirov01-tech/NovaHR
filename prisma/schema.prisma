@@ -875,3 +875,67 @@ model ApprovalWorkflowAuditLogEntry {
   @@index([entityType, entityId])
   @@map("approval_workflow_audit_log_entries")
 }
+
+/// Payroll — Phase 1 (see src/lib/payroll/payroll-period-service.ts). One row
+/// per calendar month; PayrollEmployeeRecord below is the actual line items.
+enum PayrollPeriodStatus {
+  DRAFT
+  CALCULATED
+  APPROVED
+  PAID
+  CLOSED
+}
+
+/// tenantId is schema-readiness only — Nova has no Tenant model or any other
+/// tenantId column anywhere yet (Company is master data *within* one
+/// deployment, not a SaaS tenant boundary). Every read/write goes through
+/// DEFAULT_TENANT_ID (src/lib/payroll/constants.ts) until a real
+/// multi-tenant auth layer exists; adding it now means that day never
+/// requires touching this table's shape again.
+model PayrollPeriod {
+  id        String              @id @default(cuid())
+  tenantId  String
+  year      Int
+  month     Int
+  startDate DateTime
+  endDate   DateTime
+  status    PayrollPeriodStatus @default(DRAFT)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  employeeRecords PayrollEmployeeRecord[]
+
+  @@unique([tenantId, year, month])
+  @@map("payroll_periods")
+}
+
+/// One employee's payroll line for one period. baseSalary/currency are a
+/// SNAPSHOT of Employee.payroll.baseSalary/currency taken the moment this
+/// row is first created (see ensurePayrollPeriod) — never re-read from the
+/// live Employee record afterward, so a later salary change never changes a
+/// past period's figures. employeeId is a bare String, not a @relation,
+/// same convention the Employee model's own doc comment already establishes
+/// for every other module (LeaveRequest, LeaveLedgerEntry, ...).
+model PayrollEmployeeRecord {
+  id              String        @id @default(cuid())
+  payrollPeriodId String
+  payrollPeriod   PayrollPeriod @relation(fields: [payrollPeriodId], references: [id])
+  employeeId      String
+
+  baseSalary  Float
+  currency    String
+  additions   Float @default(0)
+  deductions  Float @default(0)
+  /// baseSalary + additions
+  grossAmount Float
+  /// grossAmount - deductions — "Hesablanmış" in the UI
+  netAmount   Float
+
+  status    PayrollPeriodStatus @default(DRAFT)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@unique([payrollPeriodId, employeeId])
+  @@index([employeeId])
+  @@map("payroll_employee_records")
+}

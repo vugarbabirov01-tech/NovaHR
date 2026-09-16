@@ -205,6 +205,41 @@
     "comingSoonTitle": "{module} module is coming soon",
     "comingSoonDescription": "This area is scaffolded and ready — the full module will be built in an upcoming phase."
   },
+  "Payroll": {
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "applyPeriod": "Apply",
+    "kpiEmployeeCount": "Employee count",
+    "kpiTotalBaseSalary": "Total base salary",
+    "kpiTotalAdditions": "Additions",
+    "kpiTotalNet": "Total calculated amount",
+    "columnEmployee": "Employee",
+    "columnFin": "FIN",
+    "columnCompany": "Company",
+    "columnWorkLocation": "Work Location",
+    "columnPosition": "Position",
+    "columnBaseSalary": "Base Salary",
+    "columnAdditions": "Additions",
+    "columnDeductions": "Deductions",
+    "columnCalculated": "Calculated",
+    "columnStatus": "Status",
+    "searchPlaceholder": "Search by first name, last name, father's name, or FIN...",
+    "allCompanies": "All Companies",
+    "allWorkLocations": "All Work Locations",
+    "allPositions": "All Positions",
+    "allStatuses": "All Statuses",
+    "resultsCount": "{count, plural, =0 {No employees} =1 {1 employee} other {# employees}}",
+    "pageIndicator": "Page {current} of {total}",
+    "emptyTitle": "No employees found for this period",
+    "emptyDescription": "Try adjusting your search or filters.",
+    "status": {
+      "DRAFT": "Draft",
+      "CALCULATED": "Calculated",
+      "APPROVED": "Approved",
+      "PAID": "Paid",
+      "CLOSED": "Closed"
+    }
+  },
   "Attendance": {
     "todayDescription": "Today's check-in/check-out board",
     "checkIns": "Check-ins",
@@ -414,7 +449,7 @@
     },
     "payroll": {
       "title": "Payroll",
-      "description": "Run payroll cycles and manage compensation records."
+      "description": "Create, calculate, and manage payroll periods."
     },
     "performance": {
       "title": "Performance",

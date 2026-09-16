@@ -205,6 +205,41 @@
     "comingSoonTitle": "Модуль «{module}» скоро появится",
     "comingSoonDescription": "Этот раздел подготовлен — полноценный модуль будет реализован на следующем этапе."
   },
+  "Payroll": {
+    "previousMonth": "Предыдущий месяц",
+    "nextMonth": "Следующий месяц",
+    "applyPeriod": "Применить",
+    "kpiEmployeeCount": "Число сотрудников",
+    "kpiTotalBaseSalary": "Общая базовая зарплата",
+    "kpiTotalAdditions": "Надбавки",
+    "kpiTotalNet": "Итоговая начисленная сумма",
+    "columnEmployee": "Сотрудник",
+    "columnFin": "ФИН",
+    "columnCompany": "Компания",
+    "columnWorkLocation": "Место работы",
+    "columnPosition": "Должность",
+    "columnBaseSalary": "Базовая зарплата",
+    "columnAdditions": "Надбавки",
+    "columnDeductions": "Удержания",
+    "columnCalculated": "Начислено",
+    "columnStatus": "Статус",
+    "searchPlaceholder": "Поиск по имени, фамилии, отчеству или ФИН...",
+    "allCompanies": "Все компании",
+    "allWorkLocations": "Все места работы",
+    "allPositions": "Все должности",
+    "allStatuses": "Все статусы",
+    "resultsCount": "{count, plural, =0 {Нет сотрудников} =1 {1 сотрудник} other {# сотрудников}}",
+    "pageIndicator": "Страница {current} из {total}",
+    "emptyTitle": "Сотрудники за этот период не найдены",
+    "emptyDescription": "Попробуйте изменить поиск или фильтры.",
+    "status": {
+      "DRAFT": "Черновик",
+      "CALCULATED": "Рассчитано",
+      "APPROVED": "Утверждено",
+      "PAID": "Выплачено",
+      "CLOSED": "Закрыто"
+    }
+  },
   "Attendance": {
     "todayDescription": "Сегодняшняя доска прихода/ухода",
     "checkIns": "Приходы",
@@ -414,7 +449,7 @@
     },
     "payroll": {
       "title": "Зарплата",
-      "description": "Проводите расчёт зарплаты и управляйте записями о вознаграждении."
+      "description": "Создавайте, рассчитывайте и управляйте периодами начисления зарплаты."
     },
     "performance": {
       "title": "Эффективность",

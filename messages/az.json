@@ -205,6 +205,41 @@
     "comingSoonTitle": "{module} modulu tezliklə",
     "comingSoonDescription": "Bu bölmə hazırlanıb — tam modul növbəti mərhələdə qurulacaq."
   },
+  "Payroll": {
+    "previousMonth": "Əvvəlki ay",
+    "nextMonth": "Növbəti ay",
+    "applyPeriod": "Tətbiq et",
+    "kpiEmployeeCount": "Əməkdaş sayı",
+    "kpiTotalBaseSalary": "Ümumi baza əmək haqqı",
+    "kpiTotalAdditions": "Əlavələr",
+    "kpiTotalNet": "Yekun hesablanmış məbləğ",
+    "columnEmployee": "Əməkdaş",
+    "columnFin": "FİN",
+    "columnCompany": "Şirkət",
+    "columnWorkLocation": "İş yeri",
+    "columnPosition": "Vəzifə",
+    "columnBaseSalary": "Baza maaşı",
+    "columnAdditions": "Əlavələr",
+    "columnDeductions": "Tutulmalar",
+    "columnCalculated": "Hesablanmış",
+    "columnStatus": "Status",
+    "searchPlaceholder": "Ad, soyad, ata adı və ya FİN üzrə axtarın...",
+    "allCompanies": "Bütün Şirkətlər",
+    "allWorkLocations": "Bütün İş Yerləri",
+    "allPositions": "Bütün Vəzifələr",
+    "allStatuses": "Bütün Statuslar",
+    "resultsCount": "{count, plural, =0 {Əməkdaş yoxdur} =1 {1 əməkdaş} other {# əməkdaş}}",
+    "pageIndicator": "Səhifə {current} / {total}",
+    "emptyTitle": "Bu dövr üçün əməkdaş tapılmadı",
+    "emptyDescription": "Axtarış və ya filterləri dəyişməyi sınayın.",
+    "status": {
+      "DRAFT": "Qaralama",
+      "CALCULATED": "Hesablanıb",
+      "APPROVED": "Təsdiqlənib",
+      "PAID": "Ödənilib",
+      "CLOSED": "Bağlanıb"
+    }
+  },
   "Attendance": {
     "todayDescription": "Bugünkü giriş-çıxış lövhəsi",
     "checkIns": "Giriş",
@@ -414,7 +449,7 @@
     },
     "payroll": {
       "title": "Əmək haqqı",
-      "description": "Əmək haqqı dövrlərini icra edin və kompensasiya qeydlərini idarə edin."
+      "description": "Əmək haqqı dövrlərini yaradın, hesablayın və idarə edin."
     },
     "performance": {
       "title": "Performans",
