@@ -49,10 +49,21 @@
     "collapse": "Collapse sidebar"
   },
   "Header": {
-    "searchPlaceholder": "Search employees, requests, documents...",
     "openNavigation": "Open navigation",
     "darkTheme": "Dark theme — coming soon",
     "changeLanguage": "Change language"
+  },
+  "GlobalSearch": {
+    "placeholder": "Search employees, companies, departments...",
+    "employees": "Employees",
+    "companies": "Companies",
+    "branches": "Branches",
+    "departments": "Departments",
+    "positions": "Positions",
+    "workLocations": "Work Locations",
+    "noResults": "No results found",
+    "searching": "Searching...",
+    "showAll": "Show all {count} results"
   },
   "UserMenu": {
     "myProfile": "My Profile",

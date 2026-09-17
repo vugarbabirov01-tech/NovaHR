@@ -18,7 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { SearchInput } from "@/components/common/search-input"
+import { GlobalSearch } from "@/components/layout/global-search"
 import { UserMenu } from "@/components/layout/user-menu"
 import { LanguageSwitcher } from "@/components/layout/language-switcher"
 import { notifications } from "@/data/notifications"
@@ -94,12 +94,7 @@ export function Header({ onOpenMobileNav }: HeaderProps) {
         <Menu className="size-4" />
       </Button>
 
-      <div className="min-w-0 flex-1">
-        <SearchInput
-          placeholder={t("searchPlaceholder")}
-          containerClassName="max-w-md"
-        />
-      </div>
+      <GlobalSearch />
 
       <div className="flex items-center gap-1.5">
         <Tooltip>

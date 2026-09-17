@@ -49,10 +49,21 @@
     "collapse": "Свернуть панель"
   },
   "Header": {
-    "searchPlaceholder": "Поиск сотрудников, запросов, документов...",
     "openNavigation": "Открыть навигацию",
     "darkTheme": "Тёмная тема — скоро",
     "changeLanguage": "Изменить язык"
+  },
+  "GlobalSearch": {
+    "placeholder": "Поиск сотрудников, компаний, отделов...",
+    "employees": "Сотрудники",
+    "companies": "Компании",
+    "branches": "Филиалы",
+    "departments": "Отделы",
+    "positions": "Должности",
+    "workLocations": "Места работы",
+    "noResults": "Ничего не найдено",
+    "searching": "Поиск...",
+    "showAll": "Показать все {count} результатов"
   },
   "UserMenu": {
     "myProfile": "Мой профиль",

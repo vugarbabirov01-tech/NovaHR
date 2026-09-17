@@ -49,10 +49,21 @@
     "collapse": "Yan paneli yığ"
   },
   "Header": {
-    "searchPlaceholder": "Əməkdaşları, sorğuları, sənədləri axtarın...",
     "openNavigation": "Naviqasiyanı aç",
     "darkTheme": "Tünd tema — tezliklə",
     "changeLanguage": "Dili dəyiş"
+  },
+  "GlobalSearch": {
+    "placeholder": "Əməkdaşları, şirkətləri, şöbələri axtarın...",
+    "employees": "Əməkdaşlar",
+    "companies": "Şirkətlər",
+    "branches": "Filiallar",
+    "departments": "Şöbələr",
+    "positions": "Vəzifələr",
+    "workLocations": "İş yerləri",
+    "noResults": "Nəticə tapılmadı",
+    "searching": "Axtarılır...",
+    "showAll": "Bütün {count} nəticəni göstər"
   },
   "UserMenu": {
     "myProfile": "Mənim Profilim",
