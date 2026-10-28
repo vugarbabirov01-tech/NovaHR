@@ -5,6 +5,7 @@ import { PageTitle } from "@/components/common/page-title"
 import { KpiSection } from "@/components/dashboard/kpi-section"
 import { HeadcountTrendChart } from "@/components/dashboard/headcount-trend-chart"
 import { DepartmentChart } from "@/components/dashboard/department-chart"
+import { WorkLocationHeadcountTable } from "@/components/dashboard/work-location-headcount-table"
 import { RecentEmployees } from "@/components/dashboard/recent-employees"
 import { UpcomingBirthdays } from "@/components/dashboard/upcoming-birthdays"
 import { RecentActivities } from "@/components/dashboard/recent-activities"
@@ -13,7 +14,7 @@ import { findAllEmployees } from "@/repositories/employee-repository"
 import { toListItem } from "@/types/employee-profile"
 import { resolveWorkStatus, type WorkStatus } from "@/lib/employee-work-status"
 import { loadWorkStatusContext } from "@/lib/employee-work-status-loader"
-import { getDepartmentHeadcounts, getHeadcountTrend } from "@/lib/dashboard-service"
+import { getDepartmentHeadcounts, getHeadcountTrend, getWorkLocationHeadcounts } from "@/lib/dashboard-service"
 
 
 type Props = {
@@ -48,9 +49,10 @@ export default async function DashboardPage({ params }: Props) {
     recentEmployeesWorkStatus[employee.id] = resolveWorkStatus(employee.id, workStatusContext)
   }
 
-  const [departmentHeadcounts, headcountTrend] = await Promise.all([
+  const [departmentHeadcounts, headcountTrend, workLocationHeadcounts] = await Promise.all([
     getDepartmentHeadcounts(),
     getHeadcountTrend(),
+    getWorkLocationHeadcounts(),
   ])
 
   return (
@@ -58,6 +60,8 @@ export default async function DashboardPage({ params }: Props) {
       <PageTitle title={t("title")} description={t("description")} />
 
       <KpiSection />
+
+      <WorkLocationHeadcountTable data={workLocationHeadcounts} />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="xl:col-span-2">

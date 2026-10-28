@@ -97,7 +97,16 @@
   },
   "Dashboard": {
     "title": "Dashboard",
-    "description": "Welcome back. Here's what's happening across your organization."
+    "description": "Welcome back. Here's what's happening across your organization.",
+    "workLocationHeadcount": {
+      "title": "Employee Count by Site",
+      "description": "How many active employees work at each site",
+      "columnLocation": "Site",
+      "columnCount": "Employees",
+      "totalLabel": "Total",
+      "emptyTitle": "No site data",
+      "emptyDescription": "This will show up once active employees have a work location assigned."
+    }
   },
   "Kpi": {
     "totalEmployees": "Total Employees",

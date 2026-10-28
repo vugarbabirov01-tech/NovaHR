@@ -86,6 +86,39 @@ export async function getDepartmentHeadcounts(): Promise<DepartmentHeadcount[]> 
   )
 }
 
+export interface WorkLocationHeadcount {
+  workLocation: string
+  employees: number
+}
+
+/**
+ * "Obyektlər üzrə Əməkdaş Sayı" — grouped straight from each employee's own
+ * employment.workLocation, the same real, denormalized site name Employee
+ * List/Profile/the Advanced Filters panel already use (there is no separate
+ * WorkLocation master-data table — see employee-filters-panel.tsx's own
+ * note on this). Active employees only, same definition as
+ * getDepartmentHeadcounts above — someone on probation/suspended/
+ * terminated never inflates a site's count here. Sorted by headcount
+ * descending. An org with zero active employees (or none with a work
+ * location set) returns [] — the table itself renders an EmptyState rather
+ * than ever falling back to a placeholder site name.
+ */
+export async function getWorkLocationHeadcounts(): Promise<WorkLocationHeadcount[]> {
+  const employees = await findAllEmployees()
+  const counts = new Map<string, number>()
+
+  for (const employee of employees) {
+    if (employee.employmentStatus !== "active") continue
+    const workLocation = employee.employment.workLocation
+    if (!workLocation) continue
+    counts.set(workLocation, (counts.get(workLocation) ?? 0) + 1)
+  }
+
+  return Array.from(counts, ([workLocation, employees]) => ({ workLocation, employees })).sort(
+    (a, b) => b.employees - a.employees
+  )
+}
+
 /** The date employment actually ended, for employees currently terminated —
  * written by terminateEmployeeAction onto employment.history as a
  * "termination" event (src/lib/termination/actions.ts), never a separate

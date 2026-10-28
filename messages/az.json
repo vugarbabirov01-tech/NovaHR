@@ -97,7 +97,16 @@
   },
   "Dashboard": {
     "title": "İdarə paneli",
-    "description": "Xoş gəlmisiniz. Təşkilatınızda baş verənlər budur."
+    "description": "Xoş gəlmisiniz. Təşkilatınızda baş verənlər budur.",
+    "workLocationHeadcount": {
+      "title": "Obyektlər üzrə Əməkdaş Sayı",
+      "description": "Hər obyektdə neçə aktiv əməkdaş çalışır",
+      "columnLocation": "Obyekt",
+      "columnCount": "Əməkdaş sayı",
+      "totalLabel": "Cəmi",
+      "emptyTitle": "Obyekt məlumatı yoxdur",
+      "emptyDescription": "Aktiv əməkdaşlara iş yeri təyin edildikdə burada görünəcək."
+    }
   },
   "Kpi": {
     "totalEmployees": "Ümumi Əməkdaşlar",
