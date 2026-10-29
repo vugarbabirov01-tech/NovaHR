@@ -18,7 +18,12 @@ import { OrgChartNode } from "@/components/organization/org-chart-node"
 import { OrgChartFilters } from "@/components/organization/org-chart-filters"
 import { flattenOrganizationTree } from "@/lib/organization/build-tree"
 import { computeOrganizationChartVisibility } from "@/lib/organization/filter-tree"
-import type { OrganizationTreeNode, OrganizationChartFilters } from "@/types/organization"
+import type {
+  OrganizationBranchOption,
+  OrganizationChartFilters,
+  OrganizationCompanyOption,
+  OrganizationTreeNode,
+} from "@/types/organization"
 import type { EmployeeListItem } from "@/types/employee-profile"
 
 const MIN_SCALE = 0.3
@@ -35,6 +40,8 @@ interface FullChartDialogProps {
   tree: OrganizationTreeNode[]
   employees: EmployeeListItem[]
   managerNames: string[]
+  companies: OrganizationCompanyOption[]
+  branches: OrganizationBranchOption[]
   /** Seeded from the compact view's own state the moment this opens, then
    * managed independently — so drilling into a branch on the compact page
    * carries over here, but "Expand All"/a search typed inside the dialog
@@ -58,6 +65,8 @@ export function FullChartDialog({
   tree,
   employees,
   managerNames,
+  companies,
+  branches,
   initialExpandedIds,
   initialQuery,
   initialFilters,
@@ -217,7 +226,14 @@ export function FullChartDialog({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
-          <OrgChartFilters employees={employees} managerNames={managerNames} filters={filters} onChange={setFilters} />
+          <OrgChartFilters
+            employees={employees}
+            managerNames={managerNames}
+            companies={companies}
+            branches={branches}
+            filters={filters}
+            onChange={setFilters}
+          />
 
           <div className="ml-auto flex items-center gap-1">
             <Button variant="outline" size="sm" onClick={expandAll}>

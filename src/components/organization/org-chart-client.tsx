@@ -11,14 +11,31 @@ import { EmptyState } from "@/components/common/empty-state"
 import { OrgChartNode } from "@/components/organization/org-chart-node"
 import { OrgChartFilters } from "@/components/organization/org-chart-filters"
 import { FullChartDialog } from "@/components/organization/full-chart-dialog"
-import { computeOrganizationChartVisibility, defaultOrganizationChartFilters } from "@/lib/organization/filter-tree"
-import type { OrganizationTreeNode, OrganizationChartFilters } from "@/types/organization"
+import { computeOrganizationChartVisibility } from "@/lib/organization/filter-tree"
+import type {
+  OrganizationBranchOption,
+  OrganizationChartFilters,
+  OrganizationCompanyOption,
+  OrganizationTreeNode,
+} from "@/types/organization"
 import type { EmployeeListItem } from "@/types/employee-profile"
 
 interface OrgChartClientProps {
   tree: OrganizationTreeNode[]
   employees: EmployeeListItem[]
   managerNames: string[]
+  companies: OrganizationCompanyOption[]
+  branches: OrganizationBranchOption[]
+  /** Lifted up (not this component's own useState) so the Organization
+   * page's Chart ↔ List view toggle (organization-view.tsx) can share one
+   * Search/Filter state across both views — typing a name, switching
+   * views, still shows that search applied. FullChartDialog below keeps
+   * its own independent copy exactly as before (seeded once from these on
+   * open, then fully separate), unaffected by this. */
+  query: string
+  onQueryChange: (query: string) => void
+  filters: OrganizationChartFilters
+  onFiltersChange: (filters: OrganizationChartFilters) => void
 }
 
 /**
@@ -30,11 +47,19 @@ interface OrgChartClientProps {
  * OrgChartNode renderer this uses, so the three surfaces can never drift
  * apart visually.
  */
-export function OrgChartClient({ tree, employees, managerNames }: OrgChartClientProps) {
+export function OrgChartClient({
+  tree,
+  employees,
+  managerNames,
+  companies,
+  branches,
+  query,
+  onQueryChange,
+  filters,
+  onFiltersChange,
+}: OrgChartClientProps) {
   const t = useTranslations("OrganizationChart")
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set())
-  const [query, setQuery] = useState("")
-  const [filters, setFilters] = useState<OrganizationChartFilters>(defaultOrganizationChartFilters)
   const [isFullChartOpen, setIsFullChartOpen] = useState(false)
 
   const visibility = useMemo(
@@ -72,9 +97,16 @@ export function OrgChartClient({ tree, employees, managerNames }: OrgChartClient
             placeholder={t("searchPlaceholder")}
             containerClassName="w-full sm:max-w-xs"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => onQueryChange(event.target.value)}
           />
-          <OrgChartFilters employees={employees} managerNames={managerNames} filters={filters} onChange={setFilters} />
+          <OrgChartFilters
+            employees={employees}
+            managerNames={managerNames}
+            companies={companies}
+            branches={branches}
+            filters={filters}
+            onChange={onFiltersChange}
+          />
         </div>
 
         {tree.length === 0 ? (
@@ -105,6 +137,8 @@ export function OrgChartClient({ tree, employees, managerNames }: OrgChartClient
           tree={tree}
           employees={employees}
           managerNames={managerNames}
+          companies={companies}
+          branches={branches}
           initialExpandedIds={expandedIds}
           initialQuery={query}
           initialFilters={filters}

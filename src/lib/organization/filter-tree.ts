@@ -4,6 +4,8 @@ import { ALL_VALUE } from "@/types/employee-filters"
 import type { OrganizationTreeNode, OrganizationChartFilters } from "@/types/organization"
 
 export const defaultOrganizationChartFilters: OrganizationChartFilters = {
+  company: ALL_VALUE,
+  branch: ALL_VALUE,
   department: ALL_VALUE,
   position: ALL_VALUE,
   manager: ALL_VALUE,
@@ -17,12 +19,16 @@ export function hasActiveOrganizationChartFilters(filters: OrganizationChartFilt
 /** One employee against the current search text + filter selections — the
  * single predicate Search (§8) and the Department/Position/Manager/Status
  * filter (§9) both go through, so "does this row match" can never be
- * defined two different ways. */
-function employeeMatches(
+ * defined two different ways. Exported so UnassignedEmployeesPanel (which
+ * filters a flat employee list, not a tree) can match the exact same rule
+ * instead of re-implementing it. */
+export function employeeMatches(
   employee: OrganizationTreeNode["employee"],
   normalizedQuery: string,
   filters: OrganizationChartFilters
 ): boolean {
+  if (filters.company !== ALL_VALUE && employee.company !== filters.company) return false
+  if (filters.branch !== ALL_VALUE && employee.branch !== filters.branch) return false
   if (filters.department !== ALL_VALUE && employee.department !== filters.department) return false
   if (filters.position !== ALL_VALUE && employee.position !== filters.position) return false
   if (filters.manager !== ALL_VALUE && employee.managerName !== filters.manager) return false

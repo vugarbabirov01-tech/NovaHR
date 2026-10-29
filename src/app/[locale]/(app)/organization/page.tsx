@@ -2,8 +2,10 @@ import type { Metadata } from "next"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { PageTitle } from "@/components/common/page-title"
-import { OrgChartClient } from "@/components/organization/org-chart-client"
+import { OrganizationView } from "@/components/organization/organization-view"
 import { findAllEmployees } from "@/repositories/employee-repository"
+import { findActiveCompanies } from "@/repositories/company-repository"
+import { findActiveBranches } from "@/repositories/branch-repository"
 import { toListItem } from "@/types/employee-profile"
 import { buildOrganizationTree } from "@/lib/organization/build-tree"
 
@@ -35,16 +37,29 @@ export default async function OrganizationPage({ params }: Props) {
 
   const t = await getTranslations("Pages.organization")
 
-  const employees = (await findAllEmployees()).map(toListItem)
+  const [employeeProfiles, companyRows, branchRows] = await Promise.all([
+    findAllEmployees(),
+    findActiveCompanies(),
+    findActiveBranches(),
+  ])
+  const employees = employeeProfiles.map(toListItem)
   const tree = buildOrganizationTree(employees)
   const managerNames = Array.from(
     new Set(employees.map((employee) => employee.managerName).filter((name): name is string => Boolean(name)))
   ).sort()
+  const companies = companyRows.map((company) => ({ id: company.id, name: company.name }))
+  const branches = branchRows.map((branch) => ({ id: branch.id, name: branch.name, companyId: branch.companyId }))
 
   return (
     <div className="flex flex-col gap-6">
       <PageTitle title={t("title")} description={t("description")} />
-      <OrgChartClient tree={tree} employees={employees} managerNames={managerNames} />
+      <OrganizationView
+        tree={tree}
+        employees={employees}
+        managerNames={managerNames}
+        companies={companies}
+        branches={branches}
+      />
     </div>
   )
 }

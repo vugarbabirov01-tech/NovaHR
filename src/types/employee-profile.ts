@@ -119,6 +119,10 @@ export interface EmployeeListItem {
    * Soon" rule — otherwise unused here, same field employment.probationEndDate
    * already carries on the full profile. */
   probationEndDate?: string
+  /** Mirrors employment.isTopExecutive — surfaced here so the Organization
+   * Chart's Unassigned-managers list/count can read it without loading each
+   * employee's full profile. See that field's own doc comment. */
+  isTopExecutive?: boolean
   baseSalary: number
   currency: string
 }
@@ -148,6 +152,16 @@ export interface EmployeeEmployment {
   company: string
   managerId?: string
   managerName?: string
+  /** True for the one employee per company designated as its top leader —
+   * Organization Chart's "Baş rəhbər" (setTopExecutiveAction,
+   * organization/actions.ts). A company can have at most one; setting it on
+   * an employee clears it from whoever previously held it in the same
+   * company. Lets a legitimately manager-less top executive be excluded
+   * from the "employees with no manager assigned" count/list (§5/§11/§12
+   * of the Organization Chart spec) instead of showing up as an apparent
+   * data-quality gap. Optional/undefined (= false) for every employee
+   * created before this field existed. */
+  isTopExecutive?: boolean
   workSchedule: string
   workLocationType: WorkLocationType
   workLocation: string
@@ -447,6 +461,7 @@ export function toListItem(profile: EmployeeProfile): EmployeeListItem {
     managerId: profile.employment.managerId,
     managerName: profile.employment.managerName,
     probationEndDate: profile.employment.probationEndDate,
+    isTopExecutive: profile.employment.isTopExecutive,
     employmentType: profile.employment.employmentType,
     employmentStatus: profile.employmentStatus,
     hireDate: profile.employment.hireDate,
