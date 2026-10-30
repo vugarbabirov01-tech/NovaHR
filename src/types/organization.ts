@@ -21,6 +21,11 @@ export interface OrganizationTreeNode {
  * each owns its own state. */
 export interface OrganizationChartFilters {
   company: string
+  /** A real Branch id (or ALL_VALUE) — NOT a display name. Employees can
+   * share a branch NAME across different companies (two offices both
+   * called "Baş Ofis"), so matching by id is what keeps those from being
+   * conflated; see employeeMatches in filter-tree.ts for the actual
+   * comparison, against employment.branchId. */
   branch: string
   department: string
   position: string
@@ -30,15 +35,13 @@ export interface OrganizationChartFilters {
 
 /** The real Company/Branch master-data catalog (Administration module,
  * src/repositories/company-repository.ts + branch-repository.ts) — NOT
- * derived from employees.map(e => e.company/e.branch), which is what the
- * Company/Branch filter used to do and is why Branch silently never worked:
- * every real employee's employment.branch is still an empty string (no
- * import/wizard flow has ever populated it), so deriving branch options
- * from employee data alone always produced zero options. company/branch
- * filter VALUES still match against employment.company/employment.branch's
- * plain display-name strings (same convention Department/Position already
- * use) — only the option LIST now comes from the real catalog, scoped by
- * companyId so a Branch dropdown never shows another company's branches. */
+ * derived from employees.map(e => e.company/e.branch). Company's filter
+ * VALUE is still the plain display-name string (same convention Department/
+ * Position already use) — only its option LIST comes from the real
+ * catalog. Branch's filter VALUE is the real id (see OrganizationChartFilters.
+ * branch's own doc comment) now that employees actually carry a branchId
+ * (src/repositories/branch-repository.ts) — scoped by companyId so a Branch
+ * dropdown never shows another company's branches. */
 export interface OrganizationCompanyOption {
   id: string
   name: string

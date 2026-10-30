@@ -5,9 +5,10 @@ import { PageTitle } from "@/components/common/page-title"
 import { OrganizationView } from "@/components/organization/organization-view"
 import { findAllEmployees } from "@/repositories/employee-repository"
 import { findActiveCompanies } from "@/repositories/company-repository"
-import { findActiveBranches } from "@/repositories/branch-repository"
+import { findAllBranches } from "@/repositories/branch-repository"
 import { toListItem } from "@/types/employee-profile"
 import { buildOrganizationTree } from "@/lib/organization/build-tree"
+import { toBranchesById } from "@/lib/employees"
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -37,18 +38,26 @@ export default async function OrganizationPage({ params }: Props) {
 
   const t = await getTranslations("Pages.organization")
 
-  const [employeeProfiles, companyRows, branchRows] = await Promise.all([
+  const [employeeProfiles, companyRows, allBranchRows] = await Promise.all([
     findAllEmployees(),
     findActiveCompanies(),
-    findActiveBranches(),
+    findAllBranches(),
   ])
-  const employees = employeeProfiles.map(toListItem)
+  // Resolution (an employee's branchId -> current display name) uses every
+  // branch, active or archived — an employee doesn't lose their recorded
+  // workplace just because Administration later archived that Branch
+  // record. The Branch FILTER's own options stay active-only below, same as
+  // Company's.
+  const branchesById = toBranchesById(allBranchRows)
+  const employees = employeeProfiles.map((profile) => toListItem(profile, branchesById))
   const tree = buildOrganizationTree(employees)
   const managerNames = Array.from(
     new Set(employees.map((employee) => employee.managerName).filter((name): name is string => Boolean(name)))
   ).sort()
   const companies = companyRows.map((company) => ({ id: company.id, name: company.name }))
-  const branches = branchRows.map((branch) => ({ id: branch.id, name: branch.name, companyId: branch.companyId }))
+  const branches = allBranchRows
+    .filter((branch) => branch.active)
+    .map((branch) => ({ id: branch.id, name: branch.name, companyId: branch.companyId }))
 
   return (
     <div className="flex flex-col gap-6">

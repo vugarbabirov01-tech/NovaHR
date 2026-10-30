@@ -16,6 +16,10 @@ import type { EmployeeProfile, EmploymentHistoryEventType } from "@/types/employ
 
 interface EmploymentTabProps {
   profile: EmployeeProfile
+  /** employment.branchId resolved to the Branch's current name, or the raw
+   * employment.workLocation text when there's no linked branch — see
+   * EmployeeProfileTabs' own doc comment. */
+  resolvedWorkLocation: string
 }
 
 const historyIcons: Record<EmploymentHistoryEventType, typeof Briefcase> = {
@@ -29,7 +33,7 @@ const historyIcons: Record<EmploymentHistoryEventType, typeof Briefcase> = {
   rehire: Briefcase,
 }
 
-export function EmploymentTab({ profile }: EmploymentTabProps) {
+export function EmploymentTab({ profile, resolvedWorkLocation }: EmploymentTabProps) {
   const t = useTranslations("Employees.profile.employment")
   const tTabs = useTranslations("Employees.profile.tabs")
   const tType = useTranslations("EmploymentType")
@@ -74,7 +78,7 @@ export function EmploymentTab({ profile }: EmploymentTabProps) {
               label={t("workLocationType")}
               value={tLocation(workLocationTypeMessageKeys[employment.workLocationType])}
             />
-            <InfoField label={t("workLocation")} value={employment.workLocation} />
+            <InfoField label={t("workLocation")} value={resolvedWorkLocation} />
             <InfoField label={t("manager")} value={employment.managerName} />
             <InfoField label={t("workSchedule")} value={employment.workSchedule} />
           </InfoGrid>

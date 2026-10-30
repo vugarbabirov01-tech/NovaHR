@@ -7,7 +7,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server"
 import { ProfileHeader } from "@/components/employees/profile/profile-header"
 import { EmployeeProfileTabs } from "@/components/employees/profile/employee-profile-tabs"
 import { findAllEmployees, findEmployeeById } from "@/repositories/employee-repository"
-import { getFullName } from "@/lib/employees"
+import { findAllBranches } from "@/repositories/branch-repository"
+import { getFullName, toBranchesById } from "@/lib/employees"
 import { resolveWorkStatus } from "@/lib/employee-work-status"
 import { loadWorkStatusContext } from "@/lib/employee-work-status-loader"
 import { buildManagerChain } from "@/lib/organization/build-tree"
@@ -47,8 +48,16 @@ export default async function EmployeeProfilePage({ params, searchParams }: Prop
   // Same real employee.managerId chain the Organization Chart page builds
   // from — one extra findAllEmployees() call (not per-ancestor), reused
   // here purely to trace this one employee's reporting line upward.
-  const allEmployees = (await findAllEmployees()).map(toListItem)
+  const [allEmployeeProfiles, branches] = await Promise.all([findAllEmployees(), findAllBranches()])
+  const branchesById = toBranchesById(branches)
+  const allEmployees = allEmployeeProfiles.map((profile) => toListItem(profile, branchesById))
   const managerChain = buildManagerChain(id, allEmployees)
+  // The Employment tab's "İş Yeri" — resolved the same way the list/card
+  // view is, so a Branch rename shows up here too without rewriting this
+  // employee's own record.
+  const resolvedWorkLocation = employee.employment.branchId
+    ? branchesById.get(employee.employment.branchId)?.name ?? employee.employment.workLocation
+    : employee.employment.workLocation
 
   const backHref = returnTo && returnTo.startsWith("/employees") ? returnTo : "/employees"
 
@@ -62,7 +71,11 @@ export default async function EmployeeProfilePage({ params, searchParams }: Prop
           </div>
         }
       >
-        <EmployeeProfileTabs profile={employee} managerChain={managerChain} />
+        <EmployeeProfileTabs
+          profile={employee}
+          managerChain={managerChain}
+          resolvedWorkLocation={resolvedWorkLocation}
+        />
       </Suspense>
     </div>
   )

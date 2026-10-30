@@ -25,6 +25,7 @@ export interface EmployeeEditableFields {
   department: string
   position: string
   branch: string
+  branchId?: string
   company: string
   managerId?: string
   managerName?: string
@@ -52,6 +53,7 @@ export function extractEditableFields(profile: EmployeeProfile): EmployeeEditabl
     department: profile.employment.department,
     position: profile.employment.position,
     branch: profile.employment.branch,
+    branchId: profile.employment.branchId,
     company: profile.employment.company,
     managerId: profile.employment.managerId,
     managerName: profile.employment.managerName,
@@ -140,6 +142,7 @@ export function applyEditableFields(
       department: next.department,
       position: next.position,
       branch: next.branch,
+      branchId: next.branchId,
       company: next.company,
       managerId: next.managerId,
       managerName: next.managerName,

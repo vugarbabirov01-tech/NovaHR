@@ -114,6 +114,18 @@ export function buildManagerChain(employeeId: string, employees: EmployeeListIte
     .filter((node): node is OrganizationTreeNode => node !== undefined)
 }
 
+/** The single node for `employeeId` within `nodes`, or null if it isn't
+ * there — used by the Chart's focus mode to resolve a focused employee back
+ * to their own subtree without re-walking managerId chains by hand. */
+export function findNodeById(nodes: OrganizationTreeNode[], employeeId: string): OrganizationTreeNode | null {
+  for (const node of nodes) {
+    if (node.employee.id === employeeId) return node
+    const found = findNodeById(node.children, employeeId)
+    if (found) return found
+  }
+  return null
+}
+
 /** employeeId -> the chain of ancestor ids from the root down to (but not
  * including) that employee — what Search/Filter expand along to reveal a
  * match. Built once per tree, alongside the flattened list. */

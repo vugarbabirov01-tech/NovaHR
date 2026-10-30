@@ -28,7 +28,7 @@ export function employeeMatches(
   filters: OrganizationChartFilters
 ): boolean {
   if (filters.company !== ALL_VALUE && employee.company !== filters.company) return false
-  if (filters.branch !== ALL_VALUE && employee.branch !== filters.branch) return false
+  if (filters.branch !== ALL_VALUE && employee.branchId !== filters.branch) return false
   if (filters.department !== ALL_VALUE && employee.department !== filters.department) return false
   if (filters.position !== ALL_VALUE && employee.position !== filters.position) return false
   if (filters.manager !== ALL_VALUE && employee.managerName !== filters.manager) return false

@@ -216,3 +216,11 @@ export function countBy<T>(items: T[], selector: (item: T) => string | undefined
   return counts
 }
 
+/** The id -> name lookup toListItem's branchesById param expects — built
+ * once per page from whichever Branch rows that page already fetched, so
+ * every toListItem(profile, ...) call in a loop shares the same map instead
+ * of each rebuilding it. */
+export function toBranchesById(branches: { id: string; name: string }[]): Map<string, { name: string }> {
+  return new Map(branches.map((branch) => [branch.id, { name: branch.name }]))
+}
+

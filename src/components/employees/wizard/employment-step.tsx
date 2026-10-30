@@ -12,10 +12,12 @@ import { MasterDataQuickActions } from "@/components/employees/wizard/master-dat
 import { AddDepartmentDialog } from "@/components/master-data/add-department-dialog"
 import { PositionFormDialog } from "@/components/master-data/position-form-dialog"
 import { CompanyFormDialog } from "@/components/master-data/company-form-dialog"
+import { BranchFormDialog } from "@/components/master-data/branch-form-dialog"
 import { WorkScheduleFormDialog } from "@/components/master-data/work-schedule-form-dialog"
 import { createDepartmentAction } from "@/app/[locale]/(app)/departments/actions"
 import { createPositionAction } from "@/app/[locale]/(app)/positions/actions"
 import { createCompanyAction } from "@/app/[locale]/(app)/companies/actions"
+import { createBranchAction } from "@/app/[locale]/(app)/branches/actions"
 import { createWorkScheduleAction } from "@/app/[locale]/(app)/work-schedules/actions"
 import { CUSTOM_WORK_SCHEDULE_ID } from "@/lib/employee-wizard-mapper"
 import {
@@ -29,6 +31,7 @@ import type { WizardMasterData } from "@/lib/employee-wizard-mapper"
 import type { DepartmentInput } from "@/repositories/department-repository"
 import type { PositionInput } from "@/repositories/position-repository"
 import type { CompanyInput } from "@/repositories/company-repository"
+import type { BranchInput } from "@/repositories/branch-repository"
 import type { WorkScheduleInput } from "@/repositories/work-schedule-repository"
 
 interface StepProps {
@@ -40,10 +43,11 @@ interface StepProps {
   onAddDepartment: (department: WizardMasterData["departments"][number]) => void
   onAddPosition: (position: WizardMasterData["positions"][number]) => void
   onAddCompany: (company: WizardMasterData["companies"][number]) => void
+  onAddBranch: (branch: WizardMasterData["branches"][number]) => void
   onAddWorkSchedule: (schedule: WizardMasterData["workSchedules"][number]) => void
 }
 
-type QuickCreateEntity = "department" | "position" | "company" | "workSchedule"
+type QuickCreateEntity = "department" | "position" | "company" | "branch" | "workSchedule"
 
 export function EmploymentStep({
   data,
@@ -54,6 +58,7 @@ export function EmploymentStep({
   onAddDepartment,
   onAddPosition,
   onAddCompany,
+  onAddBranch,
   onAddWorkSchedule,
 }: StepProps) {
   const t = useTranslations("Employees.profile.employment")
@@ -70,9 +75,13 @@ export function EmploymentStep({
   // The Quick Create modals below are the one exception: they call the
   // exact same Server Actions Administration uses, then append the result
   // to this snapshot so the Select updates without a page refresh.
-  const { departments, positions, companies, workSchedules, managers } = masterData
+  const { departments, positions, companies, branches, workSchedules, managers } = masterData
 
   const availablePositions = positions.filter((position) => position.departmentId === data.departmentId)
+  // Scoped the same way Position is scoped under Department — a branch
+  // belongs to exactly one company, so offering every company's branches
+  // regardless of which one is selected would let HR pick a mismatched pair.
+  const availableBranches = branches.filter((branch) => branch.companyId === data.companyId)
   const isCustomSchedule = data.scheduleId === CUSTOM_WORK_SCHEDULE_ID
 
   const [activeDialog, setActiveDialog] = useState<QuickCreateEntity | null>(null)
@@ -122,7 +131,24 @@ export function EmploymentStep({
       const result = await createCompanyAction(input)
       if (result.success && result.data) {
         onAddCompany({ id: result.data.id, name: result.data.name })
-        onChange({ companyId: result.data.id })
+        // Changing company resets branchId the same way the Select's own
+        // onValueChange below does — a freshly created company starts with
+        // no branch selected rather than keeping a now-mismatched one.
+        onChange({ companyId: result.data.id, branchId: "" })
+        closeQuickCreate()
+      } else {
+        setQuickCreateError(result.error ?? tCommon("genericError"))
+      }
+    })
+  }
+
+  function handleCreateBranch(input: BranchInput) {
+    setQuickCreateError(null)
+    startCreateTransition(async () => {
+      const result = await createBranchAction(input)
+      if (result.success && result.data) {
+        onAddBranch({ id: result.data.id, name: result.data.name, companyId: result.data.companyId })
+        onChange({ branchId: result.data.id })
         closeQuickCreate()
       } else {
         setQuickCreateError(result.error ?? tCommon("genericError"))
@@ -259,7 +285,13 @@ export function EmploymentStep({
               id="companyId"
               className="flex-1"
               value={data.companyId}
-              onValueChange={(companyId) => onChange({ companyId })}
+              onValueChange={(companyId) => {
+                // A branch belongs to exactly one company — switching
+                // company has to drop a branchId that no longer applies,
+                // same as Position under Department above.
+                const stillValid = branches.some((b) => b.id === data.branchId && b.companyId === companyId)
+                onChange({ companyId, branchId: stillValid ? data.branchId : "" })
+              }}
               options={companies.map((company) => ({ value: company.id, label: company.name }))}
               placeholder={tCommon("selectPlaceholder")}
               searchPlaceholder={tCommon("searchPlaceholder")}
@@ -270,6 +302,28 @@ export function EmploymentStep({
               manageHref="/companies"
               addLabel={tWizard("quickCreate.addTooltip", { entity: t("company") })}
               manageLabel={tWizard("quickCreate.manageTooltip", { entity: t("company") })}
+            />
+          </div>
+        </Field>
+        <Field label={t("branch")} htmlFor="branchId">
+          <div className="flex items-center gap-1.5">
+            <SearchableSelect
+              id="branchId"
+              className="flex-1"
+              value={data.branchId}
+              onValueChange={(branchId) => onChange({ branchId })}
+              options={availableBranches.map((branch) => ({ value: branch.id, label: branch.name }))}
+              placeholder={data.companyId ? tCommon("selectPlaceholder") : t("selectCompanyFirst")}
+              searchPlaceholder={tCommon("searchPlaceholder")}
+              emptyText={tCommon("noResults")}
+              disabled={!data.companyId}
+            />
+            <MasterDataQuickActions
+              onAdd={() => setActiveDialog("branch")}
+              manageHref="/branches"
+              addLabel={tWizard("quickCreate.addTooltip", { entity: t("branch") })}
+              manageLabel={tWizard("quickCreate.manageTooltip", { entity: t("branch") })}
+              disabled={!data.companyId}
             />
           </div>
         </Field>
@@ -284,13 +338,6 @@ export function EmploymentStep({
               label: tLocation(workLocationTypeMessageKeys[type]),
             }))}
             placeholder={tCommon("selectPlaceholder")}
-          />
-        </Field>
-        <Field label={t("workLocation")} htmlFor="workLocation">
-          <Input
-            id="workLocation"
-            value={data.workLocation}
-            onChange={(e) => onChange({ workLocation: e.target.value })}
           />
         </Field>
 
@@ -359,6 +406,14 @@ export function EmploymentStep({
         onOpenChange={(open) => !open && closeQuickCreate()}
         onSubmit={handleCreateCompany}
         isSaving={isCreating}
+      />
+      <BranchFormDialog
+        open={activeDialog === "branch"}
+        onOpenChange={(open) => !open && closeQuickCreate()}
+        onSubmit={handleCreateBranch}
+        isSaving={isCreating}
+        companies={companies}
+        defaultCompanyId={data.companyId}
       />
       <WorkScheduleFormDialog
         open={activeDialog === "workSchedule"}

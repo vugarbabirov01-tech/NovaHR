@@ -6,9 +6,11 @@ import { getTranslations, setRequestLocale } from "next-intl/server"
 import { PageTitle } from "@/components/common/page-title"
 import { EmployeeListClient } from "@/components/employees/employee-list-client"
 import { findAllEmployees } from "@/repositories/employee-repository"
+import { findAllBranches } from "@/repositories/branch-repository"
 import { toListItem } from "@/types/employee-profile"
 import { resolveWorkStatus, type WorkStatus } from "@/lib/employee-work-status"
 import { loadWorkStatusContext } from "@/lib/employee-work-status-loader"
+import { toBranchesById } from "@/lib/employees"
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -27,7 +29,9 @@ export default async function EmployeesPage({ params }: Props) {
   setRequestLocale(locale)
 
   const t = await getTranslations("Employees.list")
-  const employees = (await findAllEmployees()).map(toListItem)
+  const [employeeProfiles, branches] = await Promise.all([findAllEmployees(), findAllBranches()])
+  const branchesById = toBranchesById(branches)
+  const employees = employeeProfiles.map((profile) => toListItem(profile, branchesById))
 
   // One fetch for every employee's current work status, instead of one
   // per row — see loadWorkStatusContext's own doc comment. Plain Record,

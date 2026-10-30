@@ -42,7 +42,7 @@ export default async function DashboardPage({ params }: Props) {
   const recentEmployees = [...employees]
     .sort((a, b) => new Date(b.employment.hireDate).getTime() - new Date(a.employment.hireDate).getTime())
     .slice(0, 5)
-    .map(toListItem)
+    .map((profile) => toListItem(profile))
   const workStatusContext = await loadWorkStatusContext()
   const recentEmployeesWorkStatus: Record<string, WorkStatus> = {}
   for (const employee of recentEmployees) {

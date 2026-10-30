@@ -54,7 +54,7 @@ export function OrgChartFilters({ employees, managerNames, companies, branches, 
   const counts = useMemo(
     () => ({
       company: countBy(employees, (e) => e.company),
-      branch: countBy(employees, (e) => e.branch),
+      branch: countBy(employees, (e) => e.branchId),
       department: countBy(employees, (e) => e.department),
       position: countBy(employees, (e) => e.position),
       manager: countBy(employees, (e) => e.managerName),
@@ -69,10 +69,11 @@ export function OrgChartFilters({ employees, managerNames, companies, branches, 
     [companies]
   )
 
+  const branchNameById = useMemo(() => new Map(branches.map((b) => [b.id, b.name])), [branches])
   const selectedCompanyId = filters.company === ALL_VALUE ? null : (companyByName.get(filters.company) ?? null)
   const branchOptions = useMemo(() => {
     const scoped = selectedCompanyId ? branches.filter((b) => b.companyId === selectedCompanyId) : branches
-    return uniqueSorted(scoped.map((b) => b.name))
+    return scoped.slice().sort((a, b) => a.name.localeCompare(b.name))
   }, [branches, selectedCompanyId])
 
   const departmentOptions = useMemo(() => uniqueSorted(employees.map((e) => e.department)), [employees])
@@ -95,8 +96,8 @@ export function OrgChartFilters({ employees, managerNames, companies, branches, 
     const nextCompany = value ?? ALL_VALUE
     const nextCompanyId = nextCompany === ALL_VALUE ? null : (companyByName.get(nextCompany) ?? null)
     const nextScopedBranches = nextCompanyId ? branches.filter((b) => b.companyId === nextCompanyId) : branches
-    const validBranchNames = new Set(nextScopedBranches.map((b) => b.name))
-    const nextBranch = filters.branch !== ALL_VALUE && !validBranchNames.has(filters.branch) ? ALL_VALUE : filters.branch
+    const validBranchIds = new Set(nextScopedBranches.map((b) => b.id))
+    const nextBranch = filters.branch !== ALL_VALUE && !validBranchIds.has(filters.branch) ? ALL_VALUE : filters.branch
     onChange({ ...filters, company: nextCompany, branch: nextBranch })
   }
 
@@ -144,13 +145,15 @@ export function OrgChartFilters({ employees, managerNames, companies, branches, 
           <Field label={t("branch")}>
             <Select value={filters.branch} onValueChange={(v) => set("branch", v)}>
               <SelectTrigger className="w-full">
-                <SelectValue>{(value: string) => (value === ALL_VALUE ? t("allBranches") : value)}</SelectValue>
+                <SelectValue>
+                  {(value: string) => (value === ALL_VALUE ? t("allBranches") : branchNameById.get(value) ?? value)}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL_VALUE}>{t("allBranches")}</SelectItem>
                 {branchOptions.map((b) => (
-                  <SelectItem key={b} value={b}>
-                    {b} ({counts.branch[b] ?? 0})
+                  <SelectItem key={b.id} value={b.id}>
+                    {b.name} ({counts.branch[b.id] ?? 0})
                   </SelectItem>
                 ))}
               </SelectContent>

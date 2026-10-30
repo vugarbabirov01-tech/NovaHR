@@ -46,6 +46,9 @@ next-env.d.ts
 dev.db
 dev.db-journal
 
+# local DB backups (contain real data, taken before migrations)
+/backups/
+
 # local document storage (LocalFileStorageProvider) — dev state, not source
 /storage/
 

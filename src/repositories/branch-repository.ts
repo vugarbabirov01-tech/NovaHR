@@ -71,3 +71,15 @@ export function archiveBranch(id: string): Promise<BranchModel> {
 export function restoreBranch(id: string): Promise<BranchModel> {
   return prisma.branch.update({ where: { id }, data: { active: true } })
 }
+
+/** Permanent removal — unlike archive, this can't be undone. The caller
+ * (deleteBranchAction) is responsible for confirming no employee is still
+ * assigned to this branch first (Employee.employment.branchId is a plain
+ * string, not a live relation — see employee-profile.ts's own doc comment
+ * on why). LeavePolicy/LeaveRequest/Holiday DO hold a real @relation to
+ * Branch, so Prisma itself rejects this if any of those still reference it,
+ * same safety net Department/Position already rely on for their own
+ * real FKs. */
+export function deleteBranch(id: string): Promise<BranchModel> {
+  return prisma.branch.delete({ where: { id } })
+}

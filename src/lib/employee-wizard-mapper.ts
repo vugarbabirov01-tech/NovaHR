@@ -125,12 +125,17 @@ export function wizardDataToProfile(data: EmployeeWizardData, masterData: Wizard
       position: positionTitle,
       grade: "",
       branch: branch?.name ?? "",
+      branchId: branch?.id || undefined,
       company: companyName,
       managerId: data.managerId || undefined,
       managerName: manager?.name || undefined,
       workSchedule: workScheduleLabel,
       workLocationType: data.workLocationType || "on-site",
-      workLocation: data.workLocation,
+      // The branch select is the one UI entry point for this now — falls
+      // back to whatever free-text value an employee already had (pre-
+      // migration records, or a branch that was since deleted) rather than
+      // ever blanking it out.
+      workLocation: branch?.name || data.workLocation,
       history: [
         {
           id: `EH-${id}-1`,
@@ -249,9 +254,11 @@ export function profileToWizardData(
     (p) => p.title === profile.employment.position && (!department || p.departmentId === department.id)
   )
   const company = masterData.companies.find((c) => c.name === profile.employment.company)
-  const branch = masterData.branches.find(
-    (b) => b.name === profile.employment.branch && (!company || b.companyId === company.id)
-  )
+  const branch = profile.employment.branchId
+    ? masterData.branches.find((b) => b.id === profile.employment.branchId)
+    : masterData.branches.find(
+        (b) => b.name === profile.employment.branch && (!company || b.companyId === company.id)
+      )
   const schedule = masterData.workSchedules.find((s) => s.label === profile.employment.workSchedule)
 
   return {

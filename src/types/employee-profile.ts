@@ -109,6 +109,11 @@ export interface EmployeeListItem {
   department: string
   position: string
   branch: string
+  /** The real Branch master-data record this employee is assigned to, when
+   * one has been linked (see src/repositories/branch-repository.ts). Plain
+   * string, not a live Prisma relation — same convention as managerId —
+   * since Employee has no @relation to Branch in schema.prisma either. */
+  branchId?: string
   workLocation: string
   managerId?: string
   managerName?: string
@@ -148,7 +153,18 @@ export interface EmployeeEmployment {
   department: string
   position: string
   grade: string
+  /** Denormalized display name, resolved once at save time from branchId
+   * below — same convention as department/position/company. Kept for
+   * consistency/audit, never the source of truth for display: a renamed
+   * Branch is picked up live by resolving branchId against the current
+   * Branch catalog (see toListItem's branchesById param), with this string
+   * only as the fallback when branchId doesn't resolve (unlinked employee,
+   * or the branch record was deleted). */
   branch: string
+  /** The real Branch this employee is assigned to — see
+   * EmployeeListItem.branchId's own doc comment for why this is a plain
+   * string, not a live relation. */
+  branchId?: string
   company: string
   managerId?: string
   managerName?: string
@@ -442,7 +458,25 @@ export interface EmployeeProfile {
   quickStats: EmployeeQuickStats
 }
 
-export function toListItem(profile: EmployeeProfile): EmployeeListItem {
+/**
+ * `branchesById` is an optional live Branch-catalog lookup (id -> name) —
+ * when the profile's employment.branchId resolves against it, `workLocation`
+ * below is the branch's CURRENT name rather than whatever was denormalized
+ * at save time, so renaming a Branch in Administration is reflected on every
+ * employee card/filter immediately, without rewriting any employee row. No
+ * match (no branchId, or the branch was deleted) falls back to the raw
+ * employment.workLocation text — never an empty field. Every call site maps
+ * a whole employee list at once, so it's worth fetching branches ONCE per
+ * page and reusing the same map across every toListItem call, not refetching
+ * per employee. */
+export function toListItem(
+  profile: EmployeeProfile,
+  branchesById?: Map<string, { name: string }>
+): EmployeeListItem {
+  const resolvedBranchName = profile.employment.branchId
+    ? branchesById?.get(profile.employment.branchId)?.name
+    : undefined
+
   return {
     id: profile.id,
     employeeNumber: profile.employment.employeeNumber,
@@ -457,7 +491,8 @@ export function toListItem(profile: EmployeeProfile): EmployeeListItem {
     department: profile.employment.department,
     position: profile.employment.position,
     branch: profile.employment.branch,
-    workLocation: profile.employment.workLocation,
+    branchId: profile.employment.branchId,
+    workLocation: resolvedBranchName ?? profile.employment.workLocation,
     managerId: profile.employment.managerId,
     managerName: profile.employment.managerName,
     probationEndDate: profile.employment.probationEndDate,

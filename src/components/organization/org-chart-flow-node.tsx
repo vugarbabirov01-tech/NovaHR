@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react"
 import { useTranslations } from "next-intl"
-import { ChevronDown, ChevronRight, Crown, MoreVertical, UserCog } from "lucide-react"
+import { ChevronDown, ChevronRight, Crown, Focus, MoreVertical, UserCog } from "lucide-react"
 
 import { Link, useRouter } from "@/i18n/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -25,6 +25,11 @@ import type { EmployeeListItem } from "@/types/employee-profile"
 export interface OrgChartFlowNodeFlowData extends OrgChartNodeData {
   employees: EmployeeListItem[]
   onToggle: (employeeId: string) => void
+  /** Opens OrgChartCanvas's focus mode on this node — always offered when
+   * the node has reports (§9: clicking a manager can always drop into
+   * "this manager's structure" view), and the ONLY option offered at all
+   * once exceedsInlineFanout is true, since inline expansion is capped. */
+  onFocus: (employeeId: string) => void
 }
 
 export type OrgChartFlowNodeType = Node<OrgChartFlowNodeFlowData, "orgChartNode">
@@ -41,8 +46,8 @@ export type OrgChartFlowNodeType = Node<OrgChartFlowNodeFlowData, "orgChartNode"
 export function OrgChartFlowNode({ data }: NodeProps<OrgChartFlowNodeType>) {
   const t = useTranslations("OrganizationChart")
   const router = useRouter()
-  const { node, hasChildren, isExpanded, isMatch, employees, onToggle } = data
-  const { employee, children } = node
+  const { node, hasChildren, isExpanded, isMatch, exceedsInlineFanout, employees, onToggle, onFocus } = data
+  const { employee, children, descendantCount } = node
   const [isChangeManagerOpen, setIsChangeManagerOpen] = useState(false)
   const [isTogglingTopExecutive, setIsTogglingTopExecutive] = useState(false)
   // "Ad Soyad" — same getFullName(employee) OrgChartNode (the List view's
@@ -92,38 +97,59 @@ export function OrgChartFlowNode({ data }: NodeProps<OrgChartFlowNodeType>) {
           </div>
         </Link>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={<Button variant="ghost" size="icon-sm" className="nodrag nopan shrink-0" />}
-          >
-            <MoreVertical className="size-3.5" strokeWidth={1.75} />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setIsChangeManagerOpen(true)}>
-              <UserCog className="size-3.5" strokeWidth={1.75} />
-              {t("changeManager.menuLabel")}
-            </DropdownMenuItem>
-            {!employee.managerId ? (
-              <DropdownMenuItem onClick={handleToggleTopExecutive} disabled={isTogglingTopExecutive}>
-                <Crown className="size-3.5" strokeWidth={1.75} />
-                {employee.isTopExecutive ? t("unassigned.unsetTopExecutive") : t("unassigned.setTopExecutive")}
+        <div className="nodrag nopan flex shrink-0 items-center gap-0.5">
+          {hasChildren ? (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("focusOn", { name: fullName })}
+              onClick={() => onFocus(employee.id)}
+            >
+              <Focus className="size-3.5" strokeWidth={1.75} />
+            </Button>
+          ) : null}
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+              <MoreVertical className="size-3.5" strokeWidth={1.75} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setIsChangeManagerOpen(true)}>
+                <UserCog className="size-3.5" strokeWidth={1.75} />
+                {t("changeManager.menuLabel")}
               </DropdownMenuItem>
-            ) : null}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              {!employee.managerId ? (
+                <DropdownMenuItem onClick={handleToggleTopExecutive} disabled={isTogglingTopExecutive}>
+                  <Crown className="size-3.5" strokeWidth={1.75} />
+                  {employee.isTopExecutive ? t("unassigned.unsetTopExecutive") : t("unassigned.setTopExecutive")}
+                </DropdownMenuItem>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {children.length > 0 ? (
-        <Badge
-          variant="secondary"
-          className="w-fit tabular-nums"
-          aria-label={t("directReports", { count: children.length })}
-        >
-          +{children.length}
-        </Badge>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge variant="secondary" className="tabular-nums">
+            {t("directReports", { count: children.length })}
+          </Badge>
+          <Badge variant="outline" className="tabular-nums">
+            {t("totalReports", { count: descendantCount })}
+          </Badge>
+        </div>
       ) : null}
 
-      {hasChildren ? (
+      {exceedsInlineFanout ? (
+        <Button
+          variant="outline"
+          size="sm"
+          className="nodrag nopan mt-1 w-full"
+          onClick={() => onFocus(employee.id)}
+        >
+          <Focus className="size-3.5" strokeWidth={1.75} />
+          {t("viewInFocus", { count: children.length })}
+        </Button>
+      ) : hasChildren ? (
         <button
           type="button"
           onClick={() => onToggle(employee.id)}

@@ -25,6 +25,11 @@ interface EmployeeProfileTabsProps {
    * once, server-side, in page.tsx and only ever consumed by OverviewTab's
    * Organizational Hierarchy card. */
   managerChain: OrganizationTreeNode[]
+  /** employment.branchId resolved against the live Branch catalog (falls
+   * back to the raw employment.workLocation text) — computed server-side
+   * in page.tsx since that's where the Branch list is fetched, and handed
+   * straight through to EmploymentTab. */
+  resolvedWorkLocation: string
 }
 
 const tabKeys = [
@@ -47,7 +52,7 @@ function isTabKey(value: string | null): value is TabKey {
   return tabKeys.includes(value as TabKey)
 }
 
-export function EmployeeProfileTabs({ profile, managerChain }: EmployeeProfileTabsProps) {
+export function EmployeeProfileTabs({ profile, managerChain, resolvedWorkLocation }: EmployeeProfileTabsProps) {
   const t = useTranslations("Employees.profile.tabs")
   const searchParams = useSearchParams()
   const requestedTab = searchParams.get("tab")
@@ -79,7 +84,7 @@ export function EmployeeProfileTabs({ profile, managerChain }: EmployeeProfileTa
         <OverviewTab profile={profile} managerChain={managerChain} />
       </TabsContent>
       <TabsContent value="employment">
-        <EmploymentTab profile={profile} />
+        <EmploymentTab profile={profile} resolvedWorkLocation={resolvedWorkLocation} />
       </TabsContent>
       <TabsContent value="personal">
         <PersonalTab profile={profile} />

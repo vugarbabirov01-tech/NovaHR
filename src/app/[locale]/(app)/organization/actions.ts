@@ -56,7 +56,7 @@ export async function updateEmployeeManagerAction(
     }
     managerName = getFullName(managerProfile.personal)
 
-    const employees = (await findAllEmployees()).map(toListItem)
+    const employees = (await findAllEmployees()).map((profile) => toListItem(profile))
     const tree = buildOrganizationTree(employees)
     const employeeNode = flattenOrganizationTree(tree).find((node) => node.employee.id === employeeId)
     const isDescendant = employeeNode
@@ -104,7 +104,7 @@ export async function bulkAssignManagerAction(
   const uniqueIds = Array.from(new Set(employeeIds.filter(Boolean)))
   if (uniqueIds.length === 0) return { success: false, error: "no-employees" }
 
-  const employees = (await findAllEmployees()).map(toListItem)
+  const employees = (await findAllEmployees()).map((profile) => toListItem(profile))
   const byId = new Map(employees.map((employee) => [employee.id, employee]))
 
   let managerName: string | undefined
