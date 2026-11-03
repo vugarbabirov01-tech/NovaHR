@@ -5,9 +5,14 @@ import type { LeaveRequestLifecycleStatus, LeaveUnit } from "@/generated/prisma/
 export type { LeaveRequestModel as LeaveRequest }
 
 /** createLeaveRequest creates a request in whatever status it's given
- * (default DRAFT) — Phase 3B's submission flow passes PENDING_APPROVAL and
- * sets submittedAt; nothing here transitions a request's status after
- * creation on its own. See updateLeaveRequestDecision below for that. */
+ * (default DRAFT) — HR-entered leave is created straight into APPROVED
+ * (see submitLeaveRequestAction; leave no longer goes through a separate
+ * PENDING_APPROVAL decision step), with decidedBy/decidedAt passed
+ * alongside status in the same call so the request is never persisted in
+ * an inconsistent "APPROVED but never decided" state between two writes.
+ * Nothing here transitions a request's status after creation on its own —
+ * see updateLeaveRequestDecision below for that (still used by
+ * cancelLeaveRequest). */
 export interface LeaveRequestInput {
   employeeId: string
   leaveTypeId: string
@@ -22,6 +27,8 @@ export interface LeaveRequestInput {
   leavePeriodStartYear?: number | null
   reason?: string | null
   status?: LeaveRequestLifecycleStatus
+  decidedBy?: string
+  decidedAt?: Date
 }
 
 export function findLeaveRequestsByEmployee(employeeId: string): Promise<LeaveRequestModel[]> {
@@ -36,8 +43,11 @@ export function findAllLeaveRequests(): Promise<LeaveRequestModel[]> {
   return prisma.leaveRequest.findMany({ orderBy: { createdAt: "desc" } })
 }
 
-export function findLeaveRequestById(id: string): Promise<LeaveRequestModel | null> {
-  return prisma.leaveRequest.findUnique({ where: { id } })
+export function findLeaveRequestById(
+  id: string,
+  client: PrismaClientOrTransaction = prisma
+): Promise<LeaveRequestModel | null> {
+  return client.leaveRequest.findUnique({ where: { id } })
 }
 
 /** Used by the Employee bulk-delete cascade to find which requests need
@@ -62,22 +72,29 @@ export function deleteLeaveRequestsByEmployees(
   return client.leaveRequest.deleteMany({ where: { employeeId: { in: employeeIds } } })
 }
 
-export interface PendingRequestedUnitsFilter {
+export interface UpcomingApprovedUnitsFilter {
   employeeId?: string
   leaveTypeId?: string
   /** Filters via the related LeaveType's unit — a request itself doesn't
    * store one (see CurrentlyOnLeaveRow's own mapping in the /leave page). */
   unit?: LeaveUnit
+  asOfDate: Date
 }
 
-/** SUM(requestedUnits) of PENDING_APPROVAL requests — never reduces a
- * ledger-derived balance (submitting writes no ledger row), so this is
- * surfaced as its own figure rather than folded into `remaining`. */
-export async function sumPendingRequestedUnits(filter: PendingRequestedUnitsFilter): Promise<number> {
+/** SUM(requestedUnits) of APPROVED requests whose startDate is still after
+ * asOfDate — leave that's already finalized (its LEAVE_TAKEN ledger entry
+ * is already written, so it's already reflected in `remaining`) but hasn't
+ * started yet. Surfaced as its own figure purely so "what's coming up" has
+ * a visible answer, same as the PENDING_APPROVAL sum this replaced once
+ * creating a leave request stopped being a separate decision from
+ * approving it (see submitLeaveRequestAction) — there's no longer a
+ * not-yet-decided state to sum here. */
+export async function sumUpcomingApprovedUnits(filter: UpcomingApprovedUnitsFilter): Promise<number> {
   const result = await prisma.leaveRequest.aggregate({
     _sum: { requestedUnits: true },
     where: {
-      status: "PENDING_APPROVAL",
+      status: "APPROVED",
+      startDate: { gt: filter.asOfDate },
       ...(filter.employeeId ? { employeeId: filter.employeeId } : {}),
       ...(filter.leaveTypeId ? { leaveTypeId: filter.leaveTypeId } : {}),
       ...(filter.unit ? { leaveType: { unit: filter.unit } } : {}),
@@ -86,9 +103,12 @@ export async function sumPendingRequestedUnits(filter: PendingRequestedUnitsFilt
   return result._sum.requestedUnits ?? 0
 }
 
-export function createLeaveRequest(input: LeaveRequestInput): Promise<LeaveRequestModel> {
+export function createLeaveRequest(
+  input: LeaveRequestInput,
+  client: PrismaClientOrTransaction = prisma
+): Promise<LeaveRequestModel> {
   const status = input.status ?? "DRAFT"
-  return prisma.leaveRequest.create({
+  return client.leaveRequest.create({
     data: {
       employeeId: input.employeeId,
       leaveTypeId: input.leaveTypeId,
@@ -101,6 +121,8 @@ export function createLeaveRequest(input: LeaveRequestInput): Promise<LeaveReque
       reason: input.reason ?? null,
       status,
       submittedAt: status === "DRAFT" ? null : new Date(),
+      decidedBy: input.decidedBy,
+      decidedAt: input.decidedAt,
     },
   })
 }
@@ -120,12 +142,20 @@ export interface LeaveRequestDecisionInput {
  * entry accompanies this). This just persists whatever decision the caller
  * already validated. Undefined fields are omitted from the update (Prisma's
  * own semantics), so approving only touches decidedBy/decidedAt and
- * cancelling only touches cancelledBy/cancelledAt/cancelReason. */
+ * cancelling only touches cancelledBy/cancelledAt/cancelReason.
+ *
+ * Unconditional — the caller already read the row and validated its
+ * current status just before calling this, so for approve/reject (a
+ * single-writer, low-contention path with no live UI calling it today —
+ * see leave-request-actions.ts) that's adequate. cancelLeaveRequest uses
+ * updateLeaveRequestDecisionIfStatusIn below instead, which doesn't have
+ * that read-then-write gap. */
 export function updateLeaveRequestDecision(
   id: string,
-  input: LeaveRequestDecisionInput
+  input: LeaveRequestDecisionInput,
+  client: PrismaClientOrTransaction = prisma
 ): Promise<LeaveRequestModel> {
-  return prisma.leaveRequest.update({
+  return client.leaveRequest.update({
     where: { id },
     data: {
       status: input.status,
@@ -136,4 +166,39 @@ export function updateLeaveRequestDecision(
       cancelReason: input.cancelReason,
     },
   })
+}
+
+/**
+ * Compare-and-swap: only writes if `id`'s CURRENT status is still one of
+ * `expectedStatuses` — returns null (writes nothing) if it's already moved
+ * on, instead of blindly overwriting whatever decision got there first.
+ * This is what makes cancelLeaveRequest safe against two near-simultaneous
+ * cancel calls for the same request (e.g. a double-click that got past the
+ * UI's own disabled-while-pending guard, or two HR users in different
+ * tabs): only one `updateMany` can ever match (SQLite serializes writers,
+ * and this still holds under any isolation level since the match is in the
+ * WHERE clause, not a separate read), so only one of them proceeds to
+ * write the reversing ledger entry — the other sees `null` and the caller
+ * surfaces that as a clear "already changed" error rather than silently
+ * double-reversing the balance.
+ */
+export async function updateLeaveRequestDecisionIfStatusIn(
+  id: string,
+  expectedStatuses: LeaveRequestLifecycleStatus[],
+  input: LeaveRequestDecisionInput,
+  client: PrismaClientOrTransaction = prisma
+): Promise<LeaveRequestModel | null> {
+  const result = await client.leaveRequest.updateMany({
+    where: { id, status: { in: expectedStatuses } },
+    data: {
+      status: input.status,
+      decidedBy: input.decidedBy,
+      decidedAt: input.decidedAt,
+      cancelledBy: input.cancelledBy,
+      cancelledAt: input.cancelledAt,
+      cancelReason: input.cancelReason,
+    },
+  })
+  if (result.count === 0) return null
+  return client.leaveRequest.findUniqueOrThrow({ where: { id } })
 }

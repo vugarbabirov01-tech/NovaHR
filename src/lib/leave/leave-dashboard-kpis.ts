@@ -10,13 +10,15 @@ import type { LeaveRequest } from "@/repositories/leave-request-repository"
  * summarizing data the dashboard was already loading.
  */
 export interface LeaveDashboardKpis {
-  pendingApprovals: number
   employeesOnLeave: number
   startingThisWeek: number
   endingThisWeek: number
   leavesThisMonth: number
+  /** Count of requests created (and, inseparably, approved — see
+   * submitLeaveRequestAction) with decidedAt in the current month. There's
+   * no separate PENDING_APPROVAL stage anymore, so this is "registered
+   * this month", not "a backlog cleared this month". */
   approvedThisMonth: number
-  rejectedThisMonth: number
 }
 
 /** Monday-anchored week, matching this codebase's existing work-week
@@ -76,8 +78,6 @@ export function computeLeaveDashboardKpis(requests: LeaveRequest[], now: Date = 
 
   const approved = requests.filter((r) => r.status === "APPROVED")
 
-  const pendingApprovals = requests.filter((r) => r.status === "PENDING_APPROVAL").length
-
   // Same computation resolveWorkStatus uses per-employee elsewhere — this
   // KPI is just the size of that same map, not a separate "who's on leave"
   // check, so the two can never silently disagree.
@@ -90,17 +90,12 @@ export function computeLeaveDashboardKpis(requests: LeaveRequest[], now: Date = 
   const approvedThisMonth = requests.filter(
     (r) => r.status === "APPROVED" && r.decidedAt && isWithin(r.decidedAt, monthStartLocal, monthEndLocal)
   ).length
-  const rejectedThisMonth = requests.filter(
-    (r) => r.status === "REJECTED" && r.decidedAt && isWithin(r.decidedAt, monthStartLocal, monthEndLocal)
-  ).length
 
   return {
-    pendingApprovals,
     employeesOnLeave,
     startingThisWeek,
     endingThisWeek,
     leavesThisMonth,
     approvedThisMonth,
-    rejectedThisMonth,
   }
 }

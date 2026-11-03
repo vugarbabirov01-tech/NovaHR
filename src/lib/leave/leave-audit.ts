@@ -1,3 +1,4 @@
+import type { PrismaClientOrTransaction } from "@/lib/prisma"
 import { createLeaveAuditLogEntry } from "@/repositories/leave-audit-log-repository"
 
 /**
@@ -40,6 +41,14 @@ export const LeaveAuditAction = {
   HolidayArchived: "holiday.archived",
   HolidayRestored: "holiday.restored",
   LeaveLedgerEntryRecorded: "leave_ledger_entry.recorded",
+  /** HR entering a leave now creates it as APPROVED directly (see
+   * submitLeaveRequestAction) — there's no separate decision step to log,
+   * so this one action covers what used to be two (Submitted, then later
+   * Approved). The old values stay listed below (never removed, since
+   * existing LeaveAuditLogEntry rows already hold them as plain strings
+   * and must keep resolving to real labels), they're just never written
+   * by a new request again. */
+  LeaveRequestCreated: "leave_request.created",
   LeaveRequestSubmitted: "leave_request.submitted",
   LeaveRequestApproved: "leave_request.approved",
   LeaveRequestRejected: "leave_request.rejected",
@@ -62,21 +71,31 @@ export interface RecordLeaveAuditInput {
 }
 
 /**
- * Called by each Phase 1 action right after its write succeeds, inside the
- * same try/catch — so a failed audit write surfaces as a failed action
- * rather than a silent gap in the trail. Not wrapped in a DB transaction
- * with the entity write yet (no repository in this codebase composes across
- * models via prisma.$transaction today); a future phase can tighten that if
- * it becomes a real requirement.
+ * Called right after (or, when `client` is a transaction handle, as part
+ * of) the write it's documenting. Leave request creation and cancellation
+ * (leave-request-decision-service.ts) pass their own `tx` here so the
+ * audit row commits or rolls back atomically with the status change and
+ * ledger entry — see createApprovedLeaveRequest/cancelLeaveRequest for why
+ * that matters (status+ledger+audit must land together or not at all).
+ * Every other Phase 1 action still calls this without a `client`
+ * (defaulting to the top-level `prisma`), right after its own write
+ * succeeds, inside the same try/catch — not itself transactional with that
+ * write, since none of those compose across models yet.
  */
-export function recordLeaveAudit(input: RecordLeaveAuditInput): Promise<unknown> {
-  return createLeaveAuditLogEntry({
-    entityType: input.entityType,
-    entityId: input.entityId,
-    action: input.action,
-    actor: input.actor,
-    field: input.field,
-    oldValue: input.oldValue,
-    newValue: input.newValue,
-  })
+export function recordLeaveAudit(
+  input: RecordLeaveAuditInput,
+  client?: PrismaClientOrTransaction
+): Promise<unknown> {
+  return createLeaveAuditLogEntry(
+    {
+      entityType: input.entityType,
+      entityId: input.entityId,
+      action: input.action,
+      actor: input.actor,
+      field: input.field,
+      oldValue: input.oldValue,
+      newValue: input.newValue,
+    },
+    client
+  )
 }

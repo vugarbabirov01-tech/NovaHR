@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
 
 import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/common/date-picker"
 import { Field } from "@/components/common/field"
 import { FormSection } from "@/components/common/form-section"
 import { SearchableSelect } from "@/components/common/searchable-select"
@@ -194,19 +195,13 @@ export function EmploymentStep({
           />
         </Field>
         <Field label={t("hireDate")} htmlFor="hireDate" required error={errors.hireDate}>
-          <Input
-            id="hireDate"
-            type="date"
-            value={data.hireDate}
-            onChange={(e) => onChange({ hireDate: e.target.value })}
-          />
+          <DatePicker id="hireDate" value={data.hireDate} onChange={(hireDate) => onChange({ hireDate })} />
         </Field>
         <Field label={t("probationEndDate")} htmlFor="probationEndDate">
-          <Input
+          <DatePicker
             id="probationEndDate"
-            type="date"
             value={data.probationEndDate}
-            onChange={(e) => onChange({ probationEndDate: e.target.value })}
+            onChange={(probationEndDate) => onChange({ probationEndDate })}
           />
         </Field>
         <Field label={t("employmentType")} htmlFor="employmentType" required error={errors.employmentType}>

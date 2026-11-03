@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import { prisma, type PrismaClientOrTransaction } from "@/lib/prisma"
 import type { LeaveAuditLogEntryModel } from "@/generated/prisma/models"
 
 export type { LeaveAuditLogEntryModel as LeaveAuditLogEntry }
@@ -31,9 +31,10 @@ export function findLeaveAuditLogEntriesForEntity(
 }
 
 export function createLeaveAuditLogEntry(
-  input: LeaveAuditLogEntryInput
+  input: LeaveAuditLogEntryInput,
+  client: PrismaClientOrTransaction = prisma
 ): Promise<LeaveAuditLogEntryModel> {
-  return prisma.leaveAuditLogEntry.create({
+  return client.leaveAuditLogEntry.create({
     data: {
       entityType: input.entityType,
       entityId: input.entityId,

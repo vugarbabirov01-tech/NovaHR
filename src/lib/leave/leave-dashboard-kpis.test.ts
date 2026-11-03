@@ -34,15 +34,6 @@ function makeRequest(overrides: Partial<LeaveRequest>): LeaveRequest {
 }
 
 describe("computeLeaveDashboardKpis", () => {
-  it("counts pending approvals regardless of dates", () => {
-    const requests = [
-      makeRequest({ id: "a", status: "PENDING_APPROVAL" }),
-      makeRequest({ id: "b", status: "PENDING_APPROVAL" }),
-      makeRequest({ id: "c", status: "APPROVED" }),
-    ]
-    expect(computeLeaveDashboardKpis(requests, NOW).pendingApprovals).toBe(2)
-  })
-
   it("counts distinct employees currently on leave (approved, spanning today)", () => {
     const requests = [
       makeRequest({
@@ -118,28 +109,23 @@ describe("computeLeaveDashboardKpis", () => {
     expect(computeLeaveDashboardKpis(requests, NOW).leavesThisMonth).toBe(2)
   })
 
-  it("counts decisions made this month by decidedAt, not by leave dates", () => {
+  it("counts requests registered this month by decidedAt, not by leave dates", () => {
     const requests = [
       makeRequest({ id: "a", status: "APPROVED", decidedAt: new Date("2026-08-02") }),
       makeRequest({ id: "b", status: "APPROVED", decidedAt: new Date("2026-07-31") }), // last month — excluded
-      makeRequest({ id: "c", status: "REJECTED", decidedAt: new Date("2026-08-04") }),
-      makeRequest({ id: "d", status: "REJECTED", decidedAt: null }), // never decided — excluded
-      makeRequest({ id: "e", status: "PENDING_APPROVAL", decidedAt: null }),
+      makeRequest({ id: "c", status: "REJECTED", decidedAt: new Date("2026-08-04") }), // not APPROVED — excluded
+      makeRequest({ id: "d", status: "APPROVED", decidedAt: null }), // never decided — excluded
     ]
-    const kpis = computeLeaveDashboardKpis(requests, NOW)
-    expect(kpis.approvedThisMonth).toBe(1)
-    expect(kpis.rejectedThisMonth).toBe(1)
+    expect(computeLeaveDashboardKpis(requests, NOW).approvedThisMonth).toBe(1)
   })
 
   it("returns all zeros for an empty request list", () => {
     expect(computeLeaveDashboardKpis([], NOW)).toEqual({
-      pendingApprovals: 0,
       employeesOnLeave: 0,
       startingThisWeek: 0,
       endingThisWeek: 0,
       leavesThisMonth: 0,
       approvedThisMonth: 0,
-      rejectedThisMonth: 0,
     })
   })
 })

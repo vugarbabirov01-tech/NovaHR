@@ -1,6 +1,6 @@
 import { findActiveLeaveTypes, findLeaveTypeById } from "@/repositories/leave-type-repository"
 import { sumLeaveLedgerAmountsByEntryType, sumLeaveLedgerAmountsByEmployeeAndType } from "@/repositories/leave-ledger-repository"
-import { sumPendingRequestedUnits } from "@/repositories/leave-request-repository"
+import { sumUpcomingApprovedUnits } from "@/repositories/leave-request-repository"
 import { resolveAnnualLeaveEntitlement } from "@/lib/leave/leave-policy-resolution-service"
 import { normalizeLeaveAmount as normalizeZero } from "@/lib/leave/normalize-leave-amount"
 import { findAllEmployees, findEmployeeById } from "@/repositories/employee-repository"
@@ -99,9 +99,10 @@ async function resolveFallbackAnnualEntitlementDays(
  * never a stored column; this is the read-side counterpart to Phase 1's
  * recordLeaveLedgerEntryAction: that writes raw rows, this is the only
  * function that turns them back into a balance. `pending` additionally
- * folds in this employee's PENDING_APPROVAL requests for this leave type
- * (see LeaveBalanceStatement's doc comment for why that's kept separate
- * from `remaining` rather than subtracted from it).
+ * folds in this employee's future-dated APPROVED requests for this leave
+ * type (see LeaveBalanceStatement's doc comment — despite the field's
+ * name, these have already reduced `remaining`; this is just "what's
+ * scheduled but hasn't started yet", not an un-decided amount).
  */
 export async function computeLeaveBalance(
   employeeId: string,
@@ -110,7 +111,7 @@ export async function computeLeaveBalance(
 ): Promise<LeaveBalanceStatement> {
   const [sums, pending] = await Promise.all([
     sumLeaveLedgerAmountsByEntryType({ employeeId, leaveTypeId, asOfDate }),
-    sumPendingRequestedUnits({ employeeId, leaveTypeId }),
+    sumUpcomingApprovedUnits({ employeeId, leaveTypeId, asOfDate }),
   ])
   const buckets = mapEntryTypeSumsToBuckets(sums)
 
@@ -164,10 +165,11 @@ export async function getEmployeeLeaveSummary(
  * queries stopped being a "small" number the moment a real import brought
  * the directory to 237+ employees — it was taking long enough to
  * starve the single dev-server process and make unrelated pages (e.g. an
- * Employee Profile navigation) appear to hang. `pending` is also fetched
+ * Employee Profile navigation) appear to hang. `totalPending` (future-dated
+ * APPROVED leave org-wide — see sumUpcomingApprovedUnits) is also fetched
  * once here (not per statement) since this function never used the
- * per-employee pending figure anyway — computeLeaveBalance still computes
- * it because single-employee callers need it.
+ * per-employee figure anyway — computeLeaveBalance still computes it
+ * because single-employee callers need it.
  */
 export async function getOrganizationLeaveDaysSummary(
   asOfDate: Date = new Date()
@@ -215,7 +217,7 @@ export async function getOrganizationLeaveDaysSummary(
     }
   }
 
-  const totalPending = await sumPendingRequestedUnits({ unit: "DAYS" })
+  const totalPending = await sumUpcomingApprovedUnits({ unit: "DAYS", asOfDate })
 
   return {
     asOfDate: toDateOnlyIso(asOfDate),

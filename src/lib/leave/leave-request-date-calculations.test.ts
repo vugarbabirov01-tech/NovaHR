@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { calculateReturnToWork } from "@/lib/leave/leave-policy-resolution-service"
 import { evaluateLeaveRequest } from "@/lib/leave/leave-request-service"
-import { findEmployeeById } from "@/repositories/employee-repository"
+import { withTestEmployee } from "@/lib/leave/leave-test-fixtures"
 import { findActiveLeaveTypes, findAllLeaveTypes } from "@/repositories/leave-type-repository"
 
 /**
@@ -67,61 +67,67 @@ describe("calculateReturnToWork — 03.08.2026, 46 days", () => {
 
 describe("evaluateLeaveRequest — balance preview reflects the request being submitted", () => {
   it("preserves the exact start date through the full preview pipeline", async () => {
-    const annual = (await findActiveLeaveTypes()).find((t) => t.code === "ANNUAL")
-    expect(annual).toBeDefined()
+    await withTestEmployee("EMP-1042", async (employee) => {
+      const annual = (await findActiveLeaveTypes()).find((t) => t.code === "ANNUAL")
+      expect(annual).toBeDefined()
 
-    const evaluation = await evaluateLeaveRequest("EMP-1042", annual!.id, new Date("2026-08-03"), 46)
-    expect(evaluation.startDate).toBe("2026-08-03")
-    expect(evaluation.returnToWork.startDate).toBe("2026-08-03")
+      const evaluation = await evaluateLeaveRequest(employee.id, annual!.id, new Date("2026-08-03"), 46)
+      expect(evaluation.startDate).toBe("2026-08-03")
+      expect(evaluation.returnToWork.startDate).toBe("2026-08-03")
+    })
   })
 
   it("recomputes the balance and date fields per-request rather than reusing stale values", async () => {
-    const employee = await findEmployeeById("EMP-1042")
-    expect(employee).toBeDefined()
-    const annual = (await findActiveLeaveTypes()).find((t) => t.code === "ANNUAL")
-    expect(annual).toBeDefined()
+    await withTestEmployee("EMP-1042", async (employee) => {
+      const annual = (await findActiveLeaveTypes()).find((t) => t.code === "ANNUAL")
+      expect(annual).toBeDefined()
 
-    const shortRequest = await evaluateLeaveRequest("EMP-1042", annual!.id, new Date("2026-08-03"), 5)
-    const longRequest = await evaluateLeaveRequest("EMP-1042", annual!.id, new Date("2026-08-03"), 46)
+      const shortRequest = await evaluateLeaveRequest(employee.id, annual!.id, new Date("2026-08-03"), 5)
+      const longRequest = await evaluateLeaveRequest(employee.id, annual!.id, new Date("2026-08-03"), 46)
 
-    // Balance is scoped to employee + leave type + start date, so it's
-    // identical regardless of how many days are requested...
-    expect(shortRequest.balance.remaining).toBe(longRequest.balance.remaining)
-    expect(shortRequest.balance.employeeId).toBe("EMP-1042")
-    expect(shortRequest.balance.leaveTypeId).toBe(annual!.id)
+      // Balance is scoped to employee + leave type + start date, so it's
+      // identical regardless of how many days are requested...
+      expect(shortRequest.balance.remaining).toBe(longRequest.balance.remaining)
+      expect(shortRequest.balance.employeeId).toBe(employee.id)
+      expect(shortRequest.balance.leaveTypeId).toBe(annual!.id)
 
-    // ...but the request-specific fields must differ, proving the preview
-    // is actually recalculated per-request, not cached/echoed.
-    expect(shortRequest.returnToWork.lastLeaveDay).not.toBe(longRequest.returnToWork.lastLeaveDay)
-    expect(shortRequest.numberOfDays).toBe(5)
-    expect(longRequest.numberOfDays).toBe(46)
+      // ...but the request-specific fields must differ, proving the preview
+      // is actually recalculated per-request, not cached/echoed.
+      expect(shortRequest.returnToWork.lastLeaveDay).not.toBe(longRequest.returnToWork.lastLeaveDay)
+      expect(shortRequest.numberOfDays).toBe(5)
+      expect(longRequest.numberOfDays).toBe(46)
 
-    // "Remaining After Approval" (balance.remaining - numberOfDays, added to
-    // the Review screen) must therefore also differ between the two.
-    const shortRemainingAfterApproval = shortRequest.balance.remaining - shortRequest.numberOfDays
-    const longRemainingAfterApproval = longRequest.balance.remaining - longRequest.numberOfDays
-    expect(shortRemainingAfterApproval).not.toBe(longRemainingAfterApproval)
-    expect(longRemainingAfterApproval).toBe(shortRemainingAfterApproval - 41)
+      // "Remaining After Approval" (balance.remaining - numberOfDays, added to
+      // the Review screen) must therefore also differ between the two.
+      const shortRemainingAfterApproval = shortRequest.balance.remaining - shortRequest.numberOfDays
+      const longRemainingAfterApproval = longRequest.balance.remaining - longRequest.numberOfDays
+      expect(shortRemainingAfterApproval).not.toBe(longRemainingAfterApproval)
+      expect(longRemainingAfterApproval).toBe(shortRemainingAfterApproval - 41)
+    })
   })
 
   it("rejects a retired (inactive) leave type — server-side, not just hidden from the dropdown", async () => {
-    // Maternity/Paternity were retired in favor of Social Leave (see
-    // prisma/seed.ts) — findActiveLeaveTypes() already excludes them from
-    // the wizard's own options, so this proves the rejection also holds if
-    // an inactive id reaches evaluateLeaveRequest by any other path (a
-    // stale client, a direct call), not only via the dropdown's own filter.
-    const maternity = (await findAllLeaveTypes()).find((t) => t.code === "MATERNITY")
-    expect(maternity).toBeDefined()
-    expect(maternity!.active).toBe(false)
+    await withTestEmployee("EMP-1042", async (employee) => {
+      // Maternity/Paternity were retired in favor of Social Leave (see
+      // prisma/seed.ts) — findActiveLeaveTypes() already excludes them from
+      // the wizard's own options, so this proves the rejection also holds if
+      // an inactive id reaches evaluateLeaveRequest by any other path (a
+      // stale client, a direct call), not only via the dropdown's own filter.
+      const maternity = (await findAllLeaveTypes()).find((t) => t.code === "MATERNITY")
+      expect(maternity).toBeDefined()
+      expect(maternity!.active).toBe(false)
 
-    await expect(evaluateLeaveRequest("EMP-1042", maternity!.id, new Date("2026-08-03"), 5)).rejects.toThrow(
-      "no longer available"
-    )
+      await expect(evaluateLeaveRequest(employee.id, maternity!.id, new Date("2026-08-03"), 5)).rejects.toThrow(
+        "no longer available"
+      )
+    })
   })
 
   it("rejects a leave type id that doesn't exist at all", async () => {
-    await expect(evaluateLeaveRequest("EMP-1042", "does-not-exist", new Date("2026-08-03"), 5)).rejects.toThrow(
-      "Leave type not found."
-    )
+    await withTestEmployee("EMP-1042", async (employee) => {
+      await expect(evaluateLeaveRequest(employee.id, "does-not-exist", new Date("2026-08-03"), 5)).rejects.toThrow(
+        "Leave type not found."
+      )
+    })
   })
 })

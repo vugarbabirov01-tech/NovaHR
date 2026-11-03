@@ -140,8 +140,11 @@ export function deleteLeaveLedgerEntriesByEmployees(
   return client.leaveLedgerEntry.deleteMany({ where: { employeeId: { in: employeeIds } } })
 }
 
-export function createLeaveLedgerEntry(input: LeaveLedgerEntryInput): Promise<LeaveLedgerEntryModel> {
-  return prisma.leaveLedgerEntry.create({
+export function createLeaveLedgerEntry(
+  input: LeaveLedgerEntryInput,
+  client: PrismaClientOrTransaction = prisma
+): Promise<LeaveLedgerEntryModel> {
+  return client.leaveLedgerEntry.create({
     data: {
       employeeId: input.employeeId,
       leaveTypeId: input.leaveTypeId,

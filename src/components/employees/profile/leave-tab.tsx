@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 import dynamic from "next/dynamic"
 import { useTranslations } from "next-intl"
-import { CalendarCheck, CalendarClock, CalendarMinus, CalendarPlus, Hourglass, Loader2 } from "lucide-react"
+import { CalendarCheck, CalendarClock, CalendarMinus, CalendarPlus, Hourglass, Loader2, X } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -12,15 +12,17 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { EmptyState } from "@/components/common/empty-state"
 import { KpiCard } from "@/components/common/kpi-card"
 import { LeaveRequestStatusBadge } from "@/components/leave/leave-request-status-badge"
+import { CancelLeaveRequestDialog } from "@/components/employees/leave/cancel-leave-request-dialog"
 import {
   getActiveLeaveTypesAction,
   getEmployeeLeaveSummaryAction,
   getLeaveTransactionHistoryAction,
 } from "@/lib/leave/leave-balance-actions"
-import { getLeaveRequestsForEmployeeAction } from "@/lib/leave/leave-request-actions"
+import { getLeaveRequestsForEmployeeAction, cancelLeaveRequestAction } from "@/lib/leave/leave-request-actions"
 import { formatLeaveUnitAmount } from "@/lib/leave/leave-unit-format"
 import { formatLeaveDate } from "@/lib/leave/leave-date-format"
 import { formatLeavePeriod } from "@/lib/leave/leave-period"
+import { deriveLeaveRequestDisplayStatus } from "@/lib/leave/leave-request-status-display"
 import type { LeaveBalanceStatement } from "@/types/leave"
 import type { LeaveType } from "@/repositories/leave-type-repository"
 import type { LeaveLedgerEntry } from "@/repositories/leave-ledger-repository"
@@ -81,6 +83,9 @@ export function LeaveTab({ profile }: LeaveTabProps) {
   const [history, setHistory] = useState<LeaveLedgerEntry[]>([])
   const [requests, setRequests] = useState<LeaveRequest[]>([])
   const [isWizardOpen, setIsWizardOpen] = useState(false)
+  const [cancellingRequest, setCancellingRequest] = useState<LeaveRequest | null>(null)
+  const [cancelError, setCancelError] = useState<string | null>(null)
+  const [isCancelling, startCancelTransition] = useTransition()
 
   async function fetchLeaveData() {
     const [types, balances, entries, leaveRequests] = await Promise.all([
@@ -116,6 +121,24 @@ export function LeaveTab({ profile }: LeaveTabProps) {
       setSummary(result.balances)
       setHistory(result.entries)
       setRequests(result.leaveRequests)
+    })
+  }
+
+  function handleCancelConfirm(reason: string) {
+    if (!cancellingRequest) return
+    setCancelError(null)
+    startCancelTransition(async () => {
+      const result = await cancelLeaveRequestAction(cancellingRequest.id, reason || undefined)
+      if (!result.success) {
+        setCancelError(result.error ?? tCommon("genericError"))
+        return
+      }
+      setCancellingRequest(null)
+      const refreshed = await fetchLeaveData()
+      setLeaveTypes(refreshed.types)
+      setSummary(refreshed.balances)
+      setHistory(refreshed.entries)
+      setRequests(refreshed.leaveRequests)
     })
   }
 
@@ -240,6 +263,10 @@ export function LeaveTab({ profile }: LeaveTabProps) {
               {requests.map((request) => {
                 const leaveType = leaveTypeById.get(request.leaveTypeId)
                 const unit = leaveType?.unit ?? "DAYS"
+                // Cancellable while it's still ahead of or in progress —
+                // not once it's already Completed or Cancelled.
+                const displayStatus = deriveLeaveRequestDisplayStatus(request)
+                const isCancellable = displayStatus === "scheduled" || displayStatus === "active"
                 return (
                   <li
                     key={request.id}
@@ -247,7 +274,11 @@ export function LeaveTab({ profile }: LeaveTabProps) {
                   >
                     <div className="flex flex-col gap-0.5">
                       <div className="flex items-center gap-2">
-                        <LeaveRequestStatusBadge status={request.status} />
+                        <LeaveRequestStatusBadge
+                          status={request.status}
+                          startDate={request.startDate}
+                          endDate={request.endDate}
+                        />
                         <span className="text-xs text-muted-foreground">
                           {leaveType?.name ?? request.leaveTypeId}
                           {/* null for requests created before this field
@@ -270,6 +301,19 @@ export function LeaveTab({ profile }: LeaveTabProps) {
                         {formatLeaveDate(request.startDate, monthsShort)} – {formatLeaveDate(request.endDate, monthsShort)}
                       </span>
                     </div>
+                    {isCancellable ? (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={t("cancelRequest")}
+                        onClick={() => {
+                          setCancelError(null)
+                          setCancellingRequest(request)
+                        }}
+                      >
+                        <X className="size-4" strokeWidth={1.75} />
+                      </Button>
+                    ) : null}
                   </li>
                 )
               })}
@@ -328,6 +372,28 @@ export function LeaveTab({ profile }: LeaveTabProps) {
           onSuccess={handleWizardSuccess}
         />
       ) : null}
+
+      <CancelLeaveRequestDialog
+        open={cancellingRequest !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCancellingRequest(null)
+            setCancelError(null)
+          }
+        }}
+        description={
+          cancellingRequest
+            ? t("cancelDialog.description", {
+                leaveType: leaveTypeById.get(cancellingRequest.leaveTypeId)?.name ?? cancellingRequest.leaveTypeId,
+                startDate: formatLeaveDate(cancellingRequest.startDate, monthsShort),
+                endDate: formatLeaveDate(cancellingRequest.endDate, monthsShort),
+              })
+            : ""
+        }
+        onConfirm={handleCancelConfirm}
+        isCancelling={isCancelling}
+        error={cancelError}
+      />
     </div>
   )
 }

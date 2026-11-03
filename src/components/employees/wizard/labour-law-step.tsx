@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { DatePicker } from "@/components/common/date-picker"
 import { Field } from "@/components/common/field"
 import { FormSection } from "@/components/common/form-section"
 import { EnumSelect } from "@/components/common/enum-select"
@@ -138,11 +139,10 @@ export function LabourLawStep({ data, onChange }: StepProps) {
                         />
                       </Field>
                       <Field label={t("childDateOfBirth")} htmlFor={`child-dob-${child.id}`}>
-                        <Input
+                        <DatePicker
                           id={`child-dob-${child.id}`}
-                          type="date"
                           value={child.dateOfBirth}
-                          onChange={(e) => updateChild(child.id, { dateOfBirth: e.target.value })}
+                          onChange={(dateOfBirth) => updateChild(child.id, { dateOfBirth })}
                         />
                       </Field>
                       <ToggleField
@@ -168,11 +168,12 @@ export function LabourLawStep({ data, onChange }: StepProps) {
                     </div>
                     {child.hasDisability ? (
                       <Field label={t("childDisabilityExpiryDate")} htmlFor={`child-exp-${child.id}`}>
-                        <Input
+                        <DatePicker
                           id={`child-exp-${child.id}`}
-                          type="date"
-                          value={child.disabilityCertificateExpiryDate}
-                          onChange={(e) => updateChild(child.id, { disabilityCertificateExpiryDate: e.target.value })}
+                          value={child.disabilityCertificateExpiryDate ?? ""}
+                          onChange={(disabilityCertificateExpiryDate) =>
+                            updateChild(child.id, { disabilityCertificateExpiryDate })
+                          }
                         />
                       </Field>
                     ) : null}
@@ -212,11 +213,10 @@ export function LabourLawStep({ data, onChange }: StepProps) {
                 />
               </Field>
               <Field label={t("disabilityCertificateExpiryDate")} htmlFor="disabilityCertificateExpiryDate">
-                <Input
+                <DatePicker
                   id="disabilityCertificateExpiryDate"
-                  type="date"
                   value={data.disabilityCertificateExpiryDate}
-                  onChange={(e) => onChange({ disabilityCertificateExpiryDate: e.target.value })}
+                  onChange={(disabilityCertificateExpiryDate) => onChange({ disabilityCertificateExpiryDate })}
                 />
               </Field>
             </div>

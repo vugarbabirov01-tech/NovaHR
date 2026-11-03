@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { CalendarCheck2, CalendarDays, CalendarMinus, CalendarPlus, CheckCircle2, Users, XCircle } from "lucide-react"
+import { CalendarDays, CalendarMinus, CalendarPlus, CheckCircle2, Users } from "lucide-react"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { PageTitle } from "@/components/common/page-title"
@@ -41,9 +41,10 @@ function initials(firstName: string, lastName: string): string {
  *
  * No approve/reject/cancel actions live on this page (the old requests
  * table had them; the "currently on leave" table replacing it is a
- * read-only status view) — approveLeaveRequestAction/rejectLeaveRequestAction/
- * cancelLeaveRequestAction still exist in leave-request-actions.ts and work
- * unchanged, they're just not wired to any UI on this specific page today.
+ * read-only status view) — HR enters a leave already approved (see
+ * submitLeaveRequestAction), so there's no decision queue for this page to
+ * expose in the first place. Cancelling an existing leave is done from the
+ * Employee Profile Leave tab instead (leave-tab.tsx).
  */
 export default async function LeavePage({ params }: Props) {
   const { locale } = await params
@@ -119,9 +120,8 @@ export default async function LeavePage({ params }: Props) {
       {/* Company-wide HR KPIs only — never an individual employee's
        * balance. Same responsive tiering as every other Leave KPI row:
        * mobile 1 col, tablet 2x2, desktop 4-in-a-row (wraps to a second
-       * row of 3). */}
+       * row). */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label={tDashboard("pendingApprovals")} value={String(kpis.pendingApprovals)} icon={CalendarCheck2} />
         <KpiCard label={tDashboard("kpis.employeesOnLeave")} value={String(kpis.employeesOnLeave)} icon={Users} />
         <KpiCard
           label={tDashboard("kpis.startingThisWeek")}
@@ -135,7 +135,6 @@ export default async function LeavePage({ params }: Props) {
           value={String(kpis.approvedThisMonth)}
           icon={CheckCircle2}
         />
-        <KpiCard label={tDashboard("kpis.rejectedThisMonth")} value={String(kpis.rejectedThisMonth)} icon={XCircle} />
       </div>
 
       <Card>

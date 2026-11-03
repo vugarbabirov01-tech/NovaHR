@@ -20,7 +20,8 @@
       "today": "Bu gün",
       "clear": "Təmizlə",
       "previousMonth": "Əvvəlki ay",
-      "nextMonth": "Növbəti ay"
+      "nextMonth": "Növbəti ay",
+      "openCalendar": "Təqvimi aç"
     }
   },
   "Navigation": {
@@ -136,34 +137,13 @@
   },
   "Leave": {
     "dashboard": {
-      "pendingApprovals": "Təsdiq Gözləyən",
       "newLeave": "Yeni Məzuniyyət",
       "kpis": {
         "employeesOnLeave": "Hazırda Məzuniyyətdə",
         "startingThisWeek": "Bu Həftə Başlayan",
         "endingThisWeek": "Bu Həftə Bitən",
         "leavesThisMonth": "Bu Ay Məzuniyyətlər",
-        "approvedThisMonth": "Bu Ay Təsdiqlənən",
-        "rejectedThisMonth": "Bu Ay Rədd Edilən"
-      },
-      "table": {
-        "title": "Məzuniyyət Tələbləri",
-        "employee": "Əməkdaş",
-        "department": "Şöbə",
-        "leaveType": "Məzuniyyət Növü",
-        "dates": "Tarixlər",
-        "units": "Miqdar",
-        "workingDays": "İş Günləri",
-        "status": "Status",
-        "requestedBy": "Tələb Edən",
-        "approvalLevel": "Təsdiq Səviyyəsi",
-        "view": "Bax",
-        "approve": "Təsdiqlə",
-        "reject": "Rədd Et",
-        "cancel": "Ləğv Et",
-        "decisionError": "Əməliyyat yerinə yetirilmədi. Yenidən cəhd edin.",
-        "emptyTitle": "Hələ məzuniyyət tələbi yoxdur",
-        "emptyDescription": "Əməkdaşlar tərəfindən təqdim edilən məzuniyyət tələbləri burada görünəcək."
+        "approvedThisMonth": "Bu Ay Rəsmiləşdirilən"
       },
       "currentlyOnLeaveTable": {
         "title": "Hazırda Məzuniyyətdə Olan İşçilər",
@@ -203,7 +183,7 @@
     "emptyTitle": "Fəaliyyət yoxdur",
     "emptyDescription": "Təşkilatınızdakı son fəaliyyətlər burada görünəcək.",
     "hire": "<b>{name}</b> {department} şöbəsində {role} vəzifəsinə qəbul olundu",
-    "leaveRequest": "<b>{name}</b> {days} gün illik məzuniyyət tələb etdi",
+    "leaveRequest": "<b>{name}</b> üçün {days} gün illik məzuniyyət rəsmiləşdirildi",
     "promotion": "<b>{name}</b> {role} vəzifəsinə yüksəldi",
     "review": "<b>{name}</b> {period} performans qiymətləndirməsini tamamladı",
     "document": "<b>{name}</b> imzalanmış əmək müqaviləsini yüklədi",
@@ -840,7 +820,7 @@
         "carriedForward": "Əvvəlki İldən Qalıq",
         "taken": "İstifadə Edilib",
         "remaining": "Cari Qalıq",
-        "pending": "Gözləmədə Olan",
+        "pending": "Planlaşdırılan Məzuniyyət",
         "days": "{count} gün",
         "hours": "{count} saat",
         "leaveHistory": "Əməliyyat Tarixçəsi",
@@ -852,12 +832,20 @@
         "requestLeave": "Məzuniyyət Tələb Et",
         "requestsTitle": "Məzuniyyət Tələbləri",
         "noRequests": "Hələ heç bir məzuniyyət tələbi təqdim edilməyib.",
+        "cancelRequest": "Məzuniyyəti ləğv et",
+        "cancelDialog": {
+          "title": "Məzuniyyəti ləğv et",
+          "description": "{leaveType} ({startDate} – {endDate}) ləğv ediləcək və balans bərpa olunacaq. Davam etmək istədiyinizə əminsiniz?",
+          "reasonLabel": "Səbəb",
+          "reasonHint": "İstəyə bağlı — audit jurnalında saxlanılır.",
+          "confirmButton": "Ləğv Et"
+        },
         "tooltips": {
           "openingBalance": "{year}-ci il üzrə əməkdaşın illik məzuniyyət balansı.",
           "carriedForward": "Ötən iş ilindən istifadə olunmayaraq növbəti ilə keçirilmiş məzuniyyət günləri.",
           "taken": "Cari iş ili ərzində istifadə edilmiş məzuniyyət günləri.",
           "remaining": "Hazırda istifadə oluna bilən məzuniyyət günləri.",
-          "pending": "Təsdiq gözləyən məzuniyyət tələblərinin ümumi gün sayı. Bu günlər hələ balansdan çıxılmayıb."
+          "pending": "Gələcək tarixli, artıq rəsmiləşdirilmiş məzuniyyətlərin ümumi gün sayı. Bu günlər artıq balansdan çıxılıb."
         },
         "entryTypes": {
           "openingBalance": "İlkin Qalıq",
@@ -878,7 +866,10 @@
           "approved": "Təsdiqlənib",
           "rejected": "Rədd Edilib",
           "cancelled": "Ləğv Edilib",
-          "withdrawn": "Geri Çəkilib"
+          "withdrawn": "Geri Çəkilib",
+          "scheduled": "Planlaşdırılıb",
+          "active": "Hazırda Məzuniyyətdə",
+          "completed": "Tamamlanıb"
         }
       },
       "payroll": {
@@ -1358,8 +1349,8 @@
       "next": "İrəli",
       "submit": "Təqdim Et",
       "close": "Bağla",
-      "successTitle": "Məzuniyyət tələbi təqdim edildi",
-      "successDescription": "Tələb artıq gözləmədədir.",
+      "successTitle": "Məzuniyyət yaradıldı",
+      "successDescription": "Məzuniyyət rəsmiləşdirildi və balansdan çıxıldı.",
       "validation": {
         "required": "Bu sahə mütləqdir."
       },

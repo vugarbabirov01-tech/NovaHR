@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl"
 
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/common/date-picker"
 import { Field } from "@/components/common/field"
 import { FormSection } from "@/components/common/form-section"
 import { EnumSelect } from "@/components/common/enum-select"
@@ -72,11 +73,10 @@ export function PersonalStep({ data, onChange, errors = {} }: StepProps) {
             />
           </Field>
           <Field label={t("dateOfBirth")} htmlFor="dateOfBirth" required error={errors.dateOfBirth}>
-            <Input
+            <DatePicker
               id="dateOfBirth"
-              type="date"
               value={data.dateOfBirth}
-              onChange={(e) => onChange({ dateOfBirth: e.target.value })}
+              onChange={(dateOfBirth) => onChange({ dateOfBirth })}
             />
           </Field>
           <Field label={t("nationality")} htmlFor="nationality">
@@ -149,19 +149,17 @@ export function PersonalStep({ data, onChange, errors = {} }: StepProps) {
             />
           </Field>
           <Field label={t("idIssueDate")} htmlFor="idIssueDate">
-            <Input
+            <DatePicker
               id="idIssueDate"
-              type="date"
               value={data.idIssueDate}
-              onChange={(e) => onChange({ idIssueDate: e.target.value })}
+              onChange={(idIssueDate) => onChange({ idIssueDate })}
             />
           </Field>
           <Field label={t("idExpiryDate")} htmlFor="idExpiryDate">
-            <Input
+            <DatePicker
               id="idExpiryDate"
-              type="date"
               value={data.idExpiryDate}
-              onChange={(e) => onChange({ idExpiryDate: e.target.value })}
+              onChange={(idExpiryDate) => onChange({ idExpiryDate })}
             />
           </Field>
         </div>

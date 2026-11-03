@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl"
 
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/common/date-picker"
 import { Field } from "@/components/common/field"
 import { FormSection } from "@/components/common/form-section"
 import { EnumSelect } from "@/components/common/enum-select"
@@ -41,11 +42,10 @@ export function TerminationInfoStep({ data, onChange, errors = {} }: StepProps) 
           required
           error={errors.terminationDate}
         >
-          <Input
+          <DatePicker
             id="terminationDate"
-            type="date"
             value={data.terminationDate}
-            onChange={(e) => onChange({ terminationDate: e.target.value })}
+            onChange={(terminationDate) => onChange({ terminationDate })}
           />
         </Field>
         <Field
@@ -54,11 +54,10 @@ export function TerminationInfoStep({ data, onChange, errors = {} }: StepProps) 
           required
           error={errors.lastWorkingDay}
         >
-          <Input
+          <DatePicker
             id="lastWorkingDay"
-            type="date"
             value={data.lastWorkingDay}
-            onChange={(e) => onChange({ lastWorkingDay: e.target.value })}
+            onChange={(lastWorkingDay) => onChange({ lastWorkingDay })}
           />
         </Field>
         <Field label={t("reason")} htmlFor="reason" required error={errors.reason} className="sm:col-span-2">

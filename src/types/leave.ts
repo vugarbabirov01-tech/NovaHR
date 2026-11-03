@@ -40,12 +40,13 @@ export interface LeaveBalanceStatement {
    * be re-summed to derive this). If this and a hand re-sum of the buckets
    * ever disagree, this value is the one that's correct. */
   remaining: number
-  /** SUM(requestedUnits) of this employee's PENDING_APPROVAL LeaveRequest
-   * rows for this leave type — not ledger data (submitting a request never
-   * writes a ledger entry; see leave-request-actions.ts), so it neither
-   * reduces `remaining` nor comes from the ledger. Surfaced here so every
-   * consumer shows the same "reserved but not yet decided" figure instead
-   * of only the post-decision balance. */
+  /** SUM(requestedUnits) of this employee's APPROVED LeaveRequest rows
+   * whose startDate is still in the future — leave that's already
+   * finalized (its LEAVE_TAKEN ledger entry is already written, so it's
+   * already reflected in `remaining`) but hasn't started yet. Despite the
+   * field's name, this is NOT an un-decided amount — creating a leave
+   * request is the decision now (see leave-request-actions.ts); it's
+   * surfaced separately purely so "what's coming up" has a visible answer. */
   pending: number
 }
 
@@ -63,7 +64,8 @@ export interface OrgLeaveDaysSummary {
   totalCarriedForward: number
   totalTaken: number
   totalRemaining: number
-  /** SUM of every LeaveBalanceStatement.pending across the org, DAYS-unit
-   * types only — same scoping reason as the totals above. */
+  /** SUM of every LeaveBalanceStatement.pending (future-dated APPROVED
+   * leave, already deducted — see its own doc comment) across the org,
+   * DAYS-unit types only — same scoping reason as the totals above. */
   totalPending: number
 }

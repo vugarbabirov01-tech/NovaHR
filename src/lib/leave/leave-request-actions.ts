@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache"
 
 import {
-  createLeaveRequest,
   findLeaveRequestById,
   findLeaveRequestsByEmployee,
   findAllLeaveRequests,
@@ -11,6 +10,7 @@ import {
 } from "@/repositories/leave-request-repository"
 import { evaluateLeaveRequest, type LeaveRequestEvaluation } from "@/lib/leave/leave-request-service"
 import {
+  createApprovedLeaveRequest,
   approveLeaveRequest,
   rejectLeaveRequest,
   cancelLeaveRequest,
@@ -38,10 +38,14 @@ function revalidateLeaveSurfaces() {
 
 /**
  * getLeaveRequestsForEmployeeAction/getLeaveRequestByIdAction are read-only,
- * unchanged since Phase 2. submit/approve/reject/cancel below are the
- * writers — submit creates a PENDING_APPROVAL request (no ledger entry);
- * approve/reject/cancel are Phase 4's decision actions, thin wrappers
- * around leave-request-decision-service.ts's business rules.
+ * unchanged since Phase 2. Leave only ever enters the system through an
+ * authorized HR user, so submit below creates the request already
+ * APPROVED — there's no PENDING_APPROVAL step for someone else to decide
+ * on afterward. approveLeaveRequestAction/rejectLeaveRequestAction still
+ * exist (thin wrappers around leave-request-decision-service.ts) for a
+ * request that somehow still is PENDING_APPROVAL — nothing creates one
+ * anymore, but a stray historical row isn't impossible — while cancel is
+ * very much still live: it's how HR retracts an already-approved leave.
  */
 export async function getLeaveRequestsForEmployeeAction(employeeId: string): Promise<LeaveRequest[]> {
   return findLeaveRequestsByEmployee(employeeId)
@@ -137,11 +141,15 @@ export interface SubmitLeaveRequestResult {
 /**
  * Re-runs evaluateLeaveRequest server-side — never trusts the client-shown
  * preview. If the applicable policy is BLOCK and the balance is
- * insufficient, nothing is created. Otherwise creates the LeaveRequest with
- * the *calculated* end date (never the client-entered one), optionally
- * attaches the uploaded leave application document, records an audit entry,
- * and publishes LeaveRequestSubmitted. Still writes zero LeaveLedgerEntry
- * rows and makes zero approval decisions — both remain out of scope.
+ * insufficient, nothing is created. Otherwise delegates to
+ * createApprovedLeaveRequest (leave-request-decision-service.ts), which
+ * creates the LeaveRequest already APPROVED — with the *calculated* end
+ * date, never the client-entered one — and writes its LEAVE_TAKEN ledger
+ * entry and audit record in the same DB transaction: HR entering a leave
+ * IS the approval, so status, ledger, and audit either all land together
+ * or none do. Also optionally attaches the uploaded leave application
+ * document (outside that transaction — a failed scan upload shouldn't roll
+ * back an otherwise valid leave), and publishes LeaveRequestApproved.
  */
 export async function submitLeaveRequestAction(formData: FormData): Promise<SubmitLeaveRequestResult> {
   const rawNumberOfDays = formData.get("numberOfDays")
@@ -182,7 +190,7 @@ export async function submitLeaveRequestAction(formData: FormData): Promise<Subm
 
   let leaveRequest: LeaveRequest
   try {
-    leaveRequest = await createLeaveRequest({
+    const result = await createApprovedLeaveRequest({
       employeeId: parsed.data.employeeId,
       leaveTypeId: parsed.data.leaveTypeId,
       companyId: parsed.data.companyId ?? null,
@@ -192,10 +200,14 @@ export async function submitLeaveRequestAction(formData: FormData): Promise<Subm
       requestedUnits: parsed.data.numberOfDays,
       leavePeriodStartYear: parsed.data.leavePeriodStartYear,
       reason: parsed.data.reason ?? null,
-      status: "PENDING_APPROVAL",
     })
-  } catch {
-    return { success: false, error: "Could not create leave request.", evaluation }
+    leaveRequest = result.leaveRequest
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Could not create leave request.",
+      evaluation,
+    }
   }
 
   let documentUploaded = false
@@ -222,21 +234,17 @@ export async function submitLeaveRequestAction(formData: FormData): Promise<Subm
     }
   }
 
-  await recordLeaveAudit({
-    entityType: LeaveAuditEntityType.LeaveRequest,
-    entityId: leaveRequest.id,
-    action: LeaveAuditAction.LeaveRequestSubmitted,
-    actor: "HR",
-  })
-
+  // Audit entry already recorded inside createApprovedLeaveRequest's own
+  // transaction, atomically with the status/ledger write — not repeated
+  // here.
   await eventBus.publish({
-    id: `EVT-${leaveRequest.id}-${LeaveEventType.LeaveRequestSubmitted}`,
-    type: LeaveEventType.LeaveRequestSubmitted,
+    id: `EVT-${leaveRequest.id}-${LeaveEventType.LeaveRequestApproved}`,
+    type: LeaveEventType.LeaveRequestApproved,
     payload: { employeeId: parsed.data.employeeId, leaveRequestId: leaveRequest.id },
     timestamp: new Date().toISOString(),
   })
 
-  // A new PENDING_APPROVAL request changes the Pending Leave total (and,
+  // A new APPROVED request changes Used/Current Balance immediately (and,
   // for a first-ever request, may be what first makes an opening-balance
   // fallback kick in) on both the org-wide dashboard and this employee's
   // own profile — the Employee Profile tab already client-refetches after
@@ -257,7 +265,11 @@ export interface LeaveRequestDecisionActionResult {
 /**
  * The only place a PENDING_APPROVAL request becomes APPROVED — writes the
  * LEAVE_TAKEN ledger entry (see leave-request-decision-service.ts for the
- * full Pending/Approved/Rejected/Cancelled rule this implements).
+ * full Pending/Approved/Rejected/Cancelled rule this implements). Nothing
+ * creates a PENDING_APPROVAL request anymore (submitLeaveRequestAction
+ * approves on creation), so this has no live caller today — kept for a
+ * request that's still in that state from before this change, and not
+ * deleted on the chance one surfaces again.
  */
 export async function approveLeaveRequestAction(leaveRequestId: string): Promise<LeaveRequestDecisionActionResult> {
   try {
@@ -282,7 +294,8 @@ export async function approveLeaveRequestAction(leaveRequestId: string): Promise
 }
 
 /** Never writes a ledger entry — a rejected request had nothing to
- * reverse, since PENDING_APPROVAL never touched the ledger either. */
+ * reverse, since PENDING_APPROVAL never touched the ledger either. Same
+ * no-live-caller note as approveLeaveRequestAction above. */
 export async function rejectLeaveRequestAction(
   leaveRequestId: string,
   reason?: string
@@ -308,21 +321,20 @@ export async function rejectLeaveRequestAction(
   }
 }
 
-/** Cancels either a still-pending or an already-approved request. Only the
- * approved case writes a reversing LEAVE_CANCELLED ledger entry — see
- * leave-request-decision-service.ts. */
+/** Cancels either a still-pending or an already-approved request — unlike
+ * approve/reject above, this one is very much still live: it's how HR
+ * retracts a leave that's already been entered (every real request is
+ * APPROVED from the moment it's created, so in practice this almost
+ * always cancels an APPROVED one). Status change, the (conditional)
+ * reversing LEAVE_CANCELLED ledger entry, and the audit entry are all
+ * written atomically inside cancelLeaveRequest's own transaction — see
+ * leave-request-decision-service.ts — not repeated here. */
 export async function cancelLeaveRequestAction(
   leaveRequestId: string,
   reason?: string
 ): Promise<LeaveRequestDecisionActionResult> {
   try {
     const { leaveRequest } = await cancelLeaveRequest(leaveRequestId, reason)
-    await recordLeaveAudit({
-      entityType: LeaveAuditEntityType.LeaveRequest,
-      entityId: leaveRequest.id,
-      action: LeaveAuditAction.LeaveRequestCancelled,
-      actor: "HR",
-    })
     await eventBus.publish({
       id: `EVT-${leaveRequest.id}-${LeaveEventType.LeaveRequestCancelled}`,
       type: LeaveEventType.LeaveRequestCancelled,

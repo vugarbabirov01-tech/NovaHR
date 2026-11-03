@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import { prisma, type PrismaClientOrTransaction } from "@/lib/prisma"
 import type { LeaveTypeModel } from "@/generated/prisma/models"
 import type { LeaveUnit } from "@/generated/prisma/enums"
 
@@ -37,8 +37,11 @@ export function findActiveLeaveTypes(): Promise<LeaveTypeModel[]> {
   return prisma.leaveType.findMany({ where: { active: true }, orderBy: { name: "asc" } })
 }
 
-export function findLeaveTypeById(id: string): Promise<LeaveTypeModel | null> {
-  return prisma.leaveType.findUnique({ where: { id } })
+export function findLeaveTypeById(
+  id: string,
+  client: PrismaClientOrTransaction = prisma
+): Promise<LeaveTypeModel | null> {
+  return client.leaveType.findUnique({ where: { id } })
 }
 
 export async function createLeaveType(input: LeaveTypeInput): Promise<LeaveTypeModel> {

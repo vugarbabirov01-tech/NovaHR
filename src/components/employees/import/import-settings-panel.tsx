@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/common/date-picker"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import type { ImportSettings } from "@/lib/employee-import/types"
 
@@ -70,12 +70,11 @@ export function ImportSettingsPanel({ settings, onChange }: ImportSettingsPanelP
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="import-default-salary-start-date">{t("defaultSalaryStartDate")}</Label>
-          <Input
+          <DatePicker
             id="import-default-salary-start-date"
-            type="date"
             className="max-w-xs"
             value={settings.defaultSalaryStartDate}
-            onChange={(event) => onChange({ ...settings, defaultSalaryStartDate: event.target.value })}
+            onChange={(defaultSalaryStartDate) => onChange({ ...settings, defaultSalaryStartDate })}
           />
           <p className="text-xs text-muted-foreground">{t("defaultSalaryStartDateHint")}</p>
         </div>

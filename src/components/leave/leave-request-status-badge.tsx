@@ -4,26 +4,31 @@ import { useTranslations } from "next-intl"
 
 import { Badge } from "@/components/ui/badge"
 import {
-  leaveRequestStatusMessageKeys,
-  leaveRequestStatusBadgeVariant,
+  deriveLeaveRequestDisplayStatus,
+  leaveRequestDisplayStatusMessageKeys,
+  leaveRequestDisplayStatusBadgeVariant,
 } from "@/lib/leave/leave-request-status-display"
 import type { LeaveRequestLifecycleStatus } from "@/generated/prisma/enums"
 
 interface LeaveRequestStatusBadgeProps {
   status: LeaveRequestLifecycleStatus
+  startDate: Date
+  endDate: Date
 }
 
 /**
- * The one renderer for a LeaveRequestLifecycleStatus badge — the Employee
- * Profile Leave tab and the HR /leave requests table used to each render
- * this identically inline (same variant lookup, same translation call,
- * copy-pasted). Both now render this component instead.
+ * The one renderer for a leave request's status badge. Resolves the raw
+ * LeaveRequestLifecycleStatus into a Scheduled/Active/Completed/Cancelled
+ * (or a legacy fallback) display status first — see
+ * deriveLeaveRequestDisplayStatus's own doc comment for why APPROVED alone
+ * isn't informative enough anymore now that it's set at creation time.
  */
-export function LeaveRequestStatusBadge({ status }: LeaveRequestStatusBadgeProps) {
+export function LeaveRequestStatusBadge({ status, startDate, endDate }: LeaveRequestStatusBadgeProps) {
   const t = useTranslations("Employees.profile.leave.requestStatus")
+  const displayStatus = deriveLeaveRequestDisplayStatus({ status, startDate, endDate })
   return (
-    <Badge variant={leaveRequestStatusBadgeVariant[status] ?? "outline"}>
-      {t(leaveRequestStatusMessageKeys[status] ?? "pendingApproval")}
+    <Badge variant={leaveRequestDisplayStatusBadgeVariant[displayStatus] ?? "outline"}>
+      {t(leaveRequestDisplayStatusMessageKeys[displayStatus] ?? "pendingApproval")}
     </Badge>
   )
 }

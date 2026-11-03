@@ -20,7 +20,8 @@
       "today": "Today",
       "clear": "Clear",
       "previousMonth": "Previous month",
-      "nextMonth": "Next month"
+      "nextMonth": "Next month",
+      "openCalendar": "Open calendar"
     }
   },
   "Navigation": {
@@ -136,34 +137,13 @@
   },
   "Leave": {
     "dashboard": {
-      "pendingApprovals": "Pending Approvals",
       "newLeave": "New Leave",
       "kpis": {
         "employeesOnLeave": "Employees Currently on Leave",
         "startingThisWeek": "Starting This Week",
         "endingThisWeek": "Ending This Week",
         "leavesThisMonth": "Leaves This Month",
-        "approvedThisMonth": "Approved This Month",
-        "rejectedThisMonth": "Rejected This Month"
-      },
-      "table": {
-        "title": "Leave Requests",
-        "employee": "Employee",
-        "department": "Department",
-        "leaveType": "Leave Type",
-        "dates": "Date Range",
-        "units": "Amount",
-        "workingDays": "Working Days",
-        "status": "Status",
-        "requestedBy": "Requested By",
-        "approvalLevel": "Approval Level",
-        "view": "View",
-        "approve": "Approve",
-        "reject": "Reject",
-        "cancel": "Cancel",
-        "decisionError": "The action could not be completed. Please try again.",
-        "emptyTitle": "No leave requests yet",
-        "emptyDescription": "Leave requests submitted by employees will appear here."
+        "approvedThisMonth": "Registered This Month"
       },
       "currentlyOnLeaveTable": {
         "title": "Employees Currently on Leave",
@@ -203,7 +183,7 @@
     "emptyTitle": "No recent activity",
     "emptyDescription": "Recent activity across your organization will show up here.",
     "hire": "<b>{name}</b> joined as {role} in {department}",
-    "leaveRequest": "<b>{name}</b> requested {days} days of annual leave",
+    "leaveRequest": "<b>{name}</b> was granted {days} days of annual leave",
     "promotion": "<b>{name}</b> was promoted to {role}",
     "review": "<b>{name}</b> completed {period} performance review",
     "document": "<b>{name}</b> uploaded a signed employment contract",
@@ -840,7 +820,7 @@
         "carriedForward": "Carried Forward",
         "taken": "Taken",
         "remaining": "Remaining",
-        "pending": "Pending Leave",
+        "pending": "Scheduled Leave",
         "days": "{count} {count, plural, =1 {day} other {days}}",
         "hours": "{count} {count, plural, =1 {hour} other {hours}}",
         "leaveHistory": "Transaction History",
@@ -852,12 +832,20 @@
         "requestLeave": "Request Leave",
         "requestsTitle": "Leave Requests",
         "noRequests": "No leave requests have been submitted yet.",
+        "cancelRequest": "Cancel leave",
+        "cancelDialog": {
+          "title": "Cancel leave",
+          "description": "{leaveType} ({startDate} – {endDate}) will be cancelled and the balance restored. Are you sure you want to continue?",
+          "reasonLabel": "Reason",
+          "reasonHint": "Optional — kept in the audit log.",
+          "confirmButton": "Cancel Leave"
+        },
         "tooltips": {
           "openingBalance": "The employee's annual leave balance for {year}.",
           "carriedForward": "Unused leave days carried over from the previous work year.",
           "taken": "Leave days used during the current work year.",
           "remaining": "Leave days currently available to use.",
-          "pending": "Total days across leave requests still awaiting approval. These days have not yet been deducted from the balance."
+          "pending": "Total days across future-dated leave that's already been finalized. These days have already been deducted from the balance."
         },
         "entryTypes": {
           "openingBalance": "Opening Balance",
@@ -878,7 +866,10 @@
           "approved": "Approved",
           "rejected": "Rejected",
           "cancelled": "Cancelled",
-          "withdrawn": "Withdrawn"
+          "withdrawn": "Withdrawn",
+          "scheduled": "Scheduled",
+          "active": "On Leave",
+          "completed": "Completed"
         }
       },
       "payroll": {
@@ -1358,8 +1349,8 @@
       "next": "Next",
       "submit": "Submit Request",
       "close": "Close",
-      "successTitle": "Leave request submitted",
-      "successDescription": "The request is now pending approval.",
+      "successTitle": "Leave created",
+      "successDescription": "The leave has been finalized and deducted from the balance.",
       "validation": {
         "required": "This field is required."
       },
