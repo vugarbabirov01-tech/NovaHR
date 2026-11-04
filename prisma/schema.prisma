@@ -876,6 +876,47 @@ model ApprovalWorkflowAuditLogEntry {
   @@map("approval_workflow_audit_log_entries")
 }
 
+// ---------------------------------------------------------------------------
+// Report Builder — Phase 1 (Employees data source only; see
+// src/lib/reports/). A saved ReportDefinition is purely a serialized
+// recipe (which columns, in what order, which simple filters, how sorted)
+// — never a cached result set. Every open/preview/export re-runs the
+// recipe against live data, so a saved report can never show stale numbers.
+// columns/filters are Json rather than normalized tables, same convention
+// as ApprovalInstance.contextPayload / LeavePolicy's config-shaped fields —
+// a recipe this small and this read-mostly doesn't need its own join
+// tables, and keeping it as one opaque blob per aspect means later phases
+// (more operators, nested AND/OR groups, more data sources) never require
+// a migration, only a change to how src/lib/reports/ interprets the Json.
+// createdBy is a plain String placeholder (no real user identity exists
+// yet — see DECIDING_ACTOR in the Leave module), ready to become a real
+// user id the moment auth exists, with zero shape change here.
+// ---------------------------------------------------------------------------
+
+enum ReportDataSource {
+  EMPLOYEES
+}
+
+model ReportDefinition {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  dataSource  ReportDataSource  @default(EMPLOYEES)
+  /// Ordered array of selected field keys (from the field registry),
+  /// e.g. ["firstName","lastName","department"] — order is display order.
+  columns       Json
+  /// Array of {field, operator, value} — flat list, combined with AND only
+  /// in Phase 1 (nested AND/OR groups are a later phase).
+  filters       Json
+  sortBy        String?
+  sortDirection String   @default("asc")
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("report_definitions")
+}
+
 /// Payroll — Phase 1 (see src/lib/payroll/payroll-period-service.ts). One row
 /// per calendar month; PayrollEmployeeRecord below is the actual line items.
 enum PayrollPeriodStatus {
