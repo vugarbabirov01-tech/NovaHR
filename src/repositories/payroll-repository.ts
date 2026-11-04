@@ -34,6 +34,18 @@ export function findPayrollEmployeeRecords(
   return client.payrollEmployeeRecord.findMany({ where: { payrollPeriodId } })
 }
 
+/** Report Builder's PAYROLL data source only — across every period, with
+ * the parent period included for year/month/status. Deliberately not used
+ * by anything that reads baseSalary/additions/deductions/gross/net (the
+ * report's own flattening function never reads those fields either — see
+ * payroll-report-data-source.ts and payroll-field-registry.ts). */
+export function findAllPayrollEmployeeRecordsWithPeriod(client: PrismaClientOrTransaction = prisma) {
+  return client.payrollEmployeeRecord.findMany({
+    include: { payrollPeriod: true },
+    orderBy: { createdAt: "desc" },
+  })
+}
+
 export interface CreatePayrollEmployeeRecordInput {
   payrollPeriodId: string
   employeeId: string

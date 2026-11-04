@@ -4,7 +4,33 @@
 // mapping lives in src/lib/reports/employees-report-data-source.ts, the
 // only place that ever reads EmployeeProfile directly for reporting.
 
-export type ReportDataSourceKey = "EMPLOYEES"
+export type ReportDataSourceKey =
+  | "EMPLOYEES"
+  | "COMPANIES"
+  | "BRANCHES"
+  | "DEPARTMENTS"
+  | "POSITIONS"
+  | "LEAVE_REQUESTS"
+  | "PAYROLL"
+
+export const ALL_DATA_SOURCE_KEYS: ReportDataSourceKey[] = [
+  "EMPLOYEES",
+  "COMPANIES",
+  "BRANCHES",
+  "DEPARTMENTS",
+  "POSITIONS",
+  "LEAVE_REQUESTS",
+  "PAYROLL",
+]
+
+/** PAYROLL is dev-only until real authentication/RBAC exists (see
+ * payroll-report-data-source.ts) — this is the one place both the data
+ * source selector (client) and the server actions (server) agree on which
+ * sources are actually selectable right now, so the two can never drift. */
+export function isDataSourceAvailable(dataSource: ReportDataSourceKey): boolean {
+  if (dataSource === "PAYROLL") return process.env.NODE_ENV !== "production"
+  return true
+}
 
 export type ReportFieldType = "string" | "number" | "date" | "enum"
 

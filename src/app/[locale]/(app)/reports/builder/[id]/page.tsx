@@ -32,6 +32,7 @@ export default async function EditReportPage({ params }: Props) {
           id: report.id,
           name: report.name,
           description: report.description ?? "",
+          dataSource: report.dataSource,
           columns: report.columns,
           filters: report.filters,
           sortBy: report.sortBy,

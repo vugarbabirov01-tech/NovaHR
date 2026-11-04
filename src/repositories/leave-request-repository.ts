@@ -43,6 +43,17 @@ export function findAllLeaveRequests(): Promise<LeaveRequestModel[]> {
   return prisma.leaveRequest.findMany({ orderBy: { createdAt: "desc" } })
 }
 
+/** Report Builder's LEAVE_REQUESTS data source only — the one reader that
+ * needs leaveType.name/code alongside the request, so it includes that
+ * relation; findAllLeaveRequests above stays as-is for every existing
+ * caller (the /leave dashboard never needed the relation loaded). */
+export function findAllLeaveRequestsForReporting() {
+  return prisma.leaveRequest.findMany({
+    orderBy: { startDate: "desc" },
+    include: { leaveType: true },
+  })
+}
+
 export function findLeaveRequestById(
   id: string,
   client: PrismaClientOrTransaction = prisma

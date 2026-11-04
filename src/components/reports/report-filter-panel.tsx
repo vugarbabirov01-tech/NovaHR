@@ -13,19 +13,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { getEnumMessagePath, getFieldsForDataSource, getReportFieldDefinition } from "@/lib/reports/field-registry"
 import {
-  EMPLOYEE_REPORT_FIELDS,
-  getEnumMessagePath,
-  getReportFieldDefinition,
-} from "@/lib/reports/field-registry"
-import { OPERATORS_BY_FIELD_TYPE, VALUELESS_OPERATORS, type FilterOperator, type ReportFilter } from "@/types/reports"
+  OPERATORS_BY_FIELD_TYPE,
+  VALUELESS_OPERATORS,
+  type FilterOperator,
+  type ReportDataSourceKey,
+  type ReportFilter,
+} from "@/types/reports"
 
 interface ReportFilterPanelProps {
+  dataSource: ReportDataSourceKey
   filters: ReportFilter[]
   onChange: (filters: ReportFilter[]) => void
 }
-
-const DEFAULT_FIELD = EMPLOYEE_REPORT_FIELDS[0].key
 
 function defaultOperatorFor(fieldKey: string): FilterOperator {
   const definition = getReportFieldDefinition(fieldKey)
@@ -39,14 +40,22 @@ function defaultOperatorFor(fieldKey: string): FilterOperator {
  * field's type from the registry, so a date field never offers "contains"
  * and a string field never offers "between".
  */
-export function ReportFilterPanel({ filters, onChange }: ReportFilterPanelProps) {
+export function ReportFilterPanel({ dataSource, filters, onChange }: ReportFilterPanelProps) {
   const t = useTranslations("Reports.builder")
   const tFields = useTranslations("Reports.fields")
   const tOperators = useTranslations("Reports.operators")
   const tEnum = useTranslations()
 
+  const fieldsForSource = getFieldsForDataSource(dataSource)
+  // See report-data-source-select.tsx's own comment — Base UI's
+  // <Select.Value> needs an explicit value->label map to display the
+  // trigger's current selection translated.
+  const fieldLabels: Record<string, string> = {}
+  for (const field of fieldsForSource) fieldLabels[field.key] = tFields(field.labelKey)
+
   function addFilter() {
-    onChange([...filters, { field: DEFAULT_FIELD, operator: defaultOperatorFor(DEFAULT_FIELD), value: "" }])
+    const defaultField = fieldsForSource[0].key
+    onChange([...filters, { field: defaultField, operator: defaultOperatorFor(defaultField), value: "" }])
   }
 
   function updateFilter(index: number, patch: Partial<ReportFilter>) {
@@ -67,8 +76,14 @@ export function ReportFilterPanel({ filters, onChange }: ReportFilterPanelProps)
     if (!definition) return null
 
     if (definition.type === "enum") {
+      const enumLabels: Record<string, string> = {}
+      for (const value of definition.enumValues ?? []) {
+        const messagePath = getEnumMessagePath(definition, value)
+        enumLabels[value] = messagePath ? tEnum(messagePath) : value
+      }
       return (
         <Select
+          items={enumLabels}
           value={filter.value ? String(filter.value) : ""}
           onValueChange={(value) => updateFilter(index, { value })}
         >
@@ -140,15 +155,17 @@ export function ReportFilterPanel({ filters, onChange }: ReportFilterPanelProps)
           {filters.map((filter, index) => {
             const definition = getReportFieldDefinition(filter.field)
             const operators = definition ? OPERATORS_BY_FIELD_TYPE[definition.type] : []
+            const operatorLabels: Record<string, string> = {}
+            for (const operator of operators) operatorLabels[operator] = tOperators(operator)
             return (
               <div key={index} className="flex flex-col gap-2 rounded-lg border border-border p-3 sm:flex-row sm:items-start sm:gap-2">
                 <div className="grid flex-1 gap-2 sm:grid-cols-3">
-                  <Select value={filter.field} onValueChange={(value) => value && handleFieldChange(index, value)}>
+                  <Select items={fieldLabels} value={filter.field} onValueChange={(value) => value && handleFieldChange(index, value)}>
                     <SelectTrigger className="h-8 w-full text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {EMPLOYEE_REPORT_FIELDS.map((field) => (
+                      {fieldsForSource.map((field) => (
                         <SelectItem key={field.key} value={field.key}>
                           {tFields(field.labelKey)}
                         </SelectItem>
@@ -157,6 +174,7 @@ export function ReportFilterPanel({ filters, onChange }: ReportFilterPanelProps)
                   </Select>
 
                   <Select
+                    items={operatorLabels}
                     value={filter.operator}
                     onValueChange={(value) => updateFilter(index, { operator: value as FilterOperator, value: "", valueTo: undefined })}
                   >

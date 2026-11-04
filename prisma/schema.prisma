@@ -895,6 +895,12 @@ model ApprovalWorkflowAuditLogEntry {
 
 enum ReportDataSource {
   EMPLOYEES
+  COMPANIES
+  BRANCHES
+  DEPARTMENTS
+  POSITIONS
+  LEAVE_REQUESTS
+  PAYROLL
 }
 
 model ReportDefinition {

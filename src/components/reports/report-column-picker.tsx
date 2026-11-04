@@ -10,17 +10,22 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  EMPLOYEE_REPORT_FIELDS,
-  type ReportFieldCategory,
-} from "@/lib/reports/field-registry"
+import { getFieldsForDataSource, type ReportFieldCategory } from "@/lib/reports/field-registry"
+import type { ReportDataSourceKey } from "@/types/reports"
 
 interface ReportColumnPickerProps {
+  dataSource: ReportDataSourceKey
   selectedColumns: string[]
   onChange: (columns: string[]) => void
 }
 
-const CATEGORIES: ReportFieldCategory[] = ["personal", "employment"]
+const CATEGORY_LABEL_KEYS: Record<ReportFieldCategory, string> = {
+  personal: "categoryPersonal",
+  employment: "categoryEmployment",
+  organization: "categoryOrganization",
+  leave: "categoryLeave",
+  payroll: "categoryPayroll",
+}
 
 /**
  * Left-hand half of the builder: a searchable, category-grouped checkbox
@@ -30,25 +35,32 @@ const CATEGORIES: ReportFieldCategory[] = ["personal", "employment"]
  * Phase 1 report). Toggling a checkbox appends to (or removes from) the
  * selection; order is controlled entirely by the second list.
  */
-export function ReportColumnPicker({ selectedColumns, onChange }: ReportColumnPickerProps) {
+export function ReportColumnPicker({ dataSource, selectedColumns, onChange }: ReportColumnPickerProps) {
   const t = useTranslations("Reports.builder")
   const tFields = useTranslations("Reports.fields")
   const [search, setSearch] = useState("")
+
+  const fieldsForSource = useMemo(() => getFieldsForDataSource(dataSource), [dataSource])
+  const categories = useMemo(() => {
+    const seen = new Set<ReportFieldCategory>()
+    for (const field of fieldsForSource) seen.add(field.category)
+    return Array.from(seen)
+  }, [fieldsForSource])
 
   const selectedSet = useMemo(() => new Set(selectedColumns), [selectedColumns])
 
   const fieldsByCategory = useMemo(() => {
     const query = search.trim().toLowerCase()
-    const grouped = new Map<ReportFieldCategory, typeof EMPLOYEE_REPORT_FIELDS>()
-    for (const category of CATEGORIES) grouped.set(category, [])
-    for (const field of EMPLOYEE_REPORT_FIELDS) {
+    const grouped = new Map<ReportFieldCategory, typeof fieldsForSource>()
+    for (const category of categories) grouped.set(category, [])
+    for (const field of fieldsForSource) {
       const label = tFields(field.labelKey)
       if (query && !label.toLowerCase().includes(query)) continue
       grouped.get(field.category)?.push(field)
     }
     return grouped
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search])
+  }, [search, fieldsForSource, categories])
 
   function toggleField(key: string, checked: boolean) {
     if (checked) {
@@ -87,13 +99,13 @@ export function ReportColumnPicker({ selectedColumns, onChange }: ReportColumnPi
         </div>
         <ScrollArea className="h-56 rounded-lg border border-border">
           <div className="flex flex-col gap-3 p-3">
-            {CATEGORIES.map((category) => {
+            {categories.map((category) => {
               const fields = fieldsByCategory.get(category) ?? []
               if (fields.length === 0) return null
               return (
                 <div key={category} className="flex flex-col gap-1.5">
                   <span className="text-xs font-medium text-muted-foreground">
-                    {t(category === "personal" ? "categoryPersonal" : "categoryEmployment")}
+                    {t(CATEGORY_LABEL_KEYS[category])}
                   </span>
                   {fields.map((field) => (
                     <Label key={field.key} className="flex items-center gap-2 text-sm font-normal">

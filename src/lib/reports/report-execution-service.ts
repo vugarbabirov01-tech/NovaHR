@@ -1,19 +1,6 @@
-import { fetchEmployeeReportRows } from "@/lib/reports/employees-report-data-source"
+import { fetchRowsForDataSource } from "@/lib/reports/data-source-registry"
 import { applyFilters, sortRows } from "@/lib/reports/filter-engine"
-import type {
-  ReportColumn,
-  ReportDataSourceKey,
-  ReportFilter,
-  ReportPreviewResult,
-  ReportRow,
-} from "@/types/reports"
-
-async function fetchRowsForDataSource(dataSource: ReportDataSourceKey): Promise<ReportRow[]> {
-  switch (dataSource) {
-    case "EMPLOYEES":
-      return fetchEmployeeReportRows()
-  }
-}
+import type { ReportColumn, ReportDataSourceKey, ReportFilter, ReportPreviewResult, ReportRow } from "@/types/reports"
 
 function projectColumns(row: ReportRow, columns: ReportColumn[]): ReportRow {
   const projected: ReportRow = {}
