@@ -148,6 +148,11 @@ model Employee {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  /// Authentication Phase A back-relation only — see User.employeeId's own
+  /// comment. Adds no column to this table; the FK lives entirely on the
+  /// `users` table, so this line has zero migration footprint here.
+  user User?
+
   @@map("employees")
 }
 
@@ -985,4 +990,202 @@ model PayrollEmployeeRecord {
   @@unique([payrollPeriodId, employeeId])
   @@index([employeeId])
   @@map("payroll_employee_records")
+}
+
+// ---------------------------------------------------------------------------
+// Authentication — Phase A (schema + relations + integrity-rule repository
+// functions only; no login, no middleware, no Server Action enforcement —
+// those are Phase B+). Nothing in this block is read by any existing module
+// yet, so this entire block is additive with zero behavioral effect.
+//
+// SESSION ARCHITECTURE NOTE — researched, not assumed: Auth.js's Credentials
+// provider does not support the "database" session strategy (confirmed
+// across Auth.js's own docs mirror, two Auth.js GitHub issues — #6127 and
+// #10988 — and independent reproduction reports); it requires "jwt". Nova
+// is Credentials-only (no OAuth planned), so there is also no need for
+// Auth.js's own adapter-shape Account/Session/VerificationToken tables —
+// those exist solely to support OAuth account linking and the database
+// session strategy, neither of which applies here. UserSession below is
+// NOT an Auth.js adapter table: it is this app's own, independent,
+// DB-backed revocation ledger, consulted from Auth.js's `session` callback
+// on every request (expiresAt / revokedAt / User.active all checked there)
+// so that logout, forced logout, and deactivation all take effect on the
+// very next request even though the JWT itself stays cryptographically
+// valid until its own expiry. This is what gives a JWT-strategy setup the
+// same real server-side revocation a database-strategy setup would have,
+// without depending on @auth/prisma-adapter at all (whose latest published
+// version's own peer range tops out at @prisma/client 6.x — Nova is on
+// 7.9.0 — a second, independent reason not to take that dependency).
+// ---------------------------------------------------------------------------
+
+/// employeeId is a real FK (unlike every bare employeeId string elsewhere
+/// in this schema) — deliberately, not by oversight: Employee already had
+/// a real table by the time this field was designed (unlike when Leave/
+/// Payroll were built), and this specific link decides who may view whose
+/// data, so a stale/mistyped id here is a security bug, not just a display
+/// glitch. onDelete: Restrict means an Employee with a linked User can
+/// never be deleted while that link exists — the account must be unlinked
+/// or the Employee record otherwise handled first. @unique enforces "at
+/// most one User per Employee" at the database level; NULL is unaffected
+/// by that uniqueness (SQLite/standard SQL), so any number of Users may
+/// simultaneously have no linked Employee (e.g. a Super Admin who is IT
+/// staff, not HR-tracked personnel).
+model User {
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  passwordHash       String
+  fullName           String
+  active             Boolean  @default(true)
+  mustChangePassword Boolean  @default(false)
+  employeeId         String?  @unique
+  employee           Employee? @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  lastLoginAt        DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  roleAssignments     UserRoleAssignment[]
+  sessions            UserSession[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@index([employeeId])
+  @@map("auth_users")
+}
+
+/// Catalog identity only, same shape as Department/Grade/EmploymentType —
+/// seeded with the 7 approved roles at migration time. isSystemRole
+/// distinguishes the seeded set from any custom role a future admin UI
+/// (Phase E) might create.
+model Role {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  name         String
+  description  String?
+  isSystemRole Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  permissions RolePermission[]
+  assignments UserRoleAssignment[]
+
+  @@map("auth_roles")
+}
+
+/// Catalog identity only — seeded with the initial permission-key list at
+/// migration time (EMPLOYEES_VIEW, PAYROLL_VIEW_AMOUNTS, REPORTS_EXPORT,
+/// ...). EMPLOYEE_SELF_VIEW is intentionally NOT granted through
+/// RolePermission/UserRoleAssignment — see User.employeeId's own comment
+/// and the service-layer notes below; it still gets a row here purely so
+/// every permission check and every audit-log entry can cite one
+/// consistent key, even for identity-derived ones.
+model Permission {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  description String?
+
+  roles RolePermission[]
+
+  @@map("auth_permissions")
+}
+
+model RolePermission {
+  id           String @id @default(cuid())
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id])
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+  @@index([permissionId])
+  @@map("auth_role_permissions")
+}
+
+enum ScopeType {
+  GLOBAL
+  COMPANY
+  BRANCH
+}
+
+/// The grant itself. scopeId is a bare polymorphic reference (Company.id
+/// or Branch.id depending on scopeType, or null for GLOBAL) — same soft-
+/// reference convention as Document.entityId/LeaveAuditLogEntry.entityId
+/// elsewhere in this schema, since Prisma cannot express a single FK
+/// column that points at two different tables. Integrity rules this
+/// model's own shape cannot enforce at the database level (GLOBAL implies
+/// null scopeId; COMPANY/BRANCH implies a scopeId that actually exists in
+/// the matching table; SUPER_ADMIN is only ever GLOBAL; no two ACTIVE rows
+/// share the same (userId, roleId, scopeType, scopeId)) are enforced in
+/// the repository layer instead — see
+/// src/repositories/user-role-assignment-repository.ts's own comment for
+/// exactly which checks run before every insert, and why a DB-level
+/// partial unique index (the one piece that WOULD close this more tightly)
+/// is deferred rather than hand-authored into this phase's migration.
+/// revokedAt is soft-revoke, never a delete — same discipline as every
+/// append-only audit table already in this schema, and what lets a
+/// revoked-then-re-granted assignment have an honest history.
+model UserRoleAssignment {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  roleId     String
+  role       Role      @relation(fields: [roleId], references: [id])
+  scopeType  ScopeType @default(GLOBAL)
+  scopeId    String?
+  assignedBy String
+  assignedAt DateTime  @default(now())
+  revokedAt  DateTime?
+
+  @@index([userId])
+  @@index([roleId])
+  @@map("auth_user_role_assignments")
+}
+
+/// This app's own revocation ledger — NOT an Auth.js adapter table, see
+/// this block's header comment. jti is the JWT's own unique id claim,
+/// embedded in the token at sign-in and looked up here on every session
+/// read; revoking (logout, forced logout) or expiring this row is what
+/// actually ends the session, independent of the JWT's own signature
+/// still being cryptographically valid.
+model UserSession {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  jti       String    @unique
+  issuedAt  DateTime  @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+  ipAddress String?
+  userAgent String?
+
+  @@index([userId])
+  @@map("auth_user_sessions")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("auth_password_reset_tokens")
+}
+
+/// Append-only, same entityType/entityId/action/actor/timestamp discipline
+/// as LeaveAuditLogEntry/ApprovalWorkflowAuditLogEntry. actorUserId is
+/// nullable — a failed login attempt has no identified actor yet.
+model AuthAuditLogEntry {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String
+  targetType  String?
+  targetId    String?
+  metadata    Json?
+  ipAddress   String?
+  timestamp   DateTime @default(now())
+
+  @@index([actorUserId])
+  @@index([action, timestamp])
+  @@map("auth_audit_log_entries")
 }
