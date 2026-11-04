@@ -4,7 +4,8 @@ import { findActiveLeaveByEmployee } from "@/lib/leave/leave-active-status"
 import { resolveWorkStatus, type WorkStatusContext } from "@/lib/employee-work-status"
 import { loadWorkStatusContext } from "@/lib/employee-work-status-loader"
 import { findActiveLeaveTypes } from "@/repositories/leave-type-repository"
-import type { LeaveRequest } from "@/repositories/leave-request-repository"
+import { createLeaveRequest, deleteLeaveRequestsByEmployees, type LeaveRequest } from "@/repositories/leave-request-repository"
+import { withTestEmployee } from "@/lib/leave/leave-test-fixtures"
 
 const NOW = new Date("2026-08-05T10:00:00")
 
@@ -135,20 +136,41 @@ describe("resolveWorkStatus", () => {
 })
 
 describe("loadWorkStatusContext — real data integration", () => {
-  it("resolves EMP-1041 to ON_LEAVE while their real APPROVED Annual Leave request is active, and AT_WORK outside it", async () => {
-    // EMP-1041 has a real APPROVED Annual Leave request in the dev database
-    // (2026-08-03 .. 2026-08-23) — this exercises the actual DB-backed
-    // loader end to end, not just the pure resolveWorkStatus function above.
+  it("resolves to ON_LEAVE while a real APPROVED Annual Leave request is active, and AT_WORK outside it", async () => {
+    // Exercises the actual DB-backed loader end to end, not just the pure
+    // resolveWorkStatus function above — against a throwaway employee +
+    // throwaway LeaveRequest (withTestEmployee + createLeaveRequest,
+    // cleaned up in finally), never a specific real employee id. A
+    // previous version of this test hardcoded "EMP-1041" and assumed a
+    // specific real LeaveRequest already existed for it in dev.db — both
+    // assumptions went stale the same way the Leave test suite's other
+    // fixtures did (see leave-test-fixtures.ts's own comment).
     const annual = (await findActiveLeaveTypes()).find((t) => t.code === "ANNUAL")
     expect(annual).toBeDefined()
 
-    const duringLeave = await loadWorkStatusContext(new Date("2026-08-10"))
-    expect(resolveWorkStatus("EMP-1041", duringLeave)).toBe("ON_LEAVE")
+    await withTestEmployee("EMP-1041", async (employee) => {
+      try {
+        await createLeaveRequest({
+          employeeId: employee.id,
+          leaveTypeId: annual!.id,
+          startDate: new Date("2026-08-03"),
+          endDate: new Date("2026-08-23"),
+          requestedUnits: 15,
+          status: "APPROVED",
+          decidedBy: "TEST",
+        })
 
-    const beforeLeave = await loadWorkStatusContext(new Date("2026-08-01"))
-    expect(resolveWorkStatus("EMP-1041", beforeLeave)).toBe("AT_WORK")
+        const duringLeave = await loadWorkStatusContext(new Date("2026-08-10"))
+        expect(resolveWorkStatus(employee.id, duringLeave)).toBe("ON_LEAVE")
 
-    const afterLeave = await loadWorkStatusContext(new Date("2026-08-24"))
-    expect(resolveWorkStatus("EMP-1041", afterLeave)).toBe("AT_WORK")
+        const beforeLeave = await loadWorkStatusContext(new Date("2026-08-01"))
+        expect(resolveWorkStatus(employee.id, beforeLeave)).toBe("AT_WORK")
+
+        const afterLeave = await loadWorkStatusContext(new Date("2026-08-24"))
+        expect(resolveWorkStatus(employee.id, afterLeave)).toBe("AT_WORK")
+      } finally {
+        await deleteLeaveRequestsByEmployees([employee.id])
+      }
+    })
   })
 })
