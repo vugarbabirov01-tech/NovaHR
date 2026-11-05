@@ -1129,6 +1129,18 @@ model UserRoleAssignment {
   role       Role      @relation(fields: [roleId], references: [id])
   scopeType  ScopeType @default(GLOBAL)
   scopeId    String?
+  /// "{userId}::{roleId}::{scopeType}::{scopeId ?? "GLOBAL"}" while
+  /// revokedAt is null, set back to null once revoked — the exact same
+  /// technique ApprovalInstance.activeKey already uses in this schema
+  /// (see that model's own comment): a plain unique constraint ignores
+  /// NULL-vs-NULL, so computing a real string only while "active" and
+  /// nulling it on revoke is what makes "no two ACTIVE rows share the
+  /// same (user, role, scope)" an actual database-level guarantee,
+  /// closing the race a service-level check-then-insert alone cannot
+  /// (two concurrent creates both passing the check before either
+  /// commits) — the second one's insert hits this unique constraint
+  /// instead. Revoking frees the key for a legitimate later re-grant.
+  activeKey  String?   @unique
   assignedBy String
   assignedAt DateTime  @default(now())
   revokedAt  DateTime?

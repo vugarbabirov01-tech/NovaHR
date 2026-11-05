@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto"
 
 import { prisma, type PrismaClientOrTransaction } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
+import { isUniqueConstraintConflictOn } from "@/lib/prisma-unique-conflict"
 import type { ApprovalDecision, ApprovalActionType } from "@/generated/prisma/enums"
 import { eventBus } from "@/lib/event-bus/in-memory-event-bus"
 import { ApprovalEventType } from "@/lib/event-bus/approval-event-types"
@@ -295,13 +296,20 @@ export interface SubmitForApprovalInput {
   scope?: SubmissionScope
 }
 
+/**
+ * Was target-array-only until 2026-11-05 — that shape never matches this
+ * project's actual datasource (SQLite via the libSQL driver adapter),
+ * which reports a P2002's conflicting field in a different, nested
+ * location (see isUniqueConstraintConflictOn's own comment). That meant a
+ * real concurrent double-submission race here surfaced as an unhandled
+ * error instead of this function's own intended, already-documented
+ * behavior ("the race loser gets the winner's instance back") — fixed by
+ * delegating to the shared, driver-shape-aware helper; nothing about
+ * submitForApproval's own behavior changed, this only makes the detection
+ * it already relied on actually work.
+ */
 function isActiveKeyConflict(error: unknown): boolean {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === "P2002" &&
-    Array.isArray((error.meta as { target?: unknown } | undefined)?.target) &&
-    ((error.meta as { target: unknown[] }).target as unknown[]).includes("activeKey")
-  )
+  return isUniqueConstraintConflictOn(error, "activeKey")
 }
 
 /**
