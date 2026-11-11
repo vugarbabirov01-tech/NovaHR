@@ -1,6 +1,14 @@
+import { computeAnalytics } from "@/lib/reports/aggregation-engine"
 import { fetchRowsForDataSource } from "@/lib/reports/data-source-registry"
 import { applyFilters, sortRows } from "@/lib/reports/filter-engine"
-import type { ReportColumn, ReportDataSourceKey, ReportFilter, ReportPreviewResult, ReportRow } from "@/types/reports"
+import type {
+  AnalyticsSpec,
+  ReportColumn,
+  ReportDataSourceKey,
+  ReportFilter,
+  ReportPreviewResult,
+  ReportRow,
+} from "@/types/reports"
 
 function projectColumns(row: ReportRow, columns: ReportColumn[]): ReportRow {
   const projected: ReportRow = {}
@@ -17,6 +25,10 @@ export interface ExecuteReportInput {
   /** 1-based. Omit (with pageSize) to get every matching row — used by export. */
   page?: number
   pageSize?: number
+  /** User-selected KPIs (no groupBy) — the implicit row-count KPI is
+   * always prepended regardless of this list, see below. */
+  kpis?: AnalyticsSpec[]
+  chartConfig?: AnalyticsSpec | null
 }
 
 /**
@@ -25,6 +37,12 @@ export interface ExecuteReportInput {
  * Export (which calls this with no page/pageSize to get every row). Always
  * re-reads the live Employee table — a ReportDefinition is a recipe, never
  * a cached result (see that model's own schema comment).
+ *
+ * KPIs and the chart are computed from `filtered` — the full matching set,
+ * BEFORE pagination — so they always reflect every matching row, never
+ * just the page currently on screen (2026-11-11 universal-architecture
+ * requirement). Neither this function nor aggregation-engine.ts branches
+ * on `dataSource` anywhere below.
  */
 export async function executeReport(input: ExecuteReportInput): Promise<ReportPreviewResult> {
   const allRows = await fetchRowsForDataSource(input.dataSource)
@@ -34,5 +52,14 @@ export async function executeReport(input: ExecuteReportInput): Promise<ReportPr
 
   const page = input.page && input.pageSize ? sorted.slice((input.page - 1) * input.pageSize, input.page * input.pageSize) : sorted
 
-  return { rows: page.map((row) => projectColumns(row, input.columns)), totalCount }
+  const rowCountKpi = computeAnalytics(filtered, { aggregation: "count" })
+  const extraKpis = (input.kpis ?? []).map((spec) => computeAnalytics(filtered, spec))
+  const chart = input.chartConfig ? computeAnalytics(filtered, input.chartConfig) : null
+
+  return {
+    rows: page.map((row) => projectColumns(row, input.columns)),
+    totalCount,
+    kpis: [rowCountKpi, ...extraKpis],
+    chart,
+  }
 }

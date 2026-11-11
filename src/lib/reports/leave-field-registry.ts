@@ -18,7 +18,14 @@ import type { ReportFieldDefinition } from "@/lib/reports/field-registry"
  * fields are ever evaluated, not as a filter a user could work around.
  */
 export const LEAVE_REQUEST_FIELDS: ReportFieldDefinition[] = [
-  { key: "leaveTypeName", category: "leave", type: "string", labelKey: "leaveTypeName", dataSource: "LEAVE_REQUESTS" },
+  {
+    key: "leaveTypeName",
+    category: "leave",
+    type: "string",
+    labelKey: "leaveTypeName",
+    dataSource: "LEAVE_REQUESTS",
+    groupable: true,
+  },
   { key: "leaveStartDate", category: "leave", type: "date", labelKey: "leaveStartDate", dataSource: "LEAVE_REQUESTS" },
   { key: "leaveEndDate", category: "leave", type: "date", labelKey: "leaveEndDate", dataSource: "LEAVE_REQUESTS" },
   {
@@ -27,6 +34,7 @@ export const LEAVE_REQUEST_FIELDS: ReportFieldDefinition[] = [
     type: "number",
     labelKey: "leaveRequestedUnits",
     dataSource: "LEAVE_REQUESTS",
+    aggregations: ["sum", "avg", "min", "max"],
   },
   {
     key: "leaveStatus",
@@ -51,6 +59,7 @@ export const LEAVE_REQUEST_FIELDS: ReportFieldDefinition[] = [
     type: "string",
     labelKey: "leaveEmployeeDepartment",
     dataSource: "LEAVE_REQUESTS",
+    groupable: true,
   },
   {
     key: "leaveEmployeeCompany",
@@ -58,5 +67,6 @@ export const LEAVE_REQUEST_FIELDS: ReportFieldDefinition[] = [
     type: "string",
     labelKey: "leaveEmployeeCompany",
     dataSource: "LEAVE_REQUESTS",
+    groupable: true,
   },
 ]

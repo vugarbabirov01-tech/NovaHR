@@ -26,6 +26,7 @@ export const ORGANIZATION_COMPANY_FIELDS: ReportFieldDefinition[] = [
     type: "number",
     labelKey: "companyEmployeeCount",
     dataSource: "COMPANIES",
+    aggregations: ["sum", "avg", "min", "max"],
   },
 ]
 
@@ -38,6 +39,7 @@ export const ORGANIZATION_BRANCH_FIELDS: ReportFieldDefinition[] = [
     type: "string",
     labelKey: "branchCompanyName",
     dataSource: "BRANCHES",
+    groupable: true,
   },
   {
     key: "branchEmployeeCount",
@@ -45,6 +47,7 @@ export const ORGANIZATION_BRANCH_FIELDS: ReportFieldDefinition[] = [
     type: "number",
     labelKey: "branchEmployeeCount",
     dataSource: "BRANCHES",
+    aggregations: ["sum", "avg", "min", "max"],
   },
 ]
 
@@ -69,6 +72,7 @@ export const ORGANIZATION_DEPARTMENT_FIELDS: ReportFieldDefinition[] = [
     type: "number",
     labelKey: "departmentEmployeeCount",
     dataSource: "DEPARTMENTS",
+    aggregations: ["sum", "avg", "min", "max"],
   },
 ]
 
@@ -81,6 +85,7 @@ export const ORGANIZATION_POSITION_FIELDS: ReportFieldDefinition[] = [
     type: "string",
     labelKey: "positionDepartmentName",
     dataSource: "POSITIONS",
+    groupable: true,
   },
   {
     key: "positionEmployeeCount",
@@ -88,5 +93,6 @@ export const ORGANIZATION_POSITION_FIELDS: ReportFieldDefinition[] = [
     type: "number",
     labelKey: "positionEmployeeCount",
     dataSource: "POSITIONS",
+    aggregations: ["sum", "avg", "min", "max"],
   },
 ]

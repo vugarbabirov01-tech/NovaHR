@@ -1,11 +1,12 @@
 "use client"
 
-import { useTranslations } from "next-intl"
+import { useFormatter, useTranslations } from "next-intl"
 import { ChevronLeft, ChevronRight, FileSearch, TableIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/common/empty-state"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { buildDurationFormatter } from "@/lib/reports/analytics-format"
 import { getEnumMessagePath, getReportFieldDefinition } from "@/lib/reports/field-registry"
 import type { ReportColumn, ReportRow } from "@/types/reports"
 
@@ -31,6 +32,8 @@ export function ReportPreviewTable({
   const t = useTranslations("Reports.builder")
   const tFields = useTranslations("Reports.fields")
   const tEnum = useTranslations()
+  const format = useFormatter()
+  const formatDuration = buildDurationFormatter(tFields)
 
   if (columns.length === 0) {
     return (
@@ -62,6 +65,18 @@ export function ReportPreviewTable({
     if (definition?.type === "enum") {
       const messagePath = getEnumMessagePath(definition, String(value))
       return <span>{messagePath ? tEnum(messagePath) : String(value)}</span>
+    }
+    // "X il Y ay" — rendered from the raw total-months number at display
+    // time, the same deferred-translation precedent as enum values above
+    // (see that field's own displayUnit comment in field-registry.ts).
+    if (definition?.displayUnit === "durationMonths" && typeof value === "number") {
+      return <span className="tabular-nums">{formatDuration(value)}</span>
+    }
+    // Locale-aware (comma/period decimal, thousands separator) — but no
+    // repeated unit word per row here: unlike a KPI card, a detail
+    // column's own header (e.g. "Yaş") already gives the number context.
+    if (definition?.type === "number" && typeof value === "number") {
+      return <span className="tabular-nums">{format.number(value, { maximumFractionDigits: 2 })}</span>
     }
     if (definition?.type === "number" || definition?.type === "date") {
       return <span className="tabular-nums">{String(value)}</span>

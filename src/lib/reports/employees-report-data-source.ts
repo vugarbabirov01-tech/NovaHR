@@ -14,6 +14,13 @@ import type { ReportRow } from "@/types/reports"
  * re-flattening.
  */
 function flattenEmployee(profile: EmployeeProfile): ReportRow {
+  // Computed once and reused for all three tenure fields below — tenureYears
+  // (whole years, unchanged, backward-compatible with existing saved
+  // reports), tenureYearsDecimal (sub-year precision for filters/KPIs), and
+  // tenureDurationMonths (rendered as "X il Y ay" at display time via that
+  // field's own durationUnit flag — see field-registry.ts).
+  const tenure = profile.employment.hireDate ? calculateServiceDuration(profile.employment.hireDate) : null
+
   return {
     firstName: profile.personal.firstName ?? "",
     lastName: profile.personal.lastName ?? "",
@@ -28,7 +35,9 @@ function flattenEmployee(profile: EmployeeProfile): ReportRow {
 
     employeeNumber: profile.employment.employeeNumber ?? "",
     hireDate: profile.employment.hireDate ?? "",
-    tenureYears: profile.employment.hireDate ? calculateServiceDuration(profile.employment.hireDate).years : null,
+    tenureYears: tenure ? tenure.years : null,
+    tenureYearsDecimal: tenure ? Math.round((tenure.years + tenure.months / 12 + tenure.days / 365) * 100) / 100 : null,
+    tenureDurationMonths: tenure ? tenure.years * 12 + tenure.months : null,
     probationEndDate: profile.employment.probationEndDate ?? "",
     employmentType: profile.employment.employmentType ?? "",
     contractType: profile.employment.contractType ?? "",

@@ -35,6 +35,7 @@ export const PAYROLL_FIELDS: ReportFieldDefinition[] = [
     type: "string",
     labelKey: "payrollEmployeeDepartment",
     dataSource: "PAYROLL",
+    groupable: true,
   },
   {
     key: "payrollEmployeeCompany",
@@ -42,5 +43,15 @@ export const PAYROLL_FIELDS: ReportFieldDefinition[] = [
     type: "string",
     labelKey: "payrollEmployeeCompany",
     dataSource: "PAYROLL",
+    groupable: true,
   },
 ]
+
+// Deliberately no `aggregations` anywhere in this file: payrollYear/
+// payrollMonth are numeric identifiers (never a measure), and the 2026-11-
+// 11 decision keeps every actual financial field out of this registry
+// entirely until real RBAC exists (see this file's own header comment).
+// This means the universal analytics engine can only ever offer "count" —
+// never sum/avg/min/max of anything — for this data source, which is
+// exactly the intended restriction, enforced by metadata rather than a
+// special case anywhere in the engine or UI.

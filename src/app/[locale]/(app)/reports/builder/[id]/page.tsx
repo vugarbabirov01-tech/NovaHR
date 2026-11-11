@@ -37,6 +37,8 @@ export default async function EditReportPage({ params }: Props) {
           filters: report.filters,
           sortBy: report.sortBy,
           sortDirection: report.sortDirection,
+          kpis: report.kpis,
+          chartConfig: report.chartConfig,
         }}
       />
     </div>

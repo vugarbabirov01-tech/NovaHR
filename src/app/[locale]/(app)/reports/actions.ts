@@ -47,6 +47,8 @@ export async function previewReportAction(input: unknown): Promise<MasterDataAct
       sortDirection: parsed.data.sortDirection ?? "asc",
       page: parsed.data.page,
       pageSize: parsed.data.pageSize,
+      kpis: parsed.data.kpis,
+      chartConfig: parsed.data.chartConfig,
     })
     return { success: true, data: result }
   } catch {
@@ -68,6 +70,8 @@ export async function createReportAction(input: unknown): Promise<MasterDataActi
       filters: parsed.data.filters,
       sortBy: parsed.data.sortBy ?? null,
       sortDirection: parsed.data.sortDirection ?? "asc",
+      kpis: parsed.data.kpis,
+      chartConfig: parsed.data.chartConfig,
       createdBy: REPORT_ACTOR,
     })
     revalidateReports()
@@ -97,6 +101,8 @@ export async function updateReportAction(
       filters: parsed.data.filters,
       sortBy: parsed.data.sortBy ?? null,
       sortDirection: parsed.data.sortDirection ?? "asc",
+      kpis: parsed.data.kpis,
+      chartConfig: parsed.data.chartConfig,
       createdBy: existing.createdBy,
     })
     revalidateReports()
@@ -127,14 +133,16 @@ export async function exportReportAction(
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input." }
   }
   try {
-    const { rows } = await executeReport({
+    const { rows, kpis, chart } = await executeReport({
       dataSource: parsed.data.dataSource,
       columns: parsed.data.columns,
       filters: parsed.data.filters,
       sortBy: parsed.data.sortBy ?? null,
       sortDirection: parsed.data.sortDirection ?? "asc",
+      kpis: parsed.data.kpis,
+      chartConfig: parsed.data.chartConfig,
     })
-    const file = await buildReportExportFile(rows, parsed.data.columns, locale, reportName)
+    const file = await buildReportExportFile(rows, parsed.data.columns, locale, reportName, kpis, chart)
     return { success: true, data: file }
   } catch {
     return { success: false, error: "Could not export report." }

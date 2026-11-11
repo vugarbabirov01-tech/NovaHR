@@ -1,5 +1,16 @@
+import { Prisma } from "@/generated/prisma/client"
 import { prisma, type PrismaClientOrTransaction } from "@/lib/prisma"
-import type { ReportColumn, ReportFilter, ReportDataSourceKey } from "@/types/reports"
+import type { AnalyticsSpec, ReportColumn, ReportFilter, ReportDataSourceKey } from "@/types/reports"
+
+/** Prisma's Json input type has no direct "null" member — an explicit null
+ * must be spelled Prisma.NullableJsonNullValueInput.JsonNull (same
+ * precedent as approval-workflow-definition-repository.ts's own
+ * toJsonInput, for the same reason: this is a nullable Json column, not a
+ * required one). */
+function toNullableJsonInput(value: AnalyticsSpec | null | undefined) {
+  if (!value) return Prisma.NullableJsonNullValueInput.JsonNull
+  return value as unknown as object
+}
 
 export interface ReportDefinition {
   id: string
@@ -10,6 +21,11 @@ export interface ReportDefinition {
   filters: ReportFilter[]
   sortBy: string | null
   sortDirection: "asc" | "desc"
+  /** [] for every report saved before this field existed (column is
+   * nullable; null is normalized to [] here, see the schema's own
+   * comment). */
+  kpis: AnalyticsSpec[]
+  chartConfig: AnalyticsSpec | null
   createdBy: string
   createdAt: Date
   updatedAt: Date
@@ -23,6 +39,8 @@ export interface ReportDefinitionInput {
   filters: ReportFilter[]
   sortBy?: string | null
   sortDirection?: "asc" | "desc"
+  kpis?: AnalyticsSpec[]
+  chartConfig?: AnalyticsSpec | null
   createdBy: string
 }
 
@@ -35,6 +53,8 @@ function toReportDefinition(row: {
   filters: unknown
   sortBy: string | null
   sortDirection: string
+  kpis: unknown
+  chartConfig: unknown
   createdBy: string
   createdAt: Date
   updatedAt: Date
@@ -48,6 +68,8 @@ function toReportDefinition(row: {
     filters: row.filters as ReportFilter[],
     sortBy: row.sortBy,
     sortDirection: row.sortDirection as "asc" | "desc",
+    kpis: (row.kpis as AnalyticsSpec[] | null) ?? [],
+    chartConfig: (row.chartConfig as AnalyticsSpec | null) ?? null,
     createdBy: row.createdBy,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -83,6 +105,8 @@ export async function createReportDefinition(
       filters: input.filters as unknown as object,
       sortBy: input.sortBy ?? null,
       sortDirection: input.sortDirection ?? "asc",
+      kpis: (input.kpis ?? []) as unknown as object,
+      chartConfig: toNullableJsonInput(input.chartConfig),
       createdBy: input.createdBy,
     },
   })
@@ -104,6 +128,8 @@ export async function updateReportDefinition(
       filters: input.filters as unknown as object,
       sortBy: input.sortBy ?? null,
       sortDirection: input.sortDirection ?? "asc",
+      kpis: (input.kpis ?? []) as unknown as object,
+      chartConfig: toNullableJsonInput(input.chartConfig),
     },
   })
   return toReportDefinition(row)

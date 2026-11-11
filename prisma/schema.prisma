@@ -921,6 +921,21 @@ model ReportDefinition {
   filters       Json
   sortBy        String?
   sortDirection String   @default("asc")
+  /// Universal analytics (2026-11-11) — array of AnalyticsSpec WITHOUT
+  /// groupBy (src/types/reports.ts), each rendered as one KPI card. Null/
+  /// omitted on every report saved before this field existed, which the
+  /// UI reads as "no extra KPI selected, show only the always-on row
+  /// count" — never a broken or migrated-in-place value.
+  kpis Json?
+  /// Universal analytics (2026-11-11) — at most one AnalyticsSpec WITH
+  /// groupBy, for the chart panel. Null means "no chart configured" —
+  /// the same graceful default as `kpis` above.
+  chartConfig Json?
+  /// Phase C (2026-11-11) — at most one PivotSpec (src/types/reports.ts),
+  /// the two-dimensional cross-tab. Null means "no pivot configured" —
+  /// the same graceful default as `kpis`/`chartConfig` above; every report
+  /// saved before this field existed reads as null, never a broken value.
+  pivotConfig Json?
   createdBy     String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
