@@ -144,16 +144,29 @@ export function resolveAnnualLeaveEntitlement(
     const isExtended = labourLaw.professionalCategory
       ? EXTENDED_BASE_PROFESSIONAL_CATEGORIES.has(labourLaw.professionalCategory)
       : false
-    components.push({
-      source: "statutory",
-      article: isExtended ? "Art. 114.3" : "Art. 114.2",
-      days: isExtended
-        ? AZ_LABOUR_CODE_LEAVE_RULES.EXTENDED_BASE_ANNUAL_LEAVE_DAYS
-        : AZ_LABOUR_CODE_LEAVE_RULES.BASE_ANNUAL_LEAVE_DAYS,
-      description: isExtended
-        ? `Extended base leave (${labourLaw.professionalCategory})`
-        : "Standard base leave",
-    })
+    const statutoryBaseDays = isExtended
+      ? AZ_LABOUR_CODE_LEAVE_RULES.EXTENDED_BASE_ANNUAL_LEAVE_DAYS
+      : AZ_LABOUR_CODE_LEAVE_RULES.BASE_ANNUAL_LEAVE_DAYS
+    const contractBaseDays = labourLaw.annualBaseLeaveDays
+    if (contractBaseDays && contractBaseDays > statutoryBaseDays) {
+      // Base set by the employment record (e.g. ƏMAS: 30 for office roles).
+      // Replaces the statutory base, it is not added on top of it.
+      components.push({
+        source: "company",
+        article: "Contract Base",
+        days: contractBaseDays,
+        description: `Base annual leave per employment record (${contractBaseDays} days)`,
+      })
+    } else {
+      components.push({
+        source: "statutory",
+        article: isExtended ? "Art. 114.3" : "Art. 114.2",
+        days: statutoryBaseDays,
+        description: isExtended
+          ? `Extended base leave (${labourLaw.professionalCategory})`
+          : "Standard base leave",
+      })
+    }
     if (labourLaw.professionalCategory === "academicStaff") {
       components.push({ source: "gap", article: "Art. 118", days: 0, description: TEACHER_COACH_LEAVE_GAP_NOTE })
     }

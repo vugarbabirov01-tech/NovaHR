@@ -16,6 +16,7 @@ import { EducationTab } from "@/components/employees/profile/education-tab"
 import { AssetsTab } from "@/components/employees/profile/assets-tab"
 import { NotesTab } from "@/components/employees/profile/notes-tab"
 import { AuditLogTab } from "@/components/employees/profile/audit-log-tab"
+import type { LeaveEntitlementSummary } from "@/lib/leave/entitlement-summary"
 import type { EmployeeProfile } from "@/types/employee-profile"
 import type { OrganizationTreeNode } from "@/types/organization"
 
@@ -30,6 +31,8 @@ interface EmployeeProfileTabsProps {
    * in page.tsx since that's where the Branch list is fetched, and handed
    * straight through to EmploymentTab. */
   resolvedWorkLocation: string
+  /** Annual leave entitlement broken down by the leave engine (server-side). */
+  leaveEntitlement: LeaveEntitlementSummary
 }
 
 const tabKeys = [
@@ -52,7 +55,7 @@ function isTabKey(value: string | null): value is TabKey {
   return tabKeys.includes(value as TabKey)
 }
 
-export function EmployeeProfileTabs({ profile, managerChain, resolvedWorkLocation }: EmployeeProfileTabsProps) {
+export function EmployeeProfileTabs({ profile, managerChain, resolvedWorkLocation, leaveEntitlement }: EmployeeProfileTabsProps) {
   const t = useTranslations("Employees.profile.tabs")
   const searchParams = useSearchParams()
   const requestedTab = searchParams.get("tab")
@@ -90,7 +93,7 @@ export function EmployeeProfileTabs({ profile, managerChain, resolvedWorkLocatio
         <PersonalTab profile={profile} />
       </TabsContent>
       <TabsContent value="labourLaw">
-        <LabourLawTab profile={profile} />
+        <LabourLawTab profile={profile} leaveEntitlement={leaveEntitlement} />
       </TabsContent>
       <TabsContent value="leave">
         <LeaveTab profile={profile} />

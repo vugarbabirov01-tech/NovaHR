@@ -108,22 +108,23 @@ describe("computeSync", () => {
     expect(second.changes).toEqual([])
   })
 
-  it("carries an ƏMAS base of 30 via companyAdditionalLeaveDays and adds Nova's own seniority (30 + 2)", () => {
+  it("carries an ƏMAS base of 30 via annualBaseLeaveDays and adds Nova's own seniority (30 + 2)", () => {
     const { profile, leaveComparison } = computeSync(
       baseProfile(),
       row({ [COL.leave]: "30 gün (əsas 30)", [COL.experience]: "6 il, 0 ay, 0 gün" }),
       []
     )
-    expect(profile.labourLaw.companyAdditionalLeaveDays).toBe(9)
+    expect(profile.labourLaw.annualBaseLeaveDays).toBe(30)
+    expect(profile.labourLaw.companyAdditionalLeaveDays).toBe(0)
     expect(resolveAnnualLeaveEntitlement(profile).totalDays).toBe(32)
     expect(profile.leave.annualLeaveEntitlement).toBe(30)
     expect(profile.leave.additionalLeaveEntitlement).toBe(2)
     expect(leaveComparison).toEqual({ emasTotal: 30, novaTotal: 32 })
   })
 
-  it("leaves companyAdditionalLeaveDays alone for a base of 21", () => {
+  it("leaves the base override unset for a base of 21", () => {
     const { profile } = computeSync(baseProfile(), row({ [COL.leave]: "21 gün (əsas 21)" }), [])
-    expect(profile.labourLaw.companyAdditionalLeaveDays).toBe(0)
+    expect(profile.labourLaw.annualBaseLeaveDays).toBeUndefined()
     expect(profile.leave.annualLeaveEntitlement).toBe(21)
   })
 
@@ -136,7 +137,7 @@ describe("computeSync", () => {
       }),
       []
     )
-    expect(profile.labourLaw.companyAdditionalLeaveDays).toBe(0)
+    expect(profile.labourLaw.annualBaseLeaveDays).toBeUndefined()
     expect(resolveAnnualLeaveEntitlement(profile).totalDays).toBe(42)
   })
 

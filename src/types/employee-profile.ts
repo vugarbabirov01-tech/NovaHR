@@ -318,6 +318,9 @@ export interface EmployeeLabourLaw {
   collectiveAgreementLeaveDays?: number
   companyAdditionalLeaveDays: number
   manualLeaveAdjustmentDays?: number
+  /** Base annual leave set by the employment record (ƏMAS), e.g. 30 for office
+   * roles. Replaces the 21-day statutory base when higher; unset = statutory. */
+  annualBaseLeaveDays?: number
 
   notes?: string
 }

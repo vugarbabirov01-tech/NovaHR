@@ -15,10 +15,12 @@ import {
   isMinorFromDateOfBirth,
   isRetirementAgeFromDateOfBirth,
 } from "@/lib/employees"
+import type { LeaveEntitlementSummary } from "@/lib/leave/entitlement-summary"
 import type { EmployeeProfile, WorkExperienceDuration } from "@/types/employee-profile"
 
 interface LabourLawTabProps {
   profile: EmployeeProfile
+  leaveEntitlement: LeaveEntitlementSummary
 }
 
 /** Read-only display only — never stored. */
@@ -26,7 +28,7 @@ function formatDuration(duration: WorkExperienceDuration, t: (key: string) => st
   return `${duration.years} ${t("durationYears")} ${duration.months} ${t("durationMonths")} ${duration.days} ${t("durationDays")}`
 }
 
-export function LabourLawTab({ profile }: LabourLawTabProps) {
+export function LabourLawTab({ profile, leaveEntitlement }: LabourLawTabProps) {
   const t = useTranslations("Employees.profile.labourLaw")
   const { labourLaw, personal, employment } = profile
 
@@ -231,6 +233,21 @@ export function LabourLawTab({ profile }: LabourLawTabProps) {
               ))}
             </ul>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("sectionLeaveEntitlement")}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <InfoGrid>
+            <InfoField label={t("annualBaseLeaveDays")} value={leaveEntitlement.baseDays} />
+            <InfoField label={t("seniorityLeaveDays")} value={leaveEntitlement.seniorityDays} />
+            <InfoField label={t("otherLeaveDays")} value={leaveEntitlement.otherDays} />
+            <InfoField label={t("totalLeaveEntitlement")} value={<strong>{leaveEntitlement.totalDays}</strong>} />
+          </InfoGrid>
+          <p className="text-xs text-muted-foreground">{t("leaveEntitlementHint")}</p>
         </CardContent>
       </Card>
 

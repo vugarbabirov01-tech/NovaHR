@@ -1,10 +1,10 @@
-// One-off: set the base annual leave (e.g. 30 for office roles) for given
-// employees where the ƏMAS record carries 21. Same mechanism the ƏMAS sync
-// uses: the extra days go in labourLaw.companyAdditionalLeaveDays, seniority
-// stays Nova's own Art. 116 figure. Dry-run by default.
+// Sets the base annual leave (labourLaw.annualBaseLeaveDays, e.g. 30 for office
+// roles) for given employees, or migrates legacy data where the base had been
+// carried in companyAdditionalLeaveDays. Seniority stays Nova's own Art. 116
+// figure. Dry-run by default.
 //
-//   npx tsx scripts/set-leave-base.ts --base=30 --fins=60UJWLY,XXXXXXX
-//   npx tsx scripts/set-leave-base.ts --base=30 --fins=... --apply
+//   npx tsx scripts/set-leave-base.ts --base=30 --fins=60UJWLY,6AWE7XZ [--apply]
+//   npx tsx scripts/set-leave-base.ts --migrate-legacy [--apply]
 
 import "dotenv/config"
 
@@ -21,39 +21,54 @@ function arg(name: string): string | undefined {
   return hit?.slice(hit.indexOf("=") + 1)
 }
 
+const SPECIAL_STATUS = ["Art. 119.1", "Art. 119.2", "Art. 120"]
+
 async function main() {
+  const apply = process.argv.includes("--apply")
+  const migrate = process.argv.includes("--migrate-legacy")
   const base = Number(arg("base"))
   const fins = (arg("fins") ?? "").split(",").map((s) => s.trim().toUpperCase()).filter(Boolean)
-  const apply = process.argv.includes("--apply")
-  if (!Number.isFinite(base) || base < 21 || fins.length === 0) throw new Error("need --base=<days> and --fins=<list>")
+  if (!migrate && (!Number.isFinite(base) || base < 21 || fins.length === 0)) {
+    throw new Error("need --migrate-legacy, or --base=<days> and --fins=<list>")
+  }
 
   const now = new Date()
   const rows = await prisma.employee.findMany()
-  const planned: { id: string; label: string; profile: EmployeeProfile; before: string; after: string }[] = []
+  const planned: { id: string; profile: EmployeeProfile }[] = []
 
-  for (const fin of fins) {
-    const row = rows.find((r) => r.finCode.toUpperCase() === fin)
-    if (!row) {
-      console.log(`${fin}: not found`)
-      continue
-    }
+  for (const row of rows) {
+    const fin = row.finCode.toUpperCase()
     const profile = structuredClone(row.data as unknown as EmployeeProfile)
+    const oldExtra = profile.labourLaw.companyAdditionalLeaveDays ?? 0
+    const oldBase = profile.labourLaw.annualBaseLeaveDays
+    if (migrate ? oldExtra <= 0 || oldBase : !fins.includes(fin)) continue
+
     const before = resolveAnnualLeaveEntitlement(profile, now)
-    const baseDays = before.components
-      .filter((c) => c.article === "Art. 114.2" || c.article === "Art. 114.3")
-      .reduce((sum, c) => sum + c.days, 0)
-    const statusBase = before.components.some((c) => ["Art. 119.1", "Art. 119.2", "Art. 120"].includes(c.article ?? ""))
-    if (statusBase) {
+    if (before.components.some((c) => SPECIAL_STATUS.includes(c.article))) {
       console.log(`${fin}: special-status base, skipped`)
       continue
     }
-    const oldExtra = profile.labourLaw.companyAdditionalLeaveDays ?? 0
-    profile.labourLaw.companyAdditionalLeaveDays = Math.max(0, base - baseDays)
+    const statutory = resolveAnnualLeaveEntitlement(
+      { ...profile, labourLaw: { ...profile.labourLaw, annualBaseLeaveDays: undefined } },
+      now
+    )
+      .components.filter((c) => c.article === "Art. 114.2" || c.article === "Art. 114.3")
+      .reduce((sum, c) => sum + c.days, 0)
+
+    const newBase = migrate ? statutory + oldExtra : base
+    profile.labourLaw.annualBaseLeaveDays = newBase
+    if (migrate) profile.labourLaw.companyAdditionalLeaveDays = 0
+
     const after = resolveAnnualLeaveEntitlement(profile, now)
     const seniority = after.components.filter((c) => c.article === "Art. 116").reduce((s, c) => s + c.days, 0)
     profile.leave.annualLeaveEntitlement = after.totalDays - seniority
     profile.leave.additionalLeaveEntitlement = seniority
     profile.leave.remainingLeaveDays = Math.max(0, after.totalDays - (profile.leave.usedLeaveDays ?? 0))
+    if (migrate && after.totalDays !== before.totalDays) {
+      console.log(`${fin}: total would change ${before.totalDays} -> ${after.totalDays}, skipped`)
+      continue
+    }
+
     const stamp = now.toISOString()
     profile.auditLog = [
       ...(profile.auditLog ?? []),
@@ -62,32 +77,30 @@ async function main() {
         timestamp: stamp,
         actor: "HR (leave base correction)",
         action: "leave.base-correction",
-        field: "labourLaw.companyAdditionalLeaveDays",
-        oldValue: String(oldExtra),
-        newValue: String(profile.labourLaw.companyAdditionalLeaveDays),
+        field: "labourLaw.annualBaseLeaveDays",
+        oldValue: String(oldBase ?? ""),
+        newValue: String(newBase),
       },
     ]
-    const label = `${fin} ${getFullLegalName(profile.personal)} (${profile.employment.position})`
-    planned.push({ id: profile.id, label, profile, before: `${before.totalDays}`, after: `${after.totalDays} (${after.totalDays - seniority}+${seniority})` })
-    console.log(`${label}: ${before.totalDays} -> ${after.totalDays} (base ${after.totalDays - seniority} + seniority ${seniority})`)
+    planned.push({ id: profile.id, profile })
+    console.log(
+      `${fin} ${getFullLegalName(profile.personal)} (${profile.employment.position}): ${before.totalDays} -> ${after.totalDays} ` +
+        `(base ${newBase}${migrate ? `, company extra ${oldExtra} -> 0` : ""} + seniority ${seniority})`
+    )
   }
 
   if (!apply) {
-    console.log("DRY-RUN: nothing written. Add --apply to write.")
+    console.log(`DRY-RUN: ${planned.length} employee(s), nothing written. Add --apply to write.`)
     return
   }
   mkdirSync("backups", { recursive: true })
-  const backup = `backups/dev.db.pre-leave-base.${stamp()}.bak`
+  const backup = `backups/dev.db.pre-leave-base.${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}.bak`
   copyFileSync("dev.db", backup)
   console.log("backup:", backup)
   await prisma.$transaction(async (tx) => {
     for (const p of planned) await updateEmployee(p.id, p.profile, tx)
   })
   console.log(`applied: ${planned.length}`)
-}
-
-function stamp(): string {
-  return new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)
 }
 
 main()

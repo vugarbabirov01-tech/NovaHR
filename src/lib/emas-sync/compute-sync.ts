@@ -229,24 +229,26 @@ export function computeSync(
 
   // Leave. The Leave module derives the real entitlement from labour-law
   // data (base 21, +seniority from total experience, special-status bases),
-  // so ƏMAS's base is carried through the one field that module reads for a
-  // non-statutory base: companyAdditionalLeaveDays. ƏMAS's own "staja görə"
+  // so ƏMAS's base is carried through labourLaw.annualBaseLeaveDays, the field
+  // that module reads for a non-statutory base. ƏMAS's own "staja görə"
   // figure is NOT copied — Nova's seniority comes from its own tiers.
   const leave = parseLeave(row[COL.leave])
   let leaveComparison: SyncResult["leaveComparison"]
   if (leave) {
     let resolved = resolveAnnualLeaveEntitlement(profile, now)
     const statusBase = resolved.components.some((c) => c.article === "Art. 119.1" || c.article === "Art. 119.2" || c.article === "Art. 120")
-    const baseDays = resolved.components
+    // Statutory base without any contract override (21, or 30 for extended categories).
+    const baseDays = resolveAnnualLeaveEntitlement(
+      { ...profile, labourLaw: { ...profile.labourLaw, annualBaseLeaveDays: undefined } },
+      now
+    ).components
       .filter((c) => c.article === "Art. 114.2" || c.article === "Art. 114.3")
       .reduce((sum, c) => sum + c.days, 0)
-    if (!statusBase && leave.base > baseDays) {
-      const extra = leave.base - baseDays
-      if (profile.labourLaw.companyAdditionalLeaveDays !== extra) {
-        record("labourLaw.companyAdditionalLeaveDays", profile.labourLaw.companyAdditionalLeaveDays, extra)
-        profile.labourLaw.companyAdditionalLeaveDays = extra
-        resolved = resolveAnnualLeaveEntitlement(profile, now)
-      }
+    // Only ever raises the base (never lowers one HR set higher on purpose).
+    if (!statusBase && leave.base > baseDays && (profile.labourLaw.annualBaseLeaveDays ?? 0) < leave.base) {
+      record("labourLaw.annualBaseLeaveDays", profile.labourLaw.annualBaseLeaveDays, leave.base)
+      profile.labourLaw.annualBaseLeaveDays = leave.base
+      resolved = resolveAnnualLeaveEntitlement(profile, now)
     }
     const seniority = resolved.components.filter((c) => c.article === "Art. 116").reduce((sum, c) => sum + c.days, 0)
     const annual = resolved.totalDays - seniority
