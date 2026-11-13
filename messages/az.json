@@ -206,6 +206,13 @@
     "comingSoonDescription": "Bu bölmə hazırlanıb — tam modul növbəti mərhələdə qurulacaq."
   },
   "Payroll": {
+    "exportButton": "Excel ixracı",
+    "exporting": "İxrac olunur...",
+    "exportError": "Fayl hazırlana bilmədi.",
+    "detailNetToGross": "Net / gross nisbəti",
+    "detailSalaryHistory": "Maaş dəyişikliyi tarixçəsi",
+    "detailNoHistory": "Maaş dəyişikliyi qeydi yoxdur.",
+    "detailOpenProfile": "Profilə keç",
     "columnGross": "Gross (ƏMAS)",
     "columnNet": "Net maaş",
     "columnPayable": "Ödəniləcək",

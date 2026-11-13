@@ -206,6 +206,13 @@
     "comingSoonDescription": "Этот раздел подготовлен — полноценный модуль будет реализован на следующем этапе."
   },
   "Payroll": {
+    "exportButton": "Экспорт в Excel",
+    "exporting": "Экспорт...",
+    "exportError": "Не удалось подготовить файл.",
+    "detailNetToGross": "Соотношение нетто / брутто",
+    "detailSalaryHistory": "История изменений зарплаты",
+    "detailNoHistory": "Изменений зарплаты нет.",
+    "detailOpenProfile": "Открыть профиль",
     "columnGross": "Брутто (ƏMAS)",
     "columnNet": "Нетто-зарплата",
     "columnPayable": "К выплате",

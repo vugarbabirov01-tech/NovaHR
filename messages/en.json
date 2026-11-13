@@ -206,6 +206,13 @@
     "comingSoonDescription": "This area is scaffolded and ready — the full module will be built in an upcoming phase."
   },
   "Payroll": {
+    "exportButton": "Export to Excel",
+    "exporting": "Exporting...",
+    "exportError": "Could not prepare the file.",
+    "detailNetToGross": "Net / gross ratio",
+    "detailSalaryHistory": "Salary change history",
+    "detailNoHistory": "No salary changes on record.",
+    "detailOpenProfile": "Open profile",
     "columnGross": "Gross (ƏMAS)",
     "columnNet": "Net salary",
     "columnPayable": "Payable",

@@ -32,6 +32,8 @@ export interface PayrollEmployeeRow {
   grossAmount: number
   netAmount: number
   status: PayrollPeriodStatus
+  /** Latest salary-change events from the employee's employment history, newest first (max 5). */
+  salaryHistory: { date: string; title: string }[]
 }
 
 export interface PayrollPeriodSummary {

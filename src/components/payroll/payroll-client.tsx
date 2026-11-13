@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { useTranslations } from "next-intl"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Download } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 
 import { Button } from "@/components/ui/button"
@@ -17,6 +17,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SearchInput } from "@/components/common/search-input"
 import { DataTable } from "@/components/common/data-table"
+import { PayrollEmployeeSheet } from "@/components/payroll/payroll-employee-sheet"
+import { exportPayrollAction } from "@/app/[locale]/(app)/payroll/actions"
+import { toast } from "@/components/ui/toast"
 import { PayrollStatusBadge } from "@/components/payroll/payroll-status-badge"
 import { getInitials } from "@/lib/employees"
 import { formatAzn } from "@/lib/salary-import/apply-salary-update"
@@ -33,9 +36,25 @@ function uniqueSorted(values: string[]): string[] {
 
 interface PayrollClientProps {
   rows: PayrollEmployeeRow[]
+  year: number
+  month: number
+  locale: string
 }
 
-export function PayrollClient({ rows }: PayrollClientProps) {
+function downloadBase64Xlsx(base64: string, fileName: string) {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.href = url
+  link.download = fileName
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+export function PayrollClient({ rows, year, month, locale }: PayrollClientProps) {
   const t = useTranslations("Payroll")
   const tStatus = useTranslations("Payroll.status")
 
@@ -45,6 +64,8 @@ export function PayrollClient({ rows }: PayrollClientProps) {
   const [position, setPosition] = useState(ALL_VALUE)
   const [status, setStatus] = useState(ALL_VALUE)
   const [pageIndex, setPageIndex] = useState(0)
+  const [selected, setSelected] = useState<PayrollEmployeeRow | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
 
   const companyOptions = useMemo(() => uniqueSorted(rows.map((r) => r.company)), [rows])
   const workLocationOptions = useMemo(() => uniqueSorted(rows.map((r) => r.workLocation)), [rows])
@@ -87,6 +108,22 @@ export function PayrollClient({ rows }: PayrollClientProps) {
     value === undefined ? <span className="text-muted-foreground">—</span> : formatAzn(value)
 
   const numberColumn = "text-right tabular-nums whitespace-nowrap"
+
+  async function handleExport() {
+    setIsExporting(true)
+    try {
+      const result = await exportPayrollAction(
+        year,
+        month,
+        locale,
+        filtered.map((row) => row.employeeId)
+      )
+      if (result.success) downloadBase64Xlsx(result.data.base64, result.data.fileName)
+      else toast.error(t("exportError"))
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
   const columns: ColumnDef<PayrollEmployeeRow>[] = [
     {
@@ -235,6 +272,16 @@ export function PayrollClient({ rows }: PayrollClientProps) {
           </SelectContent>
         </Select>
         <span className="text-sm text-muted-foreground">{t("resultsCount", { count: filtered.length })}</span>
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto"
+          disabled={isExporting || filtered.length === 0}
+          onClick={handleExport}
+        >
+          <Download className="size-3.5" strokeWidth={1.75} />
+          {isExporting ? t("exporting") : t("exportButton")}
+        </Button>
       </div>
 
       <DataTable
@@ -243,7 +290,10 @@ export function PayrollClient({ rows }: PayrollClientProps) {
         emptyTitle={t("emptyTitle")}
         emptyDescription={t("emptyDescription")}
         footer={footer}
+        onRowClick={setSelected}
       />
+
+      <PayrollEmployeeSheet row={selected} onOpenChange={(open) => !open && setSelected(null)} />
 
       {filtered.length > PAGE_SIZE ? (
         <div className="flex items-center justify-between text-sm text-muted-foreground">

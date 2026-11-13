@@ -30,6 +30,8 @@ interface DataTableProps<TData, TValue> {
   emptyIcon?: LucideIcon
   /** Optional totals row(s) rendered in a <tfoot> — pass <TableRow>s. */
   footer?: ReactNode
+  /** Makes body rows clickable (pointer cursor + callback with the row data). */
+  onRowClick?: (row: TData) => void
 }
 
 /** Per-column extra classes (e.g. right-aligned numbers), read from
@@ -45,6 +47,7 @@ export function DataTable<TData, TValue>({
   emptyTitle,
   emptyDescription,
   footer,
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -83,7 +86,11 @@ export function DataTable<TData, TValue>({
         </TableHeader>
         <TableBody>
           {table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
+            <TableRow
+              key={row.id}
+              className={onRowClick ? "cursor-pointer" : undefined}
+              onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+            >
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id} className={cn("px-4 py-3", metaClassName(cell.column.columnDef.meta))}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}

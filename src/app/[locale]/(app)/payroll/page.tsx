@@ -8,9 +8,8 @@ import { PayrollPeriodSwitcher } from "@/components/payroll/payroll-period-switc
 import { PayrollClient } from "@/components/payroll/payroll-client"
 import { ensurePayrollPeriod } from "@/lib/payroll/payroll-period-service"
 import { findAllEmployees } from "@/repositories/employee-repository"
-import { getFullLegalName } from "@/lib/employees"
+import { buildPayrollRows } from "@/lib/payroll/payroll-rows"
 import { formatAzn } from "@/lib/salary-import/apply-salary-update"
-import type { PayrollEmployeeRow, PayrollPeriodStatus } from "@/types/payroll"
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -68,35 +67,7 @@ export default async function PayrollPage({ params, searchParams }: Props) {
     findAllEmployees(),
   ])
 
-  const employeesById = new Map(employees.map((employee) => [employee.id, employee]))
-
-  const rows: PayrollEmployeeRow[] = records
-    .map((record): PayrollEmployeeRow | null => {
-      const employee = employeesById.get(record.employeeId)
-      if (!employee) return null
-      return {
-        id: record.id,
-        employeeId: employee.id,
-        fullName: getFullLegalName(employee.personal),
-        firstName: employee.personal.firstName,
-        lastName: employee.personal.lastName,
-        finCode: employee.personal.finCode,
-        company: employee.employment.company,
-        workLocation: employee.employment.workLocation,
-        position: employee.employment.position,
-        photoUrl: employee.personal.photoUrl,
-        baseSalary: record.baseSalary,
-        grossSalary: employee.payroll.grossSalary,
-        currency: record.currency,
-        additions: record.additions,
-        deductions: record.deductions,
-        grossAmount: record.grossAmount,
-        netAmount: record.netAmount,
-        status: record.status as PayrollPeriodStatus,
-      }
-    })
-    .filter((row): row is PayrollEmployeeRow => row !== null)
-    .sort((a, b) => a.fullName.localeCompare(b.fullName))
+  const rows = buildPayrollRows(records, employees)
 
   const totalGross = rows.reduce((sum, row) => sum + (row.grossSalary ?? 0), 0)
   const missingGross = rows.filter((row) => row.grossSalary === undefined).length
@@ -130,7 +101,7 @@ export default async function PayrollPage({ params, searchParams }: Props) {
         />
       </div>
 
-      <PayrollClient rows={rows} />
+      <PayrollClient rows={rows} year={period.year} month={period.month} locale={locale} />
     </div>
   )
 }
