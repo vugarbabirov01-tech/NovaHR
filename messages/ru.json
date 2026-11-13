@@ -746,7 +746,7 @@
         "employmentStatus": "Статус занятости",
         "timeline": "История занятости",
         "quickStats": "Краткая статистика",
-        "tenure": "Стаж работы",
+        "tenure": "Стаж в компании",
         "tenureYears": "{years, plural, =0 {Менее года} =1 {1 год} other {# лет}}",
         "directReports": "Подчинённые",
         "completedTrainings": "Пройденные тренинги",

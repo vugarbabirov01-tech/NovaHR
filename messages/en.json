@@ -746,7 +746,7 @@
         "employmentStatus": "Employment Status",
         "timeline": "Employment Timeline",
         "quickStats": "Quick Statistics",
-        "tenure": "Tenure",
+        "tenure": "Tenure at company",
         "tenureYears": "{years, plural, =0 {Less than a year} =1 {1 year} other {# years}}",
         "directReports": "Direct Reports",
         "completedTrainings": "Completed Trainings",

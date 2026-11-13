@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { InfoField } from "@/components/common/info-field"
 import { Timeline, type TimelineEntry } from "@/components/common/timeline"
 import { OrganizationHierarchyCard } from "@/components/employees/profile/organization-hierarchy-card"
+import { calculateServiceDuration } from "@/lib/employees"
 import type { EmployeeProfile, EmploymentHistoryEventType } from "@/types/employee-profile"
 import type { OrganizationTreeNode } from "@/types/organization"
 
@@ -43,7 +44,13 @@ export function OverviewTab({ profile, managerChain }: OverviewTabProps) {
   const tHistoryTypes = useTranslations("Employees.profile.employment.historyTypes")
 
   const stats = [
-    { label: t("tenure"), value: t("tenureYears", { years: profile.quickStats.tenureYears }), icon: CalendarCheck2 },
+    // Derived from the hire date: quickStats.tenureYears is a stored snapshot
+    // that real (ƏMAS-synced / HR-created) profiles never update.
+    {
+      label: t("tenure"),
+      value: t("tenureYears", { years: calculateServiceDuration(profile.employment.hireDate).years }),
+      icon: CalendarCheck2,
+    },
     { label: t("directReports"), value: profile.quickStats.directReports, icon: Users },
     { label: t("completedTrainings"), value: profile.quickStats.completedTrainings, icon: Award },
     { label: t("openTasks"), value: profile.quickStats.openTasks, icon: ClipboardList },

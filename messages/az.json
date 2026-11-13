@@ -746,7 +746,7 @@
         "employmentStatus": "Məşğulluq Statusu",
         "timeline": "Məşğulluq Tarixçəsi",
         "quickStats": "Sürətli Statistika",
-        "tenure": "İş Stajı",
+        "tenure": "Şirkətdəki staj",
         "tenureYears": "{years, plural, =0 {1 ildən az} =1 {1 il} other {# il}}",
         "directReports": "Tabeliyində olanlar",
         "completedTrainings": "Tamamlanmış Təlimlər",
