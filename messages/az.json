@@ -206,6 +206,62 @@
     "comingSoonDescription": "Bu bölmə hazırlanıb — tam modul növbəti mərhələdə qurulacaq."
   },
   "Payroll": {
+    "workflow": {
+      "back": "Geri qaytar",
+      "cancel": "Ləğv et",
+      "confirm": "Təsdiq et",
+      "toCALCULATED": "Hesabla",
+      "toAPPROVED": "Təsdiqlə",
+      "toPAID": "Ödənildi kimi qeyd et",
+      "toCLOSED": "Dövrü bağla",
+      "toDRAFT": "Qaralamaya qaytar",
+      "confirmTitle": {
+        "DRAFT": "Dövr qaralamaya qaytarılsın?",
+        "CALCULATED": "Dövr hesablansın?",
+        "APPROVED": "Dövr təsdiqlənsin?",
+        "PAID": "Ödənildi kimi qeyd edilsin?",
+        "CLOSED": "Dövr bağlansın?"
+      },
+      "confirmText": {
+        "DRAFT": "Hesablama ləğv olunur, əlavə və tutulmaları yenidən redaktə etmək olacaq.",
+        "CALCULATED": "Hər işçinin əlavə və tutulmaları net maaşa əsasən yenidən hesablanacaq.",
+        "APPROVED": "Təsdiqdən sonra əlavə və tutulmaları redaktə etmək mümkün olmayacaq. Lazım olsa təsdiqi geri çəkə bilərsiniz.",
+        "PAID": "Bu dövr üçün ödənişin edildiyi qeyd olunur. Bundan sonra geri qaytarmaq mümkün deyil.",
+        "CLOSED": "Bağlanmış dövr dəyişdirilə bilməz."
+      }
+    },
+    "workflowError": {
+      "notFound": "Qeyd tapılmadı.",
+      "invalidTransition": "Bu keçid mümkün deyil.",
+      "locked": "Dövr təsdiqlənib, dəyişiklik mümkün deyil.",
+      "invalidKind": "Növ yanlışdır.",
+      "invalidCategory": "Kateqoriya yanlışdır.",
+      "invalidAmount": "Məbləğ müsbət rəqəm olmalıdır.",
+      "invalidNote": "Qeyd 300 simvoldan uzun ola bilməz.",
+      "unknown": "Əməliyyat alınmadı."
+    },
+    "adjustments": {
+      "title": "Əlavələr və tutulmalar",
+      "empty": "Əlavə və ya tutulma yoxdur.",
+      "add": "Əlavə et",
+      "delete": "Sil",
+      "locked": "Dövr təsdiqlənib, redaktə mümkün deyil.",
+      "amountPlaceholder": "Məbləğ (AZN)",
+      "notePlaceholder": "Qeyd (ixtiyari)",
+      "kind": {
+        "ADDITION": "Əlavə",
+        "DEDUCTION": "Tutulma"
+      },
+      "category": {
+        "bonus": "Mükafat",
+        "overtime": "Əlavə iş",
+        "allowance": "Müavinət",
+        "other": "Digər",
+        "advance": "Avans",
+        "loan": "Borc",
+        "fine": "Cərimə"
+      }
+    },
     "exportButton": "Excel ixracı",
     "exporting": "İxrac olunur...",
     "exportError": "Fayl hazırlana bilmədi.",

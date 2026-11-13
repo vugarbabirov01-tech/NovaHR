@@ -54,8 +54,12 @@ export async function ensurePayrollPeriod(year: number, month: number): Promise<
     const employeeIdsWithRecords = new Set(existingRecords.map((record) => record.employeeId))
 
     const employees = await findAllEmployees(tx)
+    // Once a period leaves DRAFT its employee list is frozen.
     const missingRows = employees
-      .filter((employee) => employee.employmentStatus === "active" && !employeeIdsWithRecords.has(employee.id))
+      .filter(
+        (employee) =>
+          period!.status === "DRAFT" && employee.employmentStatus === "active" && !employeeIdsWithRecords.has(employee.id)
+      )
       .map((employee) => {
         const baseSalary = employee.payroll.baseSalary
         const grossAmount = computeGrossAmount(baseSalary, 0)

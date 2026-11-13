@@ -34,6 +34,34 @@ export function findPayrollEmployeeRecords(
   return client.payrollEmployeeRecord.findMany({ where: { payrollPeriodId } })
 }
 
+export function findPayrollPeriodById(
+  id: string,
+  client: PrismaClientOrTransaction = prisma
+): Promise<PayrollPeriodModel | null> {
+  return client.payrollPeriod.findUnique({ where: { id } })
+}
+
+export function findPayrollRecordById(
+  id: string,
+  client: PrismaClientOrTransaction = prisma
+): Promise<PayrollEmployeeRecordModel | null> {
+  return client.payrollEmployeeRecord.findUnique({ where: { id } })
+}
+
+export function findAdjustmentsByRecordIds(
+  recordIds: string[],
+  client: PrismaClientOrTransaction = prisma
+) {
+  return client.payrollAdjustment.findMany({
+    where: { recordId: { in: recordIds } },
+    orderBy: { createdAt: "asc" },
+  })
+}
+
+export function findPayrollPeriodEvents(payrollPeriodId: string, client: PrismaClientOrTransaction = prisma) {
+  return client.payrollPeriodEvent.findMany({ where: { payrollPeriodId }, orderBy: { createdAt: "desc" } })
+}
+
 /** Report Builder's PAYROLL data source only — across every period, with
  * the parent period included for year/month/status. Deliberately not used
  * by anything that reads baseSalary/additions/deductions/gross/net (the

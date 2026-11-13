@@ -206,6 +206,62 @@
     "comingSoonDescription": "This area is scaffolded and ready — the full module will be built in an upcoming phase."
   },
   "Payroll": {
+    "workflow": {
+      "back": "Step back",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "toCALCULATED": "Calculate",
+      "toAPPROVED": "Approve",
+      "toPAID": "Mark as paid",
+      "toCLOSED": "Close period",
+      "toDRAFT": "Back to draft",
+      "confirmTitle": {
+        "DRAFT": "Return period to draft?",
+        "CALCULATED": "Calculate this period?",
+        "APPROVED": "Approve this period?",
+        "PAID": "Mark as paid?",
+        "CLOSED": "Close this period?"
+      },
+      "confirmText": {
+        "DRAFT": "The calculation is undone and additions and deductions can be edited again.",
+        "CALCULATED": "Every employee's additions and deductions are recalculated from their net salary.",
+        "APPROVED": "After approval additions and deductions can no longer be edited. You can step back if needed.",
+        "PAID": "Records that this period has been paid. It cannot be reverted afterwards.",
+        "CLOSED": "A closed period cannot be changed."
+      }
+    },
+    "workflowError": {
+      "notFound": "Record not found.",
+      "invalidTransition": "This step is not allowed.",
+      "locked": "The period is approved; changes are not allowed.",
+      "invalidKind": "Invalid type.",
+      "invalidCategory": "Invalid category.",
+      "invalidAmount": "Amount must be a positive number.",
+      "invalidNote": "Note can be at most 300 characters.",
+      "unknown": "The action failed."
+    },
+    "adjustments": {
+      "title": "Additions and deductions",
+      "empty": "No additions or deductions.",
+      "add": "Add",
+      "delete": "Delete",
+      "locked": "The period is approved; editing is disabled.",
+      "amountPlaceholder": "Amount (AZN)",
+      "notePlaceholder": "Note (optional)",
+      "kind": {
+        "ADDITION": "Addition",
+        "DEDUCTION": "Deduction"
+      },
+      "category": {
+        "bonus": "Bonus",
+        "overtime": "Overtime",
+        "allowance": "Allowance",
+        "other": "Other",
+        "advance": "Advance",
+        "loan": "Loan",
+        "fine": "Fine"
+      }
+    },
     "exportButton": "Export to Excel",
     "exporting": "Exporting...",
     "exportError": "Could not prepare the file.",

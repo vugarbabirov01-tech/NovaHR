@@ -39,6 +39,8 @@ interface PayrollClientProps {
   year: number
   month: number
   locale: string
+  /** False once the period is approved: adjustments are read-only. */
+  editable: boolean
 }
 
 function downloadBase64Xlsx(base64: string, fileName: string) {
@@ -54,7 +56,7 @@ function downloadBase64Xlsx(base64: string, fileName: string) {
   URL.revokeObjectURL(url)
 }
 
-export function PayrollClient({ rows, year, month, locale }: PayrollClientProps) {
+export function PayrollClient({ rows, year, month, locale, editable }: PayrollClientProps) {
   const t = useTranslations("Payroll")
   const tStatus = useTranslations("Payroll.status")
 
@@ -64,8 +66,11 @@ export function PayrollClient({ rows, year, month, locale }: PayrollClientProps)
   const [position, setPosition] = useState(ALL_VALUE)
   const [status, setStatus] = useState(ALL_VALUE)
   const [pageIndex, setPageIndex] = useState(0)
-  const [selected, setSelected] = useState<PayrollEmployeeRow | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isExporting, setIsExporting] = useState(false)
+
+  // Looked up by id so the open panel follows fresh data after a refresh.
+  const selected = rows.find((row) => row.id === selectedId) ?? null
 
   const companyOptions = useMemo(() => uniqueSorted(rows.map((r) => r.company)), [rows])
   const workLocationOptions = useMemo(() => uniqueSorted(rows.map((r) => r.workLocation)), [rows])
@@ -290,10 +295,14 @@ export function PayrollClient({ rows, year, month, locale }: PayrollClientProps)
         emptyTitle={t("emptyTitle")}
         emptyDescription={t("emptyDescription")}
         footer={footer}
-        onRowClick={setSelected}
+        onRowClick={(row) => setSelectedId(row.id)}
       />
 
-      <PayrollEmployeeSheet row={selected} onOpenChange={(open) => !open && setSelected(null)} />
+      <PayrollEmployeeSheet
+        row={selected}
+        editable={editable}
+        onOpenChange={(open) => !open && setSelectedId(null)}
+      />
 
       {filtered.length > PAGE_SIZE ? (
         <div className="flex items-center justify-between text-sm text-muted-foreground">

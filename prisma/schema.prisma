@@ -1007,6 +1007,39 @@ model PayrollEmployeeRecord {
   @@map("payroll_employee_records")
 }
 
+/// One addition (bonus, ...) or deduction (advance, fine, ...) on an
+/// employee's payroll line. PayrollEmployeeRecord.additions/deductions are
+/// always the SUM of these rows, recomputed on every change. Editable only
+/// while the period is DRAFT or CALCULATED.
+model PayrollAdjustment {
+  id         String   @id @default(cuid())
+  recordId   String
+  /// "ADDITION" | "DEDUCTION"
+  kind       String
+  /// Fixed list, see src/lib/payroll/payroll-adjustments.ts
+  category   String
+  amount     Float
+  note       String   @default("")
+  createdAt  DateTime @default(now())
+
+  @@index([recordId])
+  @@map("payroll_adjustments")
+}
+
+/// Period status history: one row per transition (who = "system" until real
+/// authentication exists, see Auth Phase B).
+model PayrollPeriodEvent {
+  id              String   @id @default(cuid())
+  payrollPeriodId String
+  fromStatus      String
+  toStatus        String
+  actor           String   @default("system")
+  createdAt       DateTime @default(now())
+
+  @@index([payrollPeriodId])
+  @@map("payroll_period_events")
+}
+
 // ---------------------------------------------------------------------------
 // Authentication — Phase A (schema + relations + integrity-rule repository
 // functions only; no login, no middleware, no Server Action enforcement —

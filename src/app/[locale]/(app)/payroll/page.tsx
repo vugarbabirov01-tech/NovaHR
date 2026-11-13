@@ -6,6 +6,10 @@ import { PageTitle } from "@/components/common/page-title"
 import { KpiCard } from "@/components/common/kpi-card"
 import { PayrollPeriodSwitcher } from "@/components/payroll/payroll-period-switcher"
 import { PayrollClient } from "@/components/payroll/payroll-client"
+import { PayrollPeriodActions } from "@/components/payroll/payroll-period-actions"
+import { findAdjustmentsByRecordIds } from "@/repositories/payroll-repository"
+import { isPeriodEditable } from "@/lib/payroll/payroll-workflow"
+import type { PayrollPeriodStatus } from "@/types/payroll"
 import { ensurePayrollPeriod } from "@/lib/payroll/payroll-period-service"
 import { findAllEmployees } from "@/repositories/employee-repository"
 import { buildPayrollRows } from "@/lib/payroll/payroll-rows"
@@ -67,7 +71,8 @@ export default async function PayrollPage({ params, searchParams }: Props) {
     findAllEmployees(),
   ])
 
-  const rows = buildPayrollRows(records, employees)
+  const adjustments = await findAdjustmentsByRecordIds(records.map((record) => record.id))
+  const rows = buildPayrollRows(records, employees, adjustments)
 
   const totalGross = rows.reduce((sum, row) => sum + (row.grossSalary ?? 0), 0)
   const missingGross = rows.filter((row) => row.grossSalary === undefined).length
@@ -79,11 +84,14 @@ export default async function PayrollPage({ params, searchParams }: Props) {
     <div className="flex flex-col gap-6">
       <PageTitle title={t("title")} description={t("description")} />
 
-      <PayrollPeriodSwitcher
-        year={period.year}
-        month={period.month}
-        rangeLabel={formatRangeLabel(period.startDate, period.endDate)}
-      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <PayrollPeriodSwitcher
+          year={period.year}
+          month={period.month}
+          rangeLabel={formatRangeLabel(period.startDate, period.endDate)}
+        />
+        <PayrollPeriodActions periodId={period.id} status={period.status as PayrollPeriodStatus} />
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard label={tPayroll("kpiEmployeeCount")} value={String(rows.length)} icon={Users} />
@@ -101,7 +109,13 @@ export default async function PayrollPage({ params, searchParams }: Props) {
         />
       </div>
 
-      <PayrollClient rows={rows} year={period.year} month={period.month} locale={locale} />
+      <PayrollClient
+        rows={rows}
+        year={period.year}
+        month={period.month}
+        locale={locale}
+        editable={isPeriodEditable(period.status as PayrollPeriodStatus)}
+      />
     </div>
   )
 }

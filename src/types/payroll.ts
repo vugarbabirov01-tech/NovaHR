@@ -34,6 +34,16 @@ export interface PayrollEmployeeRow {
   status: PayrollPeriodStatus
   /** Latest salary-change events from the employee's employment history, newest first (max 5). */
   salaryHistory: { date: string; title: string }[]
+  /** Manual additions/deductions behind `additions` / `deductions`, oldest first. */
+  adjustments: PayrollAdjustmentView[]
+}
+
+export interface PayrollAdjustmentView {
+  id: string
+  kind: "ADDITION" | "DEDUCTION"
+  category: string
+  amount: number
+  note: string
 }
 
 export interface PayrollPeriodSummary {
