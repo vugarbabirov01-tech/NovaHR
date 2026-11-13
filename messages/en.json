@@ -620,6 +620,7 @@
       "terminateEmployment": "Terminate Employment"
     },
     "table": {
+      "columnGrossSalary": "Gross Salary",
       "columnPhoto": "Photo",
       "columnFin": "FIN",
       "columnFullName": "Full Name",
@@ -721,6 +722,8 @@
         }
       },
       "personal": {
+        "registrationAddress": "Registration Address (per ID)",
+        "socialInsuranceNumber": "Social Insurance Number (SSN)",
         "firstName": "First Name",
         "lastName": "Last Name",
         "fatherName": "Father's Name",
@@ -746,6 +749,12 @@
         "photo": "Employee Photo"
       },
       "labourLaw": {
+        "martyrFamilyMember": "Martyr's family member",
+        "sectionPreviousEmployments": "Previous Employment",
+        "noPreviousEmployments": "No previous employment on record.",
+        "employmentCounted": "Counted toward experience",
+        "employmentNotCounted": "Not counted",
+        "taxId": "Tax ID",
         "sectionFamily": "Family & Parental Status",
         "isPregnant": "Pregnant",
         "isSingleParent": "Single Parent",
@@ -873,6 +882,7 @@
         }
       },
       "payroll": {
+        "grossSalary": "Gross Salary (ƏMAS)",
         "bank": "Bank",
         "bankAccountNumber": "Bank Account Number",
         "salary": "Base Salary",
@@ -1626,6 +1636,8 @@
       "chartOtherBucket": "Other",
       "chartEmptyTitle": "No data for this chart",
       "chartEmptyDescription": "No results match the current filters.",
+      "chartPickGroupByTitle": "Pick a field to chart",
+      "chartPickGroupByDescription": "Choose a grouping field above to see the chart.",
       "chartCappedOtherNotice": "Too many categories to show individually — the smallest ones were folded into \"Other\".",
       "summaryKpiSectionTitle": "KPIs",
       "summaryChartSectionTitle": "Chart breakdown",
@@ -1645,6 +1657,7 @@
       "groupedStatsValueColumn": "Value"
     },
     "fields": {
+      "grossSalary": "Gross Salary",
       "firstName": "First Name",
       "lastName": "Last Name",
       "fatherName": "Father's Name",

@@ -620,6 +620,7 @@
       "terminateEmployment": "İş Münasibətinə Xitam Ver"
     },
     "table": {
+      "columnGrossSalary": "Gross maaş",
       "columnPhoto": "Şəkil",
       "columnFin": "FİN",
       "columnFullName": "Ad Soyad",
@@ -721,6 +722,8 @@
         }
       },
       "personal": {
+        "registrationAddress": "Qeydiyyat ünvanı (ŞV üzrə)",
+        "socialInsuranceNumber": "Sosial sığorta nömrəsi (SSN)",
         "firstName": "Ad",
         "lastName": "Soyad",
         "fatherName": "Ata adı",
@@ -746,6 +749,12 @@
         "photo": "Əməkdaş Şəkli"
       },
       "labourLaw": {
+        "martyrFamilyMember": "Şəhid ailəsi üzvü",
+        "sectionPreviousEmployments": "Əvvəlki iş yerləri",
+        "noPreviousEmployments": "Əvvəlki iş yeri məlumatı yoxdur.",
+        "employmentCounted": "Staja daxildir",
+        "employmentNotCounted": "Staja daxil deyil",
+        "taxId": "VÖEN",
         "sectionFamily": "Ailə və Valideynlik Statusu",
         "isPregnant": "Hamiləlik",
         "isSingleParent": "Tənha Valideyn",
@@ -873,6 +882,7 @@
         }
       },
       "payroll": {
+        "grossSalary": "Gross əmək haqqı (ƏMAS)",
         "bank": "Bank",
         "bankAccountNumber": "Bank Hesab Nömrəsi",
         "salary": "Əsas Əmək Haqqı",
@@ -1626,6 +1636,8 @@
       "chartOtherBucket": "Digər",
       "chartEmptyTitle": "Qrafik üçün məlumat yoxdur",
       "chartEmptyDescription": "Seçilmiş filtrlərə uyğun heç bir nəticə tapılmadı.",
+      "chartPickGroupByTitle": "Qrafik üçün sahə seçin",
+      "chartPickGroupByDescription": "Qrafiki görmək üçün yuxarıdan qruplaşdırma sahəsi seçin.",
       "chartCappedOtherNotice": "Kateqoriya sayı çox olduğu üçün ən kiçik qruplar \"Digər\" altında birləşdirildi.",
       "summaryKpiSectionTitle": "KPI göstəriciləri",
       "summaryChartSectionTitle": "Qrafik — bölgü",
@@ -1645,6 +1657,7 @@
       "groupedStatsValueColumn": "Dəyər"
     },
     "fields": {
+      "grossSalary": "Gross əmək haqqı",
       "firstName": "Ad",
       "lastName": "Soyad",
       "fatherName": "Ata adı",

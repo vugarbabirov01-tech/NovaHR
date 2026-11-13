@@ -32,6 +32,12 @@ function matchesFilter(row: ReportRow, filter: ReportFilter): boolean {
   if (filter.operator === "isEmpty") return isEmptyValue(rawValue)
   if (filter.operator === "isNotEmpty") return !isEmptyValue(rawValue)
 
+  // A filter row the user added but hasn't filled in yet is "incomplete",
+  // not "match only empty values": fail open so the result set doesn't
+  // collapse to zero while they're still typing (see doc comment above).
+  if (isEmptyValue(filter.value ?? null)) return true
+  if (filter.operator === "between" && isEmptyValue(filter.valueTo ?? null)) return true
+
   if (definition.type === "number" || definition.type === "date") {
     const rowComparable = toComparable(rawValue, definition.type)
     if (filter.operator === "between") {

@@ -10,6 +10,12 @@ const rows: ReportRow[] = [
 ]
 
 describe("applyFilters", () => {
+  it("ignores an incomplete filter (empty value) instead of matching nothing", () => {
+    expect(applyFilters(rows, [{ field: "firstName", operator: "equals", value: "" }])).toHaveLength(rows.length)
+    expect(applyFilters(rows, [{ field: "age", operator: "greaterThan", value: null }])).toHaveLength(rows.length)
+    expect(applyFilters(rows, [{ field: "age", operator: "between", value: 30, valueTo: null }])).toHaveLength(rows.length)
+  })
+
   it("string equals is case-insensitive", () => {
     expect(applyFilters(rows, [{ field: "firstName", operator: "equals", value: "ali" }])).toHaveLength(1)
   })

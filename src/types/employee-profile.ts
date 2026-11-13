@@ -129,6 +129,8 @@ export interface EmployeeListItem {
    * employee's full profile. See that field's own doc comment. */
   isTopExecutive?: boolean
   baseSalary: number
+  /** Display-only gross salary (see EmployeePayroll.grossSalary). */
+  grossSalary?: number
   currency: string
 }
 
@@ -203,6 +205,12 @@ export interface EmployeePersonal {
   idExpiryDate?: string
   passportNumber: string
   address: string
+  /** Address exactly as printed on the national ID card (ƏMAS/İAMAS
+   * "Qeydiyyat ünvanı"). Kept apart from `address`, which is the working
+   * contact/actual-residence address and is never overwritten by ƏMAS. */
+  registrationAddress?: string
+  /** Social insurance number (SSN / Sosial sığorta nömrəsi). */
+  socialInsuranceNumber?: string
   phone: string
   email: string
   emergencyContactName: string
@@ -221,6 +229,26 @@ export interface WorkExperienceDuration {
   years: number
   months: number
   days: number
+}
+
+/** One previous (pre-company) employment, as reported by ƏMAS. Display and
+ * audit data only — the aggregated duration that drives leave is still
+ * `previousWorkExperience`. */
+export interface PreviousEmployment {
+  id: string
+  /** Employer name. */
+  organization: string
+  /** Employer tax ID (VÖEN). */
+  taxId?: string
+  position?: string
+  /** ISO date (YYYY-MM-DD). */
+  startDate: string
+  /** ISO date (YYYY-MM-DD). */
+  endDate: string
+  /** True when ƏMAS counted this period toward previousWorkExperience. */
+  counted: boolean
+  /** Why a period was not counted, when `counted` is false. */
+  note?: string
 }
 
 export interface EmployeeChild {
@@ -260,6 +288,8 @@ export interface EmployeeLabourLaw {
   // Veteran / special service status (Labour Code Art. 118/120 categories)
   veteranStatus?: VeteranStatus
   stateDecorationName?: string
+  /** Member of a martyr's family (ƏMAS "Şəhid ailə üzvü"). */
+  isMartyrFamilyMember?: boolean
 
   // Professional category — several sectors carry statutory leave baselines
   // that differ from the general Labour Code minimum (judges, prosecutors,
@@ -279,6 +309,8 @@ export interface EmployeeLabourLaw {
   // previousWorkExperience, never persisted. See calculateServiceDuration /
   // addDurations in @/lib/employees.
   previousWorkExperience: WorkExperienceDuration
+  /** Itemised previous employers behind previousWorkExperience (ƏMAS). */
+  previousEmployments?: PreviousEmployment[]
 
   // Additional leave entitlement sources, stored ahead of the future Leave
   // module so nothing needs to be re-collected when automation ships
@@ -326,6 +358,9 @@ export interface EmployeePayroll {
   bankName: string
   bankAccountNumber: string
   baseSalary: number
+  /** Gross salary per ƏMAS, display/report only. baseSalary holds the net
+   * amount; payroll calculations never read this field. */
+  grossSalary?: number
   currency: string
   bonus: number
   allowances: PayrollAllowance[]
@@ -501,6 +536,7 @@ export function toListItem(
     employmentStatus: profile.employmentStatus,
     hireDate: profile.employment.hireDate,
     baseSalary: profile.payroll.baseSalary,
+    grossSalary: profile.payroll.grossSalary,
     currency: profile.payroll.currency,
   }
 }

@@ -34,6 +34,12 @@ export function LabourLawTab({ profile }: LabourLawTabProps) {
   const minorAge = calculateAgeFromDateOfBirth(personal.dateOfBirth)
   const retirementAge = isRetirementAgeFromDateOfBirth(personal.dateOfBirth, personal.gender)
 
+  // Only periods ƏMAS counted toward experience are shown; uncounted rows
+  // (substitution jobs, periods after hire) stay in the stored data.
+  const previousEmployments = (labourLaw.previousEmployments ?? []).filter((job) => job.counted).sort((a, b) =>
+    a.startDate.localeCompare(b.startDate)
+  )
+
   const companyServiceDuration = calculateServiceDuration(employment.hireDate)
   const totalWorkExperience = addDurations(labourLaw.previousWorkExperience, companyServiceDuration)
 
@@ -136,6 +142,10 @@ export function LabourLawTab({ profile }: LabourLawTabProps) {
             {labourLaw.veteranStatus === "stateDecorationHolder" ? (
               <InfoField label={t("stateDecorationName")} value={labourLaw.stateDecorationName} />
             ) : null}
+            <InfoField
+              label={t("martyrFamilyMember")}
+              value={<BooleanIndicator value={labourLaw.isMartyrFamilyMember === true} />}
+            />
           </InfoGrid>
         </CardContent>
       </Card>
@@ -188,6 +198,39 @@ export function LabourLawTab({ profile }: LabourLawTabProps) {
             <InfoField label={t("companyServiceDuration")} value={formatDuration(companyServiceDuration, t)} />
             <InfoField label={t("totalWorkExperience")} value={formatDuration(totalWorkExperience, t)} />
           </InfoGrid>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("sectionPreviousEmployments")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {previousEmployments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("noPreviousEmployments")}</p>
+          ) : (
+            <ul className="flex flex-col gap-1.5">
+              {previousEmployments.map((job) => (
+                <li
+                  key={job.id}
+                  className="flex flex-col gap-1 rounded-lg border border-border px-3 py-2 text-sm"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-medium text-foreground">{job.organization}</span>
+                    <Badge variant="default">{t("employmentCounted")}</Badge>
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+                    {job.position ? <span>{job.position}</span> : null}
+                    <span className="tabular-nums">
+                      {job.startDate} – {job.endDate}
+                    </span>
+                    {job.taxId ? <span className="tabular-nums">{t("taxId")}: {job.taxId}</span> : null}
+                    {job.note ? <span>{job.note}</span> : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
 

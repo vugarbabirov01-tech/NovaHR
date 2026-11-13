@@ -51,7 +51,7 @@ export function ReportChartDisplay({ chartConfig, result, isLoading }: ReportCha
       <div className="flex flex-col gap-2">
         <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("chartTitle")}</Label>
         <div className="h-64 rounded-xl border border-border">
-          <EmptyState icon={BarChart3} title={t("chartEmptyTitle")} description={t("chartEmptyDescription")} className="h-full justify-center border-none" />
+          <EmptyState icon={BarChart3} title={t("chartPickGroupByTitle")} description={t("chartPickGroupByDescription")} className="h-full justify-center border-none" />
         </div>
       </div>
     )

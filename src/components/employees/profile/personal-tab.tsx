@@ -38,8 +38,12 @@ export function PersonalTab({ profile }: PersonalTabProps) {
             />
             <InfoField label={t("finCode")} value={personal.finCode} />
             <InfoField label={t("nationalId")} value={personal.nationalId} />
+            <InfoField label={t("idIssueDate")} value={personal.idIssueDate} />
+            <InfoField label={t("idIssuingAuthority")} value={personal.idIssuingAuthority} />
             <InfoField label={t("passportNumber")} value={personal.passportNumber} />
+            <InfoField label={t("socialInsuranceNumber")} value={personal.socialInsuranceNumber} />
             <InfoField label={t("address")} value={personal.address} span="2" />
+            <InfoField label={t("registrationAddress")} value={personal.registrationAddress} span="2" />
             <InfoField label={t("phone")} value={personal.phone} />
             <InfoField label={t("email")} value={personal.email} />
           </InfoGrid>

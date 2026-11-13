@@ -243,6 +243,17 @@ export const EMPLOYEE_REPORT_FIELDS: ReportFieldDefinition[] = [
     enumValues: ["on-site", "remote", "hybrid"],
   },
   { key: "workLocation", dataSource: "EMPLOYEES", category: "employment", type: "string", labelKey: "workLocation" },
+  /** Gross salary per ƏMAS (display/report only; baseSalary holds the net
+   * amount and stays out of reports). Added 2026-11-13 at the user's
+   * explicit request, ahead of RBAC — see the header comment above. */
+  {
+    key: "grossSalary",
+    dataSource: "EMPLOYEES",
+    category: "payroll",
+    type: "number",
+    labelKey: "grossSalary",
+    aggregations: ["sum", "avg", "min", "max"],
+  },
 ]
 
 /** Every field, across every data source — the single registry everything

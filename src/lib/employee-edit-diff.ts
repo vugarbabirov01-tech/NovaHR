@@ -150,8 +150,11 @@ export function applyEditableFields(
       workLocationType: next.workLocationType,
       workLocation: next.workLocation,
     },
-    personal: next.personal,
-    labourLaw: next.labourLaw,
+    // Spread the existing sections first so fields the edit wizard doesn't
+    // own (e.g. ƏMAS-sourced SSN, registration address, previous
+    // employments, gross salary) survive a save instead of being dropped.
+    personal: { ...profile.personal, ...next.personal },
+    labourLaw: { ...profile.labourLaw, ...next.labourLaw },
     payroll: {
       ...profile.payroll,
       bankName: next.bankName,

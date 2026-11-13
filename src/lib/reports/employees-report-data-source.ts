@@ -51,6 +51,7 @@ function flattenEmployee(profile: EmployeeProfile): ReportRow {
     workSchedule: profile.employment.workSchedule ?? "",
     workLocationType: profile.employment.workLocationType ?? "",
     workLocation: profile.employment.workLocation ?? "",
+    grossSalary: profile.payroll.grossSalary ?? null,
   }
 }
 

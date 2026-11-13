@@ -620,6 +620,7 @@
       "terminateEmployment": "Уволить сотрудника"
     },
     "table": {
+      "columnGrossSalary": "Брутто-зарплата",
       "columnPhoto": "Фото",
       "columnFin": "ФИН",
       "columnFullName": "ФИО",
@@ -721,6 +722,8 @@
         }
       },
       "personal": {
+        "registrationAddress": "Адрес регистрации (по удостоверению)",
+        "socialInsuranceNumber": "Номер соцстрахования (SSN)",
         "firstName": "Имя",
         "lastName": "Фамилия",
         "fatherName": "Отчество",
@@ -746,6 +749,12 @@
         "photo": "Фото сотрудника"
       },
       "labourLaw": {
+        "martyrFamilyMember": "Член семьи шехида",
+        "sectionPreviousEmployments": "Предыдущие места работы",
+        "noPreviousEmployments": "Данных о предыдущих местах работы нет.",
+        "employmentCounted": "Засчитано в стаж",
+        "employmentNotCounted": "Не засчитано",
+        "taxId": "VÖEN",
         "sectionFamily": "Семейный и родительский статус",
         "isPregnant": "Беременность",
         "isSingleParent": "Родитель-одиночка",
@@ -873,6 +882,7 @@
         }
       },
       "payroll": {
+        "grossSalary": "Брутто-зарплата (ƏMAS)",
         "bank": "Банк",
         "bankAccountNumber": "Номер банковского счёта",
         "salary": "Базовый оклад",
@@ -1626,6 +1636,8 @@
       "chartOtherBucket": "Другое",
       "chartEmptyTitle": "Нет данных для графика",
       "chartEmptyDescription": "Нет результатов, соответствующих текущим фильтрам.",
+      "chartPickGroupByTitle": "Выберите поле для графика",
+      "chartPickGroupByDescription": "Выберите поле группировки выше, чтобы увидеть график.",
       "chartCappedOtherNotice": "Слишком много категорий — самые маленькие группы объединены в «Другое».",
       "summaryKpiSectionTitle": "Показатели KPI",
       "summaryChartSectionTitle": "График — разбивка",
@@ -1645,6 +1657,7 @@
       "groupedStatsValueColumn": "Значение"
     },
     "fields": {
+      "grossSalary": "Брутто-зарплата",
       "firstName": "Имя",
       "lastName": "Фамилия",
       "fatherName": "Отчество",

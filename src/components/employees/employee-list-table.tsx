@@ -16,7 +16,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import {
   ArrowUpDown,
   ChevronDown,
@@ -108,6 +108,7 @@ export function EmployeeListTable({
   const tCommon = useTranslations("Employees.card")
   const tList = useTranslations("Employees.list")
   const router = useRouter()
+  const locale = useLocale()
 
   const groupByLabels: Record<string, string> = {
     none: t("groupByNone"),
@@ -126,6 +127,7 @@ export function EmployeeListTable({
     employmentStatus: t("columnStatus"),
     workStatus: t("columnWorkStatus"),
     hireDate: t("columnHireDate"),
+    grossSalary: t("columnGrossSalary"),
   }
 
   const [sorting, setSorting] = useState<SortingState>([])
@@ -252,6 +254,21 @@ export function EmployeeListTable({
         ),
       },
       {
+        accessorKey: "grossSalary",
+        enableGrouping: false,
+        header: t("columnGrossSalary"),
+        cell: ({ row }) =>
+          row.original.grossSalary != null ? (
+            <span className="tabular-nums">
+              {new Intl.NumberFormat(locale, { style: "currency", currency: row.original.currency }).format(
+                row.original.grossSalary
+              )}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
+      },
+      {
         id: "actions",
         header: t("columnActions"),
         enableHiding: false,
@@ -270,7 +287,7 @@ export function EmployeeListTable({
         ),
       },
     ],
-    [t, tType, tCommon, activeSmartFilter, workStatusByEmployeeId, returnTo]
+    [t, tType, tCommon, locale, activeSmartFilter, workStatusByEmployeeId, returnTo]
   )
 
   const table = useReactTable({

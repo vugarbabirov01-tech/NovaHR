@@ -35,6 +35,10 @@ export function PayrollTab({ profile }: PayrollTabProps) {
             <InfoField label={t("bank")} value={payroll.bankName} />
             <InfoField label={t("bankAccountNumber")} value={payroll.bankAccountNumber} />
             <InfoField label={t("salary")} value={formatMoney(payroll.baseSalary)} />
+            <InfoField
+              label={t("grossSalary")}
+              value={payroll.grossSalary != null ? formatMoney(payroll.grossSalary) : undefined}
+            />
             <InfoField label={t("currency")} value={payroll.currency} />
             <InfoField label={t("bonus")} value={formatMoney(payroll.bonus)} />
             <InfoField label={t("compensation")} value={formatMoney(totalCompensation)} />
