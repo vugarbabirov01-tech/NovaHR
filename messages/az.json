@@ -206,6 +206,16 @@
     "comingSoonDescription": "Bu bölmə hazırlanıb — tam modul növbəti mərhələdə qurulacaq."
   },
   "Payroll": {
+    "columnGross": "Gross (ƏMAS)",
+    "columnNet": "Net maaş",
+    "columnPayable": "Ödəniləcək",
+    "footerTotal": "Yekun ({count, plural, =1 {1 əməkdaş} other {# əməkdaş}})",
+    "kpiGrossTotal": "Gross fondu",
+    "kpiGrossTooltip": "ƏMAS-dakı gross əmək haqqılarının cəmi. Yalnız göstəriş üçündür, hesablamaya qoşulmur.",
+    "kpiGrossTooltipMissing": "ƏMAS-dakı gross əmək haqqılarının cəmi. {count, plural, =1 {1 əməkdaş} other {# əməkdaş}} üçün gross məlumatı yoxdur. Yalnız göstəriş üçündür.",
+    "kpiNetTotal": "Net fondu (ödəniləcək)",
+    "kpiNetTooltip": "Net maaş, üstəgəl əlavələr, çıxılsın tutulmalar. Bu dövr üçün ödəniləcək yekun məbləğ.",
+    "kpiAdjustments": "Əlavələr / tutulmalar (AZN)",
     "previousMonth": "Əvvəlki ay",
     "nextMonth": "Növbəti ay",
     "applyPeriod": "Tətbiq et",

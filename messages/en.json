@@ -206,6 +206,16 @@
     "comingSoonDescription": "This area is scaffolded and ready — the full module will be built in an upcoming phase."
   },
   "Payroll": {
+    "columnGross": "Gross (ƏMAS)",
+    "columnNet": "Net salary",
+    "columnPayable": "Payable",
+    "footerTotal": "Total ({count, plural, =1 {1 employee} other {# employees}})",
+    "kpiGrossTotal": "Gross total",
+    "kpiGrossTooltip": "Sum of gross salaries from ƏMAS. Display only, not used in calculations.",
+    "kpiGrossTooltipMissing": "Sum of gross salaries from ƏMAS. {count, plural, =1 {1 employee has} other {# employees have}} no gross on record. Display only.",
+    "kpiNetTotal": "Net total (payable)",
+    "kpiNetTooltip": "Net salary plus additions minus deductions: the final amount payable for this period.",
+    "kpiAdjustments": "Additions / deductions (AZN)",
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
     "applyPeriod": "Apply",

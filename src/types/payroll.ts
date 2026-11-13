@@ -23,6 +23,9 @@ export interface PayrollEmployeeRow {
   position: string
   photoUrl?: string
   baseSalary: number
+  /** Gross per ƏMAS from the employee profile (display only, current value
+   * — not part of the period snapshot). Undefined when ƏMAS had none. */
+  grossSalary?: number
   currency: string
   additions: number
   deductions: number

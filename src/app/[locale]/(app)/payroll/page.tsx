@@ -86,6 +86,7 @@ export default async function PayrollPage({ params, searchParams }: Props) {
         position: employee.employment.position,
         photoUrl: employee.personal.photoUrl,
         baseSalary: record.baseSalary,
+        grossSalary: employee.payroll.grossSalary,
         currency: record.currency,
         additions: record.additions,
         deductions: record.deductions,
@@ -97,8 +98,10 @@ export default async function PayrollPage({ params, searchParams }: Props) {
     .filter((row): row is PayrollEmployeeRow => row !== null)
     .sort((a, b) => a.fullName.localeCompare(b.fullName))
 
-  const totalBaseSalary = rows.reduce((sum, row) => sum + row.baseSalary, 0)
+  const totalGross = rows.reduce((sum, row) => sum + (row.grossSalary ?? 0), 0)
+  const missingGross = rows.filter((row) => row.grossSalary === undefined).length
   const totalAdditions = rows.reduce((sum, row) => sum + row.additions, 0)
+  const totalDeductions = rows.reduce((sum, row) => sum + row.deductions, 0)
   const totalNet = rows.reduce((sum, row) => sum + row.netAmount, 0)
 
   return (
@@ -113,9 +116,18 @@ export default async function PayrollPage({ params, searchParams }: Props) {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard label={tPayroll("kpiEmployeeCount")} value={String(rows.length)} icon={Users} />
-        <KpiCard label={tPayroll("kpiTotalBaseSalary")} value={formatAzn(totalBaseSalary)} icon={Wallet} />
-        <KpiCard label={tPayroll("kpiTotalAdditions")} value={formatAzn(totalAdditions)} icon={PlusCircle} />
-        <KpiCard label={tPayroll("kpiTotalNet")} value={formatAzn(totalNet)} icon={Banknote} />
+        <KpiCard
+          label={tPayroll("kpiGrossTotal")}
+          value={formatAzn(totalGross)}
+          icon={Wallet}
+          tooltip={missingGross > 0 ? tPayroll("kpiGrossTooltipMissing", { count: missingGross }) : tPayroll("kpiGrossTooltip")}
+        />
+        <KpiCard label={tPayroll("kpiNetTotal")} value={formatAzn(totalNet)} icon={Banknote} tooltip={tPayroll("kpiNetTooltip")} />
+        <KpiCard
+          label={tPayroll("kpiAdjustments")}
+          value={`+${formatAzn(totalAdditions).replace(" AZN", "")} / −${formatAzn(totalDeductions).replace(" AZN", "")}`}
+          icon={PlusCircle}
+        />
       </div>
 
       <PayrollClient rows={rows} />

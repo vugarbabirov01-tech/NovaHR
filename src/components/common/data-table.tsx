@@ -6,6 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+import type { ReactNode } from "react"
 import type { LucideIcon } from "lucide-react"
 import { Inbox } from "lucide-react"
 
@@ -13,10 +14,12 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { cn } from "@/lib/utils"
 import { EmptyState } from "@/components/common/empty-state"
 
 interface DataTableProps<TData, TValue> {
@@ -25,6 +28,14 @@ interface DataTableProps<TData, TValue> {
   emptyTitle: string
   emptyDescription: string
   emptyIcon?: LucideIcon
+  /** Optional totals row(s) rendered in a <tfoot> — pass <TableRow>s. */
+  footer?: ReactNode
+}
+
+/** Per-column extra classes (e.g. right-aligned numbers), read from
+ * columnDef.meta.className so existing tables without meta are unchanged. */
+function metaClassName(meta: unknown): string | undefined {
+  return (meta as { className?: string } | undefined)?.className
 }
 
 export function DataTable<TData, TValue>({
@@ -33,6 +44,7 @@ export function DataTable<TData, TValue>({
   emptyIcon = Inbox,
   emptyTitle,
   emptyDescription,
+  footer,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -57,7 +69,7 @@ export function DataTable<TData, TValue>({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent">
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} className="h-10 px-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <TableHead key={header.id} className={cn("h-10 px-4 text-xs font-medium text-muted-foreground uppercase tracking-wide", metaClassName(header.column.columnDef.meta))}>
                   {header.isPlaceholder
                     ? null
                     : flexRender(
@@ -73,13 +85,14 @@ export function DataTable<TData, TValue>({
           {table.getRowModel().rows.map((row) => (
             <TableRow key={row.id}>
               {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id} className="px-4 py-3">
+                <TableCell key={cell.id} className={cn("px-4 py-3", metaClassName(cell.column.columnDef.meta))}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
               ))}
             </TableRow>
           ))}
         </TableBody>
+        {footer ? <TableFooter>{footer}</TableFooter> : null}
       </Table>
     </div>
   )

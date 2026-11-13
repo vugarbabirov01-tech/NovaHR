@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 
 import { Button } from "@/components/ui/button"
+import { TableCell, TableRow } from "@/components/ui/table"
 import {
   Select,
   SelectContent,
@@ -82,6 +83,11 @@ export function PayrollClient({ rows }: PayrollClientProps) {
     }
   }
 
+  const money = (value: number | undefined) =>
+    value === undefined ? <span className="text-muted-foreground">—</span> : formatAzn(value)
+
+  const numberColumn = "text-right tabular-nums whitespace-nowrap"
+
   const columns: ColumnDef<PayrollEmployeeRow>[] = [
     {
       id: "employee",
@@ -94,33 +100,44 @@ export function PayrollClient({ rows }: PayrollClientProps) {
               {getInitials(row.original.firstName, row.original.lastName)}
             </AvatarFallback>
           </Avatar>
-          <span className="font-medium text-foreground">{row.original.fullName}</span>
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate font-medium text-foreground">{row.original.fullName}</span>
+            <span className="truncate text-xs text-muted-foreground">
+              {[row.original.position, row.original.workLocation].filter(Boolean).join(" · ")}
+            </span>
+          </div>
         </div>
       ),
     },
-    { accessorKey: "finCode", header: t("columnFin") },
-    { accessorKey: "company", header: t("columnCompany") },
-    { accessorKey: "workLocation", header: t("columnWorkLocation") },
-    { accessorKey: "position", header: t("columnPosition") },
+    {
+      id: "grossSalary",
+      header: t("columnGross"),
+      meta: { className: numberColumn },
+      cell: ({ row }) => money(row.original.grossSalary),
+    },
     {
       id: "baseSalary",
-      header: t("columnBaseSalary"),
-      cell: ({ row }) => formatAzn(row.original.baseSalary),
+      header: t("columnNet"),
+      meta: { className: numberColumn },
+      cell: ({ row }) => money(row.original.baseSalary),
     },
     {
       id: "additions",
       header: t("columnAdditions"),
-      cell: ({ row }) => formatAzn(row.original.additions),
+      meta: { className: numberColumn },
+      cell: ({ row }) => money(row.original.additions),
     },
     {
       id: "deductions",
       header: t("columnDeductions"),
-      cell: ({ row }) => formatAzn(row.original.deductions),
+      meta: { className: numberColumn },
+      cell: ({ row }) => money(row.original.deductions),
     },
     {
       id: "netAmount",
-      header: t("columnCalculated"),
-      cell: ({ row }) => <span className="font-medium text-foreground">{formatAzn(row.original.netAmount)}</span>,
+      header: t("columnPayable"),
+      meta: { className: numberColumn },
+      cell: ({ row }) => <span className="font-semibold text-foreground">{formatAzn(row.original.netAmount)}</span>,
     },
     {
       id: "status",
@@ -128,6 +145,31 @@ export function PayrollClient({ rows }: PayrollClientProps) {
       cell: ({ row }) => <PayrollStatusBadge status={row.original.status} label={tStatus(row.original.status)} />,
     },
   ]
+
+  // Totals cover every row matching the current filters, not just the visible page.
+  const totals = useMemo(
+    () => ({
+      gross: filtered.reduce((sum, row) => sum + (row.grossSalary ?? 0), 0),
+      net: filtered.reduce((sum, row) => sum + row.baseSalary, 0),
+      additions: filtered.reduce((sum, row) => sum + row.additions, 0),
+      deductions: filtered.reduce((sum, row) => sum + row.deductions, 0),
+      payable: filtered.reduce((sum, row) => sum + row.netAmount, 0),
+    }),
+    [filtered]
+  )
+
+  const footer =
+    filtered.length > 0 ? (
+      <TableRow className="bg-muted/50 font-semibold hover:bg-muted/50">
+        <TableCell className="px-4 py-3">{t("footerTotal", { count: filtered.length })}</TableCell>
+        <TableCell className={"px-4 py-3 " + numberColumn}>{formatAzn(totals.gross)}</TableCell>
+        <TableCell className={"px-4 py-3 " + numberColumn}>{formatAzn(totals.net)}</TableCell>
+        <TableCell className={"px-4 py-3 " + numberColumn}>{formatAzn(totals.additions)}</TableCell>
+        <TableCell className={"px-4 py-3 " + numberColumn}>{formatAzn(totals.deductions)}</TableCell>
+        <TableCell className={"px-4 py-3 " + numberColumn}>{formatAzn(totals.payable)}</TableCell>
+        <TableCell className="px-4 py-3" />
+      </TableRow>
+    ) : undefined
 
   return (
     <div className="flex flex-col gap-4">
@@ -200,6 +242,7 @@ export function PayrollClient({ rows }: PayrollClientProps) {
         data={pageRows}
         emptyTitle={t("emptyTitle")}
         emptyDescription={t("emptyDescription")}
+        footer={footer}
       />
 
       {filtered.length > PAGE_SIZE ? (
