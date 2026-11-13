@@ -20,6 +20,8 @@ export interface VacancyRow {
   hired: number
   activeCandidates: number
   status: RequisitionStatus
+  /** Opened because an employee left. */
+  isReplacement: boolean
 }
 
 export function VacanciesClient({ rows }: { rows: VacancyRow[] }) {
@@ -45,7 +47,10 @@ export function VacanciesClient({ rows }: { rows: VacancyRow[] }) {
       cell: ({ row }) => (
         <div className="flex min-w-0 flex-col">
           <span className="truncate font-medium text-foreground">{row.original.title}</span>
-          <span className="text-xs text-muted-foreground tabular-nums">{row.original.code}</span>
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {row.original.code}
+            {row.original.isReplacement ? ` · ${t("reason.REPLACEMENT")}` : ""}
+          </span>
         </div>
       ),
     },

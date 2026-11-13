@@ -25,7 +25,6 @@ const FORWARD: Partial<Record<PipelineStage, PipelineStage>> = {
   NEW: "SCREENING",
   SCREENING: "INTERVIEW",
   INTERVIEW: "OFFER",
-  OFFER: "HIRED",
 }
 
 const stageAccent: Record<PipelineStage, string> = {

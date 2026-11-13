@@ -1,16 +1,26 @@
+import { getFullLegalName } from "@/lib/employees"
 import { prisma, type PrismaClientOrTransaction } from "@/lib/prisma"
+import { buildReplacementRequisition } from "@/lib/recruitment/replacement-vacancy"
+import { findAllDepartments } from "@/repositories/department-repository"
+import { findAllEmployees, findEmployeeById } from "@/repositories/employee-repository"
 import {
   acceptsApplications,
+  canStartHire,
+  canTransitionOffer,
   canTransitionRequisition,
   findDuplicateCandidates,
+  isOfferEditable,
   isPipelineStage,
   isRequisitionEditable,
   normalizeEmail,
   normalizeFin,
   validateCandidateInput,
+  validateOfferInput,
   validateRequisitionInput,
   validateStageMove,
   type CandidateInput,
+  type OfferInput,
+  type OfferStatus,
   type PipelineStage,
   type RequisitionInput,
   type RequisitionStatus,
@@ -36,6 +46,14 @@ export type RecruitmentErrorCode =
   | "sameStage"
   | "reasonRequired"
   | "invalidNote"
+  | "invalidSalary"
+  | "invalidStartDate"
+  | "offerNotAllowed"
+  | "offerLocked"
+  | "noOffer"
+  | "useHireFlow"
+  | "notTerminated"
+  | "cannotHire"
 
 export class RecruitmentError extends Error {
   constructor(public readonly code: RecruitmentErrorCode) {
@@ -129,7 +147,7 @@ export function getRequisitionDetail(id: string) {
     include: {
       applications: {
         orderBy: { stageUpdatedAt: "desc" },
-        include: { candidate: true, notes: { orderBy: { createdAt: "desc" } } },
+        include: { candidate: true, offer: true, notes: { orderBy: { createdAt: "desc" } } },
       },
     },
   })
@@ -232,24 +250,6 @@ export async function moveApplication(applicationId: string, to: string, rejecti
         rejectionReason: to === "REJECTED" ? rejectionReason.trim() : "",
       },
     })
-
-    // The vacancy is filled once enough people have been hired.
-    if (to === "HIRED") {
-      const hired = await tx.recruitmentApplication.count({
-        where: { requisitionId: application.requisitionId, stage: "HIRED" },
-      })
-      if (hired >= application.requisition.openings) {
-        await tx.jobRequisition.update({ where: { id: application.requisitionId }, data: { status: "FILLED" } })
-        await tx.recruitmentStatusEvent.create({
-          data: {
-            requisitionId: application.requisitionId,
-            fromStatus: "OPEN",
-            toStatus: "FILLED",
-            note: "auto: all openings filled",
-          },
-        })
-      }
-    }
   })
 }
 
@@ -274,4 +274,176 @@ export function listCandidates() {
     orderBy: { createdAt: "desc" },
     include: { applications: { include: { requisition: { select: { id: true, code: true, title: true } } } } },
   })
+}
+
+// ---------------------------------------------------------------------------
+// Offers and hiring
+// ---------------------------------------------------------------------------
+
+const OFFER_ERRORS = { salary: "invalidSalary", startDate: "invalidStartDate", note: "invalidNote" } as const
+
+/** Creates or updates the application's offer. Allowed only at the OFFER stage, while the offer is a draft (or was declined). */
+export async function saveOffer(applicationId: string, input: OfferInput): Promise<void> {
+  const invalid = validateOfferInput(input)
+  if (invalid) throw new RecruitmentError(OFFER_ERRORS[invalid])
+  await prisma.$transaction(async (tx) => {
+    const application = await tx.recruitmentApplication.findUnique({
+      where: { id: applicationId },
+      include: { requisition: true, offer: true },
+    })
+    if (!application) throw new RecruitmentError("notFound")
+    if (!acceptsApplications(application.requisition.status as RequisitionStatus)) throw new RecruitmentError("notOpen")
+    if (application.stage !== "OFFER") throw new RecruitmentError("offerNotAllowed")
+
+    const data = { salary: Math.round(input.salary * 100) / 100, startDate: input.startDate, note: (input.note ?? "").trim() }
+    if (!application.offer) {
+      await tx.recruitmentOffer.create({ data: { applicationId, ...data } })
+      return
+    }
+    const status = application.offer.status as OfferStatus
+    if (!isOfferEditable(status)) throw new RecruitmentError("offerLocked")
+    // Revising a declined offer reopens it as a draft.
+    await tx.recruitmentOffer.update({
+      where: { applicationId },
+      data: { ...data, status: "DRAFT", sentAt: null, respondedAt: null },
+    })
+  })
+}
+
+export async function transitionOffer(applicationId: string, to: OfferStatus): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    const application = await tx.recruitmentApplication.findUnique({
+      where: { id: applicationId },
+      include: { requisition: true, offer: true },
+    })
+    if (!application) throw new RecruitmentError("notFound")
+    if (!application.offer) throw new RecruitmentError("noOffer")
+    if (!acceptsApplications(application.requisition.status as RequisitionStatus)) throw new RecruitmentError("notOpen")
+    if (!canTransitionOffer(application.offer.status as OfferStatus, to)) throw new RecruitmentError("invalidTransition")
+
+    const now = new Date()
+    await tx.recruitmentOffer.update({
+      where: { applicationId },
+      data: {
+        status: to,
+        sentAt: to === "SENT" ? now : to === "DRAFT" ? null : undefined,
+        respondedAt: to === "ACCEPTED" || to === "DECLINED" ? now : to === "DRAFT" ? null : undefined,
+      },
+    })
+  })
+}
+
+/** Everything the hire page needs; throws unless the application is ready to be hired. */
+export async function getHireContext(applicationId: string) {
+  const application = await prisma.recruitmentApplication.findUnique({
+    where: { id: applicationId },
+    include: { candidate: true, requisition: true, offer: true },
+  })
+  if (!application) throw new RecruitmentError("notFound")
+  if (!acceptsApplications(application.requisition.status as RequisitionStatus)) throw new RecruitmentError("notOpen")
+  if (!canStartHire(application.stage as PipelineStage, (application.offer?.status as OfferStatus | undefined) ?? null)) {
+    throw new RecruitmentError("cannotHire")
+  }
+  return application
+}
+
+/**
+ * Called once the employee record exists: marks the application HIRED, links
+ * the employee, and closes the vacancy as FILLED when every opening is taken.
+ */
+export async function completeHire(applicationId: string, employeeId: string): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    const application = await tx.recruitmentApplication.findUnique({
+      where: { id: applicationId },
+      include: { requisition: true, offer: true },
+    })
+    if (!application) throw new RecruitmentError("notFound")
+    if (!canStartHire(application.stage as PipelineStage, (application.offer?.status as OfferStatus | undefined) ?? null)) {
+      throw new RecruitmentError("cannotHire")
+    }
+
+    await tx.recruitmentApplication.update({
+      where: { id: applicationId },
+      data: { stage: "HIRED", hiredEmployeeId: employeeId, stageUpdatedAt: new Date() },
+    })
+
+    const hired = await tx.recruitmentApplication.count({
+      where: { requisitionId: application.requisitionId, stage: "HIRED" },
+    })
+    if (hired >= application.requisition.openings) {
+      await tx.jobRequisition.update({ where: { id: application.requisitionId }, data: { status: "FILLED" } })
+      await tx.recruitmentStatusEvent.create({
+        data: {
+          requisitionId: application.requisitionId,
+          fromStatus: "OPEN",
+          toStatus: "FILLED",
+          note: "auto: all openings filled",
+        },
+      })
+    }
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Vacant places (employees who left)
+// ---------------------------------------------------------------------------
+
+/**
+ * Opens a draft REPLACEMENT vacancy for an employee who has left: same
+ * position, department and branch. Idempotent: if a vacancy already replaces
+ * this employee it is returned unchanged.
+ */
+export async function createReplacementVacancy(
+  employeeId: string
+): Promise<{ id: string; code: string; created: boolean }> {
+  const employee = await findEmployeeById(employeeId)
+  if (!employee) throw new RecruitmentError("notFound")
+  if (employee.employmentStatus !== "terminated") throw new RecruitmentError("notTerminated")
+
+  const departments = await findAllDepartments()
+  const input = buildReplacementRequisition(employee, departments)
+
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.jobRequisition.findFirst({ where: { replacesEmployeeId: employeeId } })
+    if (existing) return { id: existing.id, code: existing.code, created: false }
+
+    const code = await nextRequisitionCode(tx)
+    const created = await tx.jobRequisition.create({
+      data: { code, ...requisitionData(input), replacesEmployeeId: employeeId },
+    })
+    await tx.recruitmentStatusEvent.create({
+      data: { requisitionId: created.id, fromStatus: "", toStatus: "DRAFT", note: "auto: employee left" },
+    })
+    return { id: created.id, code, created: true }
+  })
+}
+
+export interface VacantPlace {
+  employeeId: string
+  fullName: string
+  employeeNumber: string
+  position: string
+  department: string
+  /** yyyy-mm-dd of the termination event, when recorded */
+  leftOn: string
+}
+
+/** Employees who left and have no replacement vacancy yet (safety net for the automatic flow and for older departures). */
+export async function listVacantPlaces(): Promise<VacantPlace[]> {
+  const [employees, linked] = await Promise.all([
+    findAllEmployees(),
+    prisma.jobRequisition.findMany({ where: { replacesEmployeeId: { not: null } }, select: { replacesEmployeeId: true } }),
+  ])
+  const covered = new Set(linked.map((row) => row.replacesEmployeeId))
+  return employees
+    .filter((employee) => employee.employmentStatus === "terminated" && !covered.has(employee.id))
+    .map((employee) => ({
+      employeeId: employee.id,
+      fullName: getFullLegalName(employee.personal),
+      employeeNumber: employee.employment.employeeNumber,
+      position: employee.employment.position,
+      department: employee.employment.department,
+      leftOn: [...employee.employment.history].reverse().find((event) => event.type === "termination")?.date ?? "",
+    }))
+    .sort((a, b) => b.leftOn.localeCompare(a.leftOn))
 }

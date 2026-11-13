@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
 
 import { addApplicationNoteAction, moveApplicationAction } from "@/app/[locale]/(app)/recruitment/actions"
+import { OfferSection } from "@/components/recruitment/offer-section"
 import type { ApplicationView } from "@/components/recruitment/recruitment-types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -125,7 +126,7 @@ export function ApplicationSheet({ application, canMove, onOpenChange }: Applica
                       onChange={(event) => setTarget(event.target.value)}
                     >
                       <option value="">{t("sheet.moveTo")}</option>
-                      {PIPELINE_STAGES.filter((stage) => stage !== application.stage).map((stage) => (
+                      {PIPELINE_STAGES.filter((stage) => stage !== application.stage && stage !== "HIRED").map((stage) => (
                         <option key={stage} value={stage}>
                           {t(`stage.${stage}` as never)}
                         </option>
@@ -140,6 +141,8 @@ export function ApplicationSheet({ application, canMove, onOpenChange }: Applica
                   </div>
                 </>
               ) : null}
+
+              <OfferSection application={application} canEdit={canMove} />
 
               <Separator />
               <div className="flex flex-col gap-2">

@@ -8,7 +8,8 @@ import { RecruitmentTabs } from "@/components/recruitment/recruitment-tabs"
 import { VacanciesClient, type VacancyRow } from "@/components/recruitment/vacancies-client"
 import { buttonVariants } from "@/components/ui/button"
 import { Link } from "@/i18n/navigation"
-import { listRequisitions } from "@/lib/recruitment/recruitment-service"
+import { VacantPlaces } from "@/components/recruitment/vacant-places"
+import { listRequisitions, listVacantPlaces } from "@/lib/recruitment/recruitment-service"
 import type { RequisitionStatus } from "@/lib/recruitment/recruitment-rules"
 import { findAllBranches } from "@/repositories/branch-repository"
 import { findAllDepartments } from "@/repositories/department-repository"
@@ -35,10 +36,11 @@ export default async function RecruitmentPage({ params }: Props) {
   const t = await getTranslations("Pages.recruitment")
   const tRecruitment = await getTranslations("Recruitment")
 
-  const [requisitions, departments, branches] = await Promise.all([
+  const [requisitions, departments, branches, vacantPlaces] = await Promise.all([
     listRequisitions(),
     findAllDepartments(),
     findAllBranches(),
+    listVacantPlaces(),
   ])
   const departmentNames = new Map(departments.map((d) => [d.id, d.name]))
   const branchNames = new Map(branches.map((b) => [b.id, b.name]))
@@ -53,6 +55,7 @@ export default async function RecruitmentPage({ params }: Props) {
     hired: requisition.applications.filter((a) => a.stage === "HIRED").length,
     activeCandidates: requisition.applications.filter((a) => !["HIRED", "REJECTED"].includes(a.stage)).length,
     status: requisition.status as RequisitionStatus,
+    isReplacement: requisition.replacesEmployeeId !== null,
   }))
 
   const open = rows.filter((row) => row.status === "OPEN")
@@ -78,6 +81,7 @@ export default async function RecruitmentPage({ params }: Props) {
         <KpiCard label={tRecruitment("kpi.inPipeline")} value={String(inPipeline)} icon={Users} />
         <KpiCard label={tRecruitment("kpi.filled")} value={String(filled)} icon={CheckCircle2} />
       </div>
+      <VacantPlaces places={vacantPlaces} />
       <VacanciesClient rows={rows} />
     </div>
   )

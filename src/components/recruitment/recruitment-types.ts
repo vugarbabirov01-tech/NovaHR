@@ -13,6 +13,15 @@ export interface ApplicationView {
   id: string
   stage: PipelineStage
   rejectionReason: string
+  /** Employee created through the hire flow, if hired. */
+  hiredEmployeeId: string | null
+  offer: {
+    status: string
+    salary: number
+    /** yyyy-mm-dd */
+    startDate: string
+    note: string
+  } | null
   /** ISO timestamp of the last stage change */
   stageUpdatedAt: string
   candidate: {

@@ -2,11 +2,15 @@ import { describe, expect, it } from "vitest"
 
 import {
   acceptsApplications,
+  canStartHire,
+  canTransitionOffer,
   canTransitionRequisition,
   findDuplicateCandidates,
+  isOfferEditable,
   isRequisitionEditable,
   normalizePhone,
   validateCandidateInput,
+  validateOfferInput,
   validateRequisitionInput,
   validateStageMove,
 } from "@/lib/recruitment/recruitment-rules"
@@ -38,7 +42,12 @@ describe("pipeline stage moves", () => {
   it("allows normal forward and backward moves", () => {
     expect(validateStageMove("NEW", "SCREENING")).toBeNull()
     expect(validateStageMove("INTERVIEW", "SCREENING")).toBeNull()
-    expect(validateStageMove("OFFER", "HIRED")).toBeNull()
+    expect(validateStageMove("OFFER", "INTERVIEW")).toBeNull()
+  })
+
+  it("never allows a plain move to HIRED (the hire flow does that)", () => {
+    expect(validateStageMove("OFFER", "HIRED")).toBe("useHireFlow")
+    expect(validateStageMove("NEW", "HIRED")).toBe("useHireFlow")
   })
 
   it("requires a reason to reject and blocks final or unchanged stages", () => {
@@ -91,5 +100,38 @@ describe("duplicate detection", () => {
 
   it("does not match on empty fields", () => {
     expect(findDuplicateCandidates(existing, { firstName: "A", lastName: "B", phone: "0559999999" })).toEqual([])
+  })
+})
+
+describe("offers", () => {
+  it("follows draft -> sent -> accepted/declined, and a decline can be revised", () => {
+    expect(canTransitionOffer("DRAFT", "SENT")).toBe(true)
+    expect(canTransitionOffer("SENT", "ACCEPTED")).toBe(true)
+    expect(canTransitionOffer("SENT", "DECLINED")).toBe(true)
+    expect(canTransitionOffer("DECLINED", "DRAFT")).toBe(true)
+    expect(canTransitionOffer("DRAFT", "ACCEPTED")).toBe(false)
+    expect(canTransitionOffer("ACCEPTED", "DRAFT")).toBe(false)
+  })
+
+  it("is editable only as a draft or after a decline", () => {
+    expect(isOfferEditable("DRAFT")).toBe(true)
+    expect(isOfferEditable("DECLINED")).toBe(true)
+    expect(isOfferEditable("SENT")).toBe(false)
+    expect(isOfferEditable("ACCEPTED")).toBe(false)
+  })
+
+  it("validates salary, start date and note", () => {
+    expect(validateOfferInput({ salary: 900, startDate: "2026-12-01" })).toBeNull()
+    expect(validateOfferInput({ salary: 0, startDate: "2026-12-01" })).toBe("salary")
+    expect(validateOfferInput({ salary: 900, startDate: "01.12.2026" })).toBe("startDate")
+    expect(validateOfferInput({ salary: 900, startDate: "2026-13-45" })).toBe("startDate")
+    expect(validateOfferInput({ salary: 900, startDate: "2026-12-01", note: "x".repeat(1001) })).toBe("note")
+  })
+
+  it("starts the hire flow only from OFFER with an accepted offer", () => {
+    expect(canStartHire("OFFER", "ACCEPTED")).toBe(true)
+    expect(canStartHire("OFFER", "SENT")).toBe(false)
+    expect(canStartHire("OFFER", null)).toBe(false)
+    expect(canStartHire("INTERVIEW", "ACCEPTED")).toBe(false)
   })
 })

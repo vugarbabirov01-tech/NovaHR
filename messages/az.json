@@ -295,6 +295,8 @@
       }
     },
     "detail": {
+      "replaces": "Əvəz etdiyi işçi",
+      "openFormerEmployee": "Profilə bax",
       "back": "Vakansiyalar",
       "openings": "Doldurulub / Say",
       "salary": "Maaş diapazonu",
@@ -315,6 +317,43 @@
       "WALK_IN": "Özü müraciət",
       "AGENCY": "Agentlik",
       "OTHER": "Digər"
+    },
+    "offer": {
+      "title": "Təklif",
+      "status": "Status",
+      "salary": "Net maaş",
+      "startDate": "Başlama tarixi",
+      "statusLabel": {
+        "DRAFT": "Qaralama",
+        "SENT": "Göndərilib",
+        "ACCEPTED": "Qəbul edilib",
+        "DECLINED": "İmtina edilib"
+      },
+      "salaryPlaceholder": "Net maaş (AZN)",
+      "notePlaceholder": "Qeyd (ixtiyari)",
+      "create": "Təklif yarat",
+      "update": "Təklifi yenilə",
+      "move": {
+        "DRAFT_SENT": "Göndərildi kimi qeyd et",
+        "SENT_ACCEPTED": "Namizəd qəbul etdi",
+        "SENT_DECLINED": "Namizəd imtina etdi",
+        "DECLINED_DRAFT": "Təklifi yenidən redaktə et"
+      },
+      "hire": "İşə qəbul et",
+      "openEmployee": "İşçi profilinə keç"
+    },
+    "hire": {
+      "title": "İşə qəbul",
+      "description": "{name} üçün işçi qeydi ({code}). Təklifdəki məlumatlar doldurulub, çatışmayanları tamamlayın.",
+      "back": "Vakansiyaya qayıt"
+    },
+    "vacant": {
+      "title": "{count, plural, =1 {1 vakant yer} other {# vakant yer}}",
+      "description": "İşdən çıxmış əməkdaşların yerləri. Avtomatik açılmayıbsa, buradan vakansiya yarada bilərsiniz.",
+      "formerHolder": "əvvəlki işçi: {name}",
+      "leftOn": "çıxıb: {date}",
+      "create": "Vakansiya yarat",
+      "creating": "Yaradılır..."
     },
     "pipeline": {
       "title": "Namizədlər",
@@ -370,6 +409,13 @@
       }
     },
     "errors": {
+      "notTerminated": "Əməkdaş işdən çıxarılmayıb.",
+      "invalidStartDate": "Başlama tarixi yanlışdır.",
+      "offerNotAllowed": "Təklif yalnız \"Təklif\" mərhələsində yaradıla bilər.",
+      "offerLocked": "Göndərilmiş təklif dəyişdirilə bilməz.",
+      "noOffer": "Təklif yoxdur.",
+      "useHireFlow": "İşə qəbul yalnız təklif qəbul edildikdən sonra \"İşə qəbul et\" düyməsi ilə aparılır.",
+      "cannotHire": "İşə qəbul üçün namizəd \"Təklif\" mərhələsində olmalı və təklif qəbul edilməlidir.",
       "notFound": "Qeyd tapılmadı.",
       "invalidTitle": "Vəzifə adı boş və ya çox uzundur.",
       "invalidOpenings": "Boş yer sayı 1 ilə 500 arasında olmalıdır.",

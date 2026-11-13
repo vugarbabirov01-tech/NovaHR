@@ -295,6 +295,8 @@
       }
     },
     "detail": {
+      "replaces": "Replaces",
+      "openFormerEmployee": "Open profile",
       "back": "Vacancies",
       "openings": "Filled / Openings",
       "salary": "Salary range",
@@ -315,6 +317,43 @@
       "WALK_IN": "Walk-in",
       "AGENCY": "Agency",
       "OTHER": "Other"
+    },
+    "offer": {
+      "title": "Offer",
+      "status": "Status",
+      "salary": "Net salary",
+      "startDate": "Start date",
+      "statusLabel": {
+        "DRAFT": "Draft",
+        "SENT": "Sent",
+        "ACCEPTED": "Accepted",
+        "DECLINED": "Declined"
+      },
+      "salaryPlaceholder": "Net salary (AZN)",
+      "notePlaceholder": "Note (optional)",
+      "create": "Create offer",
+      "update": "Update offer",
+      "move": {
+        "DRAFT_SENT": "Mark as sent",
+        "SENT_ACCEPTED": "Candidate accepted",
+        "SENT_DECLINED": "Candidate declined",
+        "DECLINED_DRAFT": "Revise the offer"
+      },
+      "hire": "Hire",
+      "openEmployee": "Open employee profile"
+    },
+    "hire": {
+      "title": "Hire",
+      "description": "Employee record for {name} ({code}). The offer details are pre-filled; complete anything missing.",
+      "back": "Back to vacancy"
+    },
+    "vacant": {
+      "title": "{count, plural, =1 {1 vacant position} other {# vacant positions}}",
+      "description": "Positions left by employees who have departed. If a vacancy was not opened automatically, create it here.",
+      "formerHolder": "former employee: {name}",
+      "leftOn": "left: {date}",
+      "create": "Create vacancy",
+      "creating": "Creating..."
     },
     "pipeline": {
       "title": "Candidates",
@@ -370,6 +409,13 @@
       }
     },
     "errors": {
+      "notTerminated": "The employee has not been terminated.",
+      "invalidStartDate": "Invalid start date.",
+      "offerNotAllowed": "An offer can only be created at the \"Offer\" stage.",
+      "offerLocked": "A sent offer cannot be changed.",
+      "noOffer": "There is no offer.",
+      "useHireFlow": "Hiring is done with the \"Hire\" button once the offer is accepted.",
+      "cannotHire": "To hire, the candidate must be at the \"Offer\" stage with an accepted offer.",
       "notFound": "Record not found.",
       "invalidTitle": "Position title is empty or too long.",
       "invalidOpenings": "Openings must be between 1 and 500.",

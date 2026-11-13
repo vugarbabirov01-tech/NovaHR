@@ -8,5 +8,7 @@ export async function register() {
       "@/lib/integrations/notifications/notification-consumer"
     )
     registerNotificationConsumer()
+    const { registerRecruitmentConsumer } = await import("@/lib/recruitment/recruitment-consumer")
+    registerRecruitmentConsumer()
   }
 }

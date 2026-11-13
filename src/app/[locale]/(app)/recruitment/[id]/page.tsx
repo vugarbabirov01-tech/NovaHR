@@ -57,6 +57,15 @@ export default async function VacancyPage({ params }: Props) {
     id: application.id,
     stage: application.stage as PipelineStage,
     rejectionReason: application.rejectionReason,
+    hiredEmployeeId: application.hiredEmployeeId,
+    offer: application.offer
+      ? {
+          status: application.offer.status,
+          salary: application.offer.salary,
+          startDate: application.offer.startDate,
+          note: application.offer.note,
+        }
+      : null,
     stageUpdatedAt: application.stageUpdatedAt.toISOString(),
     candidate: {
       id: application.candidate.id,
@@ -103,6 +112,16 @@ export default async function VacancyPage({ params }: Props) {
           <Detail label={t("detail.openings")} value={`${hired} / ${requisition.openings}`} />
           <Detail label={t("detail.salary")} value={salary} />
           <Detail label={t("form.reason")} value={t(`reason.${requisition.reason}` as never)} />
+          {requisition.replacesEmployeeId ? (
+            <div className="flex flex-col gap-0.5">
+              <dt className="text-xs text-muted-foreground">{t("detail.replaces")}</dt>
+              <dd className="text-sm">
+                <Link href={`/employees/${requisition.replacesEmployeeId}`} className="text-primary hover:underline">
+                  {t("detail.openFormerEmployee")}
+                </Link>
+              </dd>
+            </div>
+          ) : null}
         </dl>
         {requisition.description ? (
           <p className="mt-4 text-sm whitespace-pre-wrap text-muted-foreground">{requisition.description}</p>

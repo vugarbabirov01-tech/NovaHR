@@ -3,14 +3,26 @@
 import {
   addApplicationNote,
   addCandidateToRequisition,
+  completeHire,
+  createReplacementVacancy,
   createRequisition,
   moveApplication,
   RecruitmentError,
+  saveOffer,
+  transitionOffer,
   transitionRequisition,
   updateRequisition,
   type AddCandidateResult,
 } from "@/lib/recruitment/recruitment-service"
-import { REQUISITION_STATUSES, type CandidateInput, type RequisitionInput, type RequisitionStatus } from "@/lib/recruitment/recruitment-rules"
+import {
+  OFFER_STATUSES,
+  REQUISITION_STATUSES,
+  type CandidateInput,
+  type OfferInput,
+  type OfferStatus,
+  type RequisitionInput,
+  type RequisitionStatus,
+} from "@/lib/recruitment/recruitment-rules"
 
 export type RecruitmentResult<T = undefined> =
   | ({ success: true } & (T extends undefined ? object : { data: T }))
@@ -55,4 +67,23 @@ export async function addApplicationNoteAction(
   input: { kind: string; text: string; rating?: number | null }
 ) {
   return run(() => addApplicationNote(applicationId, input))
+}
+
+export async function saveOfferAction(applicationId: string, input: OfferInput) {
+  return run(() => saveOffer(applicationId, input))
+}
+
+export async function transitionOfferAction(applicationId: string, to: string) {
+  if (!(OFFER_STATUSES as readonly string[]).includes(to)) return { success: false as const, code: "invalidTransition" }
+  return run(() => transitionOffer(applicationId, to as OfferStatus))
+}
+
+/** Called by the hire page right after the employee record was created. */
+export async function completeHireAction(applicationId: string, employeeId: string) {
+  return run(() => completeHire(applicationId, employeeId))
+}
+
+/** Opens a draft replacement vacancy for an employee who has left. */
+export async function createReplacementVacancyAction(employeeId: string) {
+  return run(() => createReplacementVacancy(employeeId))
 }

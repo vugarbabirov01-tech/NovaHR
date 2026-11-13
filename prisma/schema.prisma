@@ -1273,6 +1273,8 @@ model JobRequisition {
   /// "NEW_POSITION" | "REPLACEMENT"
   reason       String   @default("NEW_POSITION")
   description  String   @default("")
+  /// Set when the vacancy was opened because this employee left (Employee id)
+  replacesEmployeeId String?
   /// "DRAFT" | "PENDING_APPROVAL" | "OPEN" | "REJECTED" | "FILLED" | "CLOSED"
   status       String   @default("DRAFT")
   createdAt    DateTime @default(now())
@@ -1281,6 +1283,7 @@ model JobRequisition {
   applications RecruitmentApplication[]
 
   @@index([status])
+  @@index([replacesEmployeeId])
   @@map("job_requisitions")
 }
 
@@ -1329,10 +1332,13 @@ model RecruitmentApplication {
   /// "NEW" | "SCREENING" | "INTERVIEW" | "OFFER" | "HIRED" | "REJECTED"
   stage           String         @default("NEW")
   rejectionReason String         @default("")
+  /// Set when the candidate was hired through the hire flow (Employee id)
+  hiredEmployeeId String?
   stageUpdatedAt  DateTime       @default(now())
   createdAt       DateTime       @default(now())
 
   notes RecruitmentApplicationNote[]
+  offer RecruitmentOffer?
 
   @@unique([candidateId, requisitionId])
   @@index([requisitionId, stage])
@@ -1352,4 +1358,24 @@ model RecruitmentApplicationNote {
 
   @@index([applicationId])
   @@map("recruitment_application_notes")
+}
+
+/// One job offer per application. Salary is the NET monthly salary in AZN,
+/// the same convention as Employee.payroll.baseSalary.
+model RecruitmentOffer {
+  id            String                 @id @default(cuid())
+  applicationId String                 @unique
+  application   RecruitmentApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  salary        Float
+  /// yyyy-mm-dd
+  startDate     String
+  note          String                 @default("")
+  /// "DRAFT" | "SENT" | "ACCEPTED" | "DECLINED"
+  status        String                 @default("DRAFT")
+  sentAt        DateTime?
+  respondedAt   DateTime?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  @@map("recruitment_offers")
 }

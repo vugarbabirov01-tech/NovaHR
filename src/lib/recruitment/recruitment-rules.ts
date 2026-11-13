@@ -60,13 +60,15 @@ export function isFinalStage(stage: PipelineStage): boolean {
   return stage === "HIRED" || stage === "REJECTED"
 }
 
-export type StageMoveError = "invalidStage" | "alreadyFinal" | "sameStage" | "reasonRequired"
+export type StageMoveError = "invalidStage" | "alreadyFinal" | "sameStage" | "reasonRequired" | "useHireFlow"
 
 /** Returns an error code, or null when the move is allowed. */
 export function validateStageMove(from: PipelineStage, to: string, rejectionReason?: string): StageMoveError | null {
   if (!isPipelineStage(to)) return "invalidStage"
   if (isFinalStage(from)) return "alreadyFinal"
   if (from === to) return "sameStage"
+  // Hiring goes through the hire flow (accepted offer -> employee record), never a plain stage move.
+  if (to === "HIRED") return "useHireFlow"
   if (to === "REJECTED" && !(rejectionReason ?? "").trim()) return "reasonRequired"
   return null
 }
@@ -160,4 +162,52 @@ export function findDuplicateCandidates<T extends CandidateIdentity>(existing: T
       (phone !== "" && normalizePhone(candidate.phone) === phone) ||
       (email !== "" && normalizeEmail(candidate.email) === email)
   )
+}
+
+// ---------------------------------------------------------------------------
+// Job offers
+// ---------------------------------------------------------------------------
+
+export const OFFER_STATUSES = ["DRAFT", "SENT", "ACCEPTED", "DECLINED"] as const
+export type OfferStatus = (typeof OFFER_STATUSES)[number]
+
+const OFFER_TRANSITIONS: Record<OfferStatus, OfferStatus[]> = {
+  DRAFT: ["SENT"],
+  SENT: ["ACCEPTED", "DECLINED"],
+  DECLINED: ["DRAFT"],
+  ACCEPTED: [],
+}
+
+export function canTransitionOffer(from: OfferStatus, to: OfferStatus): boolean {
+  return OFFER_TRANSITIONS[from].includes(to)
+}
+
+export function nextOfferStatuses(from: OfferStatus): OfferStatus[] {
+  return OFFER_TRANSITIONS[from]
+}
+
+/** Salary and start date can be changed until the offer is sent (or after a decline, which reopens it as a draft). */
+export function isOfferEditable(status: OfferStatus): boolean {
+  return status === "DRAFT" || status === "DECLINED"
+}
+
+export interface OfferInput {
+  salary: number
+  /** yyyy-mm-dd */
+  startDate: string
+  note?: string
+}
+
+export type OfferInputError = "salary" | "startDate" | "note"
+
+export function validateOfferInput(input: OfferInput): OfferInputError | null {
+  if (!Number.isFinite(input.salary) || input.salary <= 0 || input.salary > 1_000_000) return "salary"
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.startDate) || Number.isNaN(new Date(input.startDate).getTime())) return "startDate"
+  if ((input.note ?? "").length > 1000) return "note"
+  return null
+}
+
+/** The hire flow opens only for an application at the OFFER stage whose offer was accepted. */
+export function canStartHire(stage: PipelineStage, offerStatus: OfferStatus | null): boolean {
+  return stage === "OFFER" && offerStatus === "ACCEPTED"
 }
