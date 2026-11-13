@@ -23,7 +23,25 @@ function toComparable(value: ReportRow[string], type: "number" | "date"): number
  * server-side against a fixed, whitelisted field/operator set (never raw
  * SQL or user-supplied code).
  */
-function matchesFilter(row: ReportRow, filter: ReportFilter): boolean {
+/** [start, end) of a relative calendar range, in UTC milliseconds. */
+function relativeRange(operator: ReportFilter["operator"], now: Date): [number, number] | null {
+  const y = now.getUTCFullYear()
+  const m = now.getUTCMonth()
+  switch (operator) {
+    case "thisMonth":
+      return [Date.UTC(y, m, 1), Date.UTC(y, m + 1, 1)]
+    case "lastMonth":
+      return [Date.UTC(y, m - 1, 1), Date.UTC(y, m, 1)]
+    case "thisYear":
+      return [Date.UTC(y, 0, 1), Date.UTC(y + 1, 0, 1)]
+    case "lastYear":
+      return [Date.UTC(y - 1, 0, 1), Date.UTC(y, 0, 1)]
+    default:
+      return null
+  }
+}
+
+function matchesFilter(row: ReportRow, filter: ReportFilter, now: Date): boolean {
   const definition = getReportFieldDefinition(filter.field)
   if (!definition) return true
 
@@ -31,6 +49,12 @@ function matchesFilter(row: ReportRow, filter: ReportFilter): boolean {
 
   if (filter.operator === "isEmpty") return isEmptyValue(rawValue)
   if (filter.operator === "isNotEmpty") return !isEmptyValue(rawValue)
+
+  const range = relativeRange(filter.operator, now)
+  if (range) {
+    const rowTime = toComparable(rawValue, "date")
+    return rowTime !== null && rowTime >= range[0] && rowTime < range[1]
+  }
 
   // A filter row the user added but hasn't filled in yet is "incomplete",
   // not "match only empty values": fail open so the result set doesn't
@@ -83,9 +107,9 @@ function matchesFilter(row: ReportRow, filter: ReportFilter): boolean {
 }
 
 /** Phase 1: every filter in the list is combined with AND. */
-export function applyFilters(rows: ReportRow[], filters: ReportFilter[]): ReportRow[] {
+export function applyFilters(rows: ReportRow[], filters: ReportFilter[], now: Date = new Date()): ReportRow[] {
   if (filters.length === 0) return rows
-  return rows.filter((row) => filters.every((filter) => matchesFilter(row, filter)))
+  return rows.filter((row) => filters.every((filter) => matchesFilter(row, filter, now)))
 }
 
 export function sortRows(rows: ReportRow[], sortBy: string | null, direction: "asc" | "desc"): ReportRow[] {

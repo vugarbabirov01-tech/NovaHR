@@ -1517,7 +1517,77 @@
     }
   },
   "Reports": {
+    "templateCategories": {
+      "employees": "Employees",
+      "tenure": "Tenure",
+      "leave": "Leave",
+      "organization": "Organization"
+    },
+    "templates": {
+      "headcountByWorkLocation": {
+        "name": "Headcount by work location",
+        "description": "How many employees work at each location, as a chart."
+      },
+      "employeeList": {
+        "name": "Employee list",
+        "description": "All employees: number, name, department, position and hire date."
+      },
+      "headcountByDepartment": {
+        "name": "Headcount by department",
+        "description": "How many employees each department has, as a chart."
+      },
+      "employmentTypeBreakdown": {
+        "name": "Employment type breakdown",
+        "description": "Employees by full-time, part-time, temporary and so on."
+      },
+      "genderBreakdown": {
+        "name": "Gender breakdown",
+        "description": "Number of male and female employees and the average age."
+      },
+      "ageDistribution": {
+        "name": "Age distribution",
+        "description": "Employees by age range, plus average, youngest and oldest age."
+      },
+      "hiredThisYear": {
+        "name": "Hired this year",
+        "description": "Employees who started this year, with a monthly breakdown."
+      },
+      "hiredLastYear": {
+        "name": "Hired last year",
+        "description": "Employees who started last year, with a monthly breakdown."
+      },
+      "tenureDistribution": {
+        "name": "Tenure distribution",
+        "description": "Employees by length of service and the average tenure."
+      },
+      "longestServing": {
+        "name": "Longest-serving employees",
+        "description": "Employees ordered by length of service, longest first."
+      },
+      "newcomers": {
+        "name": "Newcomers and probation",
+        "description": "Employees who joined this year and their probation end date."
+      },
+      "leaveByType": {
+        "name": "Leave by type",
+        "description": "All leave requests, count by type and total days."
+      },
+      "leaveThisYear": {
+        "name": "Leave this year",
+        "description": "Leave starting this year, total days per month."
+      },
+      "departmentsOverview": {
+        "name": "Departments overview",
+        "description": "Departments and the number of employees in each."
+      },
+      "positionsOverview": {
+        "name": "Positions overview",
+        "description": "Positions, their department and employee count."
+      }
+    },
     "overview": {
+      "readyReportsTitle": "Ready-made reports",
+      "readyReportsDescription": "Pick one and the report is ready right away. You can adjust it and save it under your own name.",
       "title": "Reports",
       "description": "Build results and export workforce analytics.",
       "newReportButton": "New Report",
@@ -1657,6 +1727,7 @@
       "groupedStatsValueColumn": "Value"
     },
     "fields": {
+      "fullName": "Full name (Last, First, Father's)",
       "grossSalary": "Gross Salary",
       "firstName": "First Name",
       "lastName": "Last Name",
@@ -1720,6 +1791,10 @@
       "payrollEmployeeCompany": "Company"
     },
     "operators": {
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "thisYear": "This year",
+      "lastYear": "Last year",
       "equals": "Equals",
       "notEquals": "Not Equals",
       "contains": "Contains",

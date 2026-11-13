@@ -75,6 +75,10 @@ export interface ReportBuilderInitialReport {
 interface ReportBuilderClientProps {
   locale: string
   initialReport?: ReportBuilderInitialReport
+  /** Pre-fills a NEW report (e.g. from a ready-made template) — unlike
+   * initialReport it has no id, so the builder stays in create mode and
+   * saving makes the user their own copy. */
+  prefill?: Omit<ReportBuilderInitialReport, "id">
 }
 
 /**
@@ -85,32 +89,33 @@ interface ReportBuilderClientProps {
  * guarantee the saved ReportDefinition itself makes (see that model's
  * schema comment).
  */
-export function ReportBuilderClient({ locale, initialReport }: ReportBuilderClientProps) {
+export function ReportBuilderClient({ locale, initialReport, prefill }: ReportBuilderClientProps) {
   const t = useTranslations("Reports.builder")
   const tFields = useTranslations("Reports.fields")
   const tCommon = useTranslations("Common")
   const router = useRouter()
   const mode = initialReport ? "edit" : "create"
+  const seed = initialReport ?? prefill
   // Simple vs. Pro — a VIEW over the same state below, never a separate
   // copy of it (point 3, 2026-11-11: switching never loses anything,
   // because there is nothing mode-specific to lose). Simple is the
   // default per that same decision.
   const [viewMode, setViewMode] = useState<"simple" | "pro">("simple")
 
-  const [name, setName] = useState(initialReport?.name ?? "")
-  const [description, setDescription] = useState(initialReport?.description ?? "")
-  const [dataSource, setDataSource] = useState<ReportDataSourceKey>(initialReport?.dataSource ?? "EMPLOYEES")
-  const [columns, setColumns] = useState<string[]>(initialReport?.columns ?? [])
-  const [filters, setFilters] = useState<ReportFilter[]>(initialReport?.filters ?? [])
-  const [sortBy, setSortBy] = useState<string | null>(initialReport?.sortBy ?? null)
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">(initialReport?.sortDirection ?? "asc")
+  const [name, setName] = useState(seed?.name ?? "")
+  const [description, setDescription] = useState(seed?.description ?? "")
+  const [dataSource, setDataSource] = useState<ReportDataSourceKey>(seed?.dataSource ?? "EMPLOYEES")
+  const [columns, setColumns] = useState<string[]>(seed?.columns ?? [])
+  const [filters, setFilters] = useState<ReportFilter[]>(seed?.filters ?? [])
+  const [sortBy, setSortBy] = useState<string | null>(seed?.sortBy ?? null)
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">(seed?.sortDirection ?? "asc")
   // 2026-11-11 (explicit user decision — reversing the earlier auto-
   // suggestion mechanism): a brand-new report NEVER starts with a
   // pre-picked statistic — only the implicit row count, until the user
   // deliberately adds one. A saved report's own kpis (even []) always
   // wins, never mixed with a "starting" default (requirement 10).
-  const [kpis, setKpis] = useState<AnalyticsSpec[]>(initialReport?.kpis ?? [])
-  const [chartConfig, setChartConfig] = useState<AnalyticsSpec | null>(initialReport?.chartConfig ?? null)
+  const [kpis, setKpis] = useState<AnalyticsSpec[]>(seed?.kpis ?? [])
+  const [chartConfig, setChartConfig] = useState<AnalyticsSpec | null>(seed?.chartConfig ?? null)
   const [page, setPage] = useState(1)
 
   // Switching data source discards the current column/filter/sort

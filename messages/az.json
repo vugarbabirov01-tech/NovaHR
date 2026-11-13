@@ -1517,7 +1517,77 @@
     }
   },
   "Reports": {
+    "templateCategories": {
+      "employees": "İşçilər",
+      "tenure": "Staj",
+      "leave": "Məzuniyyət",
+      "organization": "Təşkilat"
+    },
+    "templates": {
+      "headcountByWorkLocation": {
+        "name": "İş yerləri üzrə işçi sayı",
+        "description": "Hər iş yerində (obyektdə) neçə işçi çalışdığını qrafiklə göstərir."
+      },
+      "employeeList": {
+        "name": "İşçi siyahısı",
+        "description": "Bütün işçilər: nömrə, ad, şöbə, vəzifə və işə qəbul tarixi."
+      },
+      "headcountByDepartment": {
+        "name": "Şöbələr üzrə işçi sayı",
+        "description": "Hər şöbədə neçə işçi olduğunu qrafiklə göstərir."
+      },
+      "employmentTypeBreakdown": {
+        "name": "Məşğulluq növü üzrə bölgü",
+        "description": "Tam ştat, yarım ştat, müvəqqəti və s. üzrə işçi sayı."
+      },
+      "genderBreakdown": {
+        "name": "Cins üzrə bölgü",
+        "description": "Kişi və qadın işçilərin sayı və orta yaş."
+      },
+      "ageDistribution": {
+        "name": "Yaş bölgüsü",
+        "description": "İşçilərin yaş aralıqları üzrə sayı, orta, ən kiçik və ən böyük yaş."
+      },
+      "hiredThisYear": {
+        "name": "Bu il işə qəbul olunanlar",
+        "description": "Cari ildə işə başlayan işçilər, aylar üzrə bölgü ilə."
+      },
+      "hiredLastYear": {
+        "name": "Keçən il işə qəbul olunanlar",
+        "description": "Keçən ildə işə başlayan işçilər, aylar üzrə bölgü ilə."
+      },
+      "tenureDistribution": {
+        "name": "Staj bölgüsü",
+        "description": "Şirkətdəki iş stajı üzrə işçi sayı və orta staj."
+      },
+      "longestServing": {
+        "name": "Ən uzun staja malik işçilər",
+        "description": "İşçilər şirkətdəki stajına görə azalan sırada."
+      },
+      "newcomers": {
+        "name": "Yeni işçilər və sınaq müddəti",
+        "description": "Bu il gələn işçilər və sınaq müddətinin bitmə tarixi."
+      },
+      "leaveByType": {
+        "name": "Məzuniyyətlər növə görə",
+        "description": "Bütün məzuniyyət sorğuları, növ üzrə say və cəmi gün."
+      },
+      "leaveThisYear": {
+        "name": "Bu ilin məzuniyyətləri",
+        "description": "Cari ildə başlayan məzuniyyətlər, aylar üzrə cəmi gün."
+      },
+      "departmentsOverview": {
+        "name": "Şöbələrə baxış",
+        "description": "Şöbələr və hər birindəki işçi sayı."
+      },
+      "positionsOverview": {
+        "name": "Vəzifələrə baxış",
+        "description": "Vəzifələr, aid olduğu şöbə və işçi sayı."
+      }
+    },
     "overview": {
+      "readyReportsTitle": "Hazır hesabatlar",
+      "readyReportsDescription": "Birini seçin, hesabat dərhal hazır olacaq. İstəsəniz dəyişib öz adınızla saxlaya bilərsiniz.",
       "title": "Hesabatlar",
       "description": "Nəticələr yaradın və iş qüvvəsi analitikasını ixrac edin.",
       "newReportButton": "Yeni Hesabat",
@@ -1657,6 +1727,7 @@
       "groupedStatsValueColumn": "Dəyər"
     },
     "fields": {
+      "fullName": "Soyad Ad Ata adı",
       "grossSalary": "Gross əmək haqqı",
       "firstName": "Ad",
       "lastName": "Soyad",
@@ -1689,7 +1760,7 @@
       "managerName": "Rəhbər",
       "workSchedule": "İş rejimi",
       "workLocationType": "İş yerinin növü",
-      "workLocation": "İş obyekti",
+      "workLocation": "İş yeri",
       "companyName": "Ad",
       "companyCode": "Kod",
       "companyEmployeeCount": "Əməkdaş sayı",
@@ -1720,6 +1791,10 @@
       "payrollEmployeeCompany": "Şirkət"
     },
     "operators": {
+      "thisMonth": "Bu ay",
+      "lastMonth": "Keçən ay",
+      "thisYear": "Bu il",
+      "lastYear": "Keçən il",
       "equals": "Bərabərdir",
       "notEquals": "Bərabər deyil",
       "contains": "Ehtiva edir",

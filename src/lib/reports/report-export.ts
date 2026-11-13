@@ -1,6 +1,7 @@
 import * as XLSX from "xlsx"
 import { getFormatter, getTranslations } from "next-intl/server"
 
+import { formatReportDate } from "@/lib/reports/format-date"
 import { buildAnalyticsValueFormatters, buildDurationFormatter, formatAnalyticsValue, translateAnalyticsPointKey } from "@/lib/reports/analytics-format"
 import { getReportFieldDefinition } from "@/lib/reports/field-registry"
 import type { AnalyticsResult, ReportColumn, ReportRow } from "@/types/reports"
@@ -39,6 +40,8 @@ async function resolveCellText(
   if (definition?.displayUnit === "durationMonths" && typeof value === "number") {
     return durationFormatter(value)
   }
+
+  if (definition?.type === "date") return formatReportDate(value)
 
   return String(value)
 }

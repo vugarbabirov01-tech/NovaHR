@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/common/empty-state"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { buildDurationFormatter } from "@/lib/reports/analytics-format"
+import { formatReportDate } from "@/lib/reports/format-date"
 import { getEnumMessagePath, getReportFieldDefinition } from "@/lib/reports/field-registry"
 import type { ReportColumn, ReportRow } from "@/types/reports"
 
@@ -78,7 +79,10 @@ export function ReportPreviewTable({
     if (definition?.type === "number" && typeof value === "number") {
       return <span className="tabular-nums">{format.number(value, { maximumFractionDigits: 2 })}</span>
     }
-    if (definition?.type === "number" || definition?.type === "date") {
+    if (definition?.type === "date") {
+      return <span className="tabular-nums">{formatReportDate(value)}</span>
+    }
+    if (definition?.type === "number") {
       return <span className="tabular-nums">{String(value)}</span>
     }
     return <span>{String(value)}</span>

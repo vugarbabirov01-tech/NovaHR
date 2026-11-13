@@ -29,6 +29,12 @@ export interface ExecuteReportInput {
    * always prepended regardless of this list, see below. */
   kpis?: AnalyticsSpec[]
   chartConfig?: AnalyticsSpec | null
+  /** "Top N": keep only the first N rows after sorting (positive integer).
+   * Applies to the table rows and totalCount only — KPIs and the chart
+   * still describe the full filtered set. Not persisted on a saved
+   * ReportDefinition yet (that needs a schema change), so only callers
+   * that build the input themselves (templates, future AI search) use it. */
+  rowLimit?: number
 }
 
 /**
@@ -47,7 +53,11 @@ export interface ExecuteReportInput {
 export async function executeReport(input: ExecuteReportInput): Promise<ReportPreviewResult> {
   const allRows = await fetchRowsForDataSource(input.dataSource)
   const filtered = applyFilters(allRows, input.filters)
-  const sorted = sortRows(filtered, input.sortBy, input.sortDirection)
+  const sortedAll = sortRows(filtered, input.sortBy, input.sortDirection)
+  const sorted =
+    input.rowLimit !== undefined && Number.isInteger(input.rowLimit) && input.rowLimit > 0
+      ? sortedAll.slice(0, input.rowLimit)
+      : sortedAll
   const totalCount = sorted.length
 
   const page = input.page && input.pageSize ? sorted.slice((input.page - 1) * input.pageSize, input.page * input.pageSize) : sorted

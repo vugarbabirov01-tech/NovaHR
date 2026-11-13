@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server"
 import { Link } from "@/i18n/navigation"
 import { PageTitle } from "@/components/common/page-title"
 import { buttonVariants } from "@/components/ui/button"
+import { ReportTemplateGallery } from "@/components/reports/report-template-gallery"
 import { MyReportsList } from "@/components/reports/my-reports-list"
 import { findAllReportDefinitions } from "@/repositories/report-definition-repository"
 
@@ -39,6 +40,7 @@ export default async function ReportsPage({ params }: Props) {
           </Link>
         }
       />
+      <ReportTemplateGallery />
       <div className="flex flex-col gap-3">
         <h2 className="text-sm font-medium text-foreground">{t("myReportsTitle")}</h2>
         <MyReportsList reports={reports} />

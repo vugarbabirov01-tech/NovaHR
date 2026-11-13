@@ -1,4 +1,4 @@
-import { calculateAgeFromDateOfBirth, calculateServiceDuration } from "@/lib/employees"
+import { calculateAgeFromDateOfBirth, calculateServiceDuration, getFullLegalName } from "@/lib/employees"
 import { findAllEmployees } from "@/repositories/employee-repository"
 import type { EmployeeProfile } from "@/types/employee-profile"
 import type { ReportRow } from "@/types/reports"
@@ -22,6 +22,7 @@ function flattenEmployee(profile: EmployeeProfile): ReportRow {
   const tenure = profile.employment.hireDate ? calculateServiceDuration(profile.employment.hireDate) : null
 
   return {
+    fullName: getFullLegalName(profile.personal),
     firstName: profile.personal.firstName ?? "",
     lastName: profile.personal.lastName ?? "",
     fatherName: profile.personal.fatherName ?? "",

@@ -88,3 +88,32 @@ describe("sortRows", () => {
     expect(sortRows(rows, null, "asc")).toBe(rows)
   })
 })
+
+describe("relative date operators", () => {
+  const now = new Date(Date.UTC(2026, 10, 13)) // 13 Nov 2026
+  const dated: ReportRow[] = [
+    { id: "a", hireDate: "2026-11-02" },
+    { id: "b", hireDate: "2026-03-10" },
+    { id: "c", hireDate: "2026-10-31" },
+    { id: "d", hireDate: "2025-12-31" },
+    { id: "e", hireDate: "" },
+  ]
+  const ids = (operator: "thisMonth" | "lastMonth" | "thisYear" | "lastYear") =>
+    applyFilters(dated, [{ field: "hireDate", operator }], now).map((r) => r.id)
+
+  it("thisMonth / lastMonth use calendar months", () => {
+    expect(ids("thisMonth")).toEqual(["a"])
+    expect(ids("lastMonth")).toEqual(["c"])
+  })
+  it("thisYear / lastYear use calendar years and skip empty dates", () => {
+    expect(ids("thisYear")).toEqual(["a", "b", "c"])
+    expect(ids("lastYear")).toEqual(["d"])
+  })
+  it("lastMonth works across a year boundary", () => {
+    const jan = new Date(Date.UTC(2027, 0, 5))
+    expect(applyFilters(dated, [{ field: "hireDate", operator: "lastMonth" }], jan).map((r) => r.id)).toEqual([])
+    expect(
+      applyFilters([{ id: "x", hireDate: "2026-12-20" }], [{ field: "hireDate", operator: "lastMonth" }], jan).map((r) => r.id)
+    ).toEqual(["x"])
+  })
+})

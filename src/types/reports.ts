@@ -44,16 +44,23 @@ export type FilterOperator =
   | "between"
   | "isEmpty"
   | "isNotEmpty"
+  // Relative calendar ranges (date fields only, no value input) — resolved
+  // against "today" at execution time, so a saved report always means
+  // "this year", never a frozen year.
+  | "thisMonth"
+  | "lastMonth"
+  | "thisYear"
+  | "lastYear"
 
 export const OPERATORS_BY_FIELD_TYPE: Record<ReportFieldType, FilterOperator[]> = {
   string: ["equals", "notEquals", "contains", "startsWith", "isEmpty", "isNotEmpty"],
   number: ["equals", "notEquals", "greaterThan", "lessThan", "between", "isEmpty", "isNotEmpty"],
-  date: ["equals", "greaterThan", "lessThan", "between", "isEmpty", "isNotEmpty"],
+  date: ["equals", "greaterThan", "lessThan", "between", "thisMonth", "lastMonth", "thisYear", "lastYear", "isEmpty", "isNotEmpty"],
   enum: ["equals", "notEquals", "isEmpty", "isNotEmpty"],
 }
 
 /** Operators that need no value input at all. */
-export const VALUELESS_OPERATORS: FilterOperator[] = ["isEmpty", "isNotEmpty"]
+export const VALUELESS_OPERATORS: FilterOperator[] = ["isEmpty", "isNotEmpty", "thisMonth", "lastMonth", "thisYear", "lastYear"]
 
 /** A single flat condition. Phase 1 combines every filter in a report with
  * AND only — nested AND/OR groups are a later phase. */

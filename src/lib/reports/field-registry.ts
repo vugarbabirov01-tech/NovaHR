@@ -110,6 +110,8 @@ export interface ReportFieldDefinition {
  * and that source's own flattening function.
  */
 export const EMPLOYEE_REPORT_FIELDS: ReportFieldDefinition[] = [
+  /** "Soyad Ad Ata adı" in one column — see getFullLegalName. */
+  { key: "fullName", dataSource: "EMPLOYEES", category: "personal", type: "string", labelKey: "fullName" },
   { key: "firstName", dataSource: "EMPLOYEES", category: "personal", type: "string", labelKey: "firstName" },
   { key: "lastName", dataSource: "EMPLOYEES", category: "personal", type: "string", labelKey: "lastName" },
   { key: "fatherName", dataSource: "EMPLOYEES", category: "personal", type: "string", labelKey: "fatherName" },
@@ -242,7 +244,7 @@ export const EMPLOYEE_REPORT_FIELDS: ReportFieldDefinition[] = [
     enumKeyMap: workLocationTypeMessageKeys,
     enumValues: ["on-site", "remote", "hybrid"],
   },
-  { key: "workLocation", dataSource: "EMPLOYEES", category: "employment", type: "string", labelKey: "workLocation" },
+  { key: "workLocation", dataSource: "EMPLOYEES", category: "employment", type: "string", labelKey: "workLocation", groupable: true },
   /** Gross salary per ƏMAS (display/report only; baseSalary holds the net
    * amount and stays out of reports). Added 2026-11-13 at the user's
    * explicit request, ahead of RBAC — see the header comment above. */
