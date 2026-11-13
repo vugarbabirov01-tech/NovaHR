@@ -205,6 +205,193 @@
     "comingSoonTitle": "{module} module is coming soon",
     "comingSoonDescription": "This area is scaffolded and ready — the full module will be built in an upcoming phase."
   },
+  "Recruitment": {
+    "tabs": {
+      "vacancies": "Vacancies",
+      "candidates": "Candidates"
+    },
+    "kpi": {
+      "open": "Open vacancies",
+      "pending": "Awaiting approval",
+      "inPipeline": "Candidates in pipeline",
+      "filled": "Filled"
+    },
+    "list": {
+      "newVacancy": "New vacancy",
+      "searchPlaceholder": "Search by code, position, department or branch",
+      "allStatuses": "All statuses",
+      "resultsCount": "{count, plural, =0 {No vacancies} =1 {1 vacancy} other {# vacancies}}",
+      "emptyTitle": "No vacancies found",
+      "emptyDescription": "Press \"New vacancy\" to create the first one.",
+      "columns": {
+        "title": "Vacancy",
+        "place": "Department · Branch",
+        "openings": "Filled / Openings",
+        "candidates": "Candidates",
+        "status": "Status"
+      }
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "PENDING_APPROVAL": "Awaiting approval",
+      "OPEN": "Open",
+      "REJECTED": "Rejected",
+      "FILLED": "Filled",
+      "CLOSED": "Closed"
+    },
+    "reason": {
+      "NEW_POSITION": "New position",
+      "REPLACEMENT": "Replacement"
+    },
+    "form": {
+      "createTitle": "New vacancy",
+      "editTitle": "Edit vacancy",
+      "title": "Position title",
+      "department": "Department",
+      "branch": "Branch",
+      "notSet": "Not set",
+      "openings": "Number of openings",
+      "salaryMin": "Salary (min, AZN)",
+      "salaryMax": "Salary (max, AZN)",
+      "reason": "Reason",
+      "description": "Description and requirements",
+      "save": "Save",
+      "saving": "Saving...",
+      "cancel": "Cancel"
+    },
+    "workflow": {
+      "edit": "Edit",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "move": {
+        "DRAFT_PENDING_APPROVAL": "Send for approval",
+        "PENDING_APPROVAL_OPEN": "Approve",
+        "PENDING_APPROVAL_REJECTED": "Reject",
+        "PENDING_APPROVAL_DRAFT": "Return to draft",
+        "REJECTED_DRAFT": "Edit again",
+        "OPEN_FILLED": "Mark as filled",
+        "OPEN_CLOSED": "Close",
+        "CLOSED_OPEN": "Reopen"
+      },
+      "confirmTitle": {
+        "DRAFT_PENDING_APPROVAL": "Send for approval?",
+        "PENDING_APPROVAL_OPEN": "Approve this vacancy?",
+        "PENDING_APPROVAL_REJECTED": "Reject this vacancy?",
+        "PENDING_APPROVAL_DRAFT": "Return to draft?",
+        "REJECTED_DRAFT": "Return to draft for editing?",
+        "OPEN_FILLED": "Mark as filled?",
+        "OPEN_CLOSED": "Close this vacancy?",
+        "CLOSED_OPEN": "Reopen this vacancy?"
+      },
+      "confirmText": {
+        "DRAFT_PENDING_APPROVAL": "Once sent, the vacancy can no longer be edited.",
+        "PENDING_APPROVAL_OPEN": "The vacancy opens and candidates can be added.",
+        "PENDING_APPROVAL_REJECTED": "The vacancy is rejected. You can edit it and send it again.",
+        "PENDING_APPROVAL_DRAFT": "The vacancy goes back to an editable draft.",
+        "REJECTED_DRAFT": "The vacancy goes back to an editable draft.",
+        "OPEN_FILLED": "The vacancy counts as filled and no longer accepts candidates.",
+        "OPEN_CLOSED": "Adding candidates and moving stages stops. You can reopen it later.",
+        "CLOSED_OPEN": "The vacancy is reopened."
+      }
+    },
+    "detail": {
+      "back": "Vacancies",
+      "openings": "Filled / Openings",
+      "salary": "Salary range",
+      "history": "Status history"
+    },
+    "stage": {
+      "NEW": "New",
+      "SCREENING": "Screening",
+      "INTERVIEW": "Interview",
+      "OFFER": "Offer",
+      "HIRED": "Hired",
+      "REJECTED": "Rejected"
+    },
+    "source": {
+      "REFERRAL": "Referral",
+      "JOB_SITE": "Job site",
+      "SOCIAL": "Social media",
+      "WALK_IN": "Walk-in",
+      "AGENCY": "Agency",
+      "OTHER": "Other"
+    },
+    "pipeline": {
+      "title": "Candidates",
+      "notOpenHint": "The vacancy must be open to add candidates.",
+      "emptyColumn": "No candidates",
+      "advance": "Move to next stage"
+    },
+    "candidateForm": {
+      "add": "Add candidate",
+      "title": "New candidate",
+      "description": "The candidate is added to this vacancy's \"New\" stage.",
+      "lastName": "Last name",
+      "firstName": "First name",
+      "fatherName": "Father's name",
+      "phone": "Phone",
+      "email": "E-mail",
+      "finCode": "FİN",
+      "source": "Source",
+      "notes": "Notes",
+      "contactHint": "At least a phone number or an e-mail is required.",
+      "save": "Add",
+      "duplicatesTitle": "Similar candidate found",
+      "duplicatesText": "A candidate with the same FİN, phone or e-mail already exists. Use the existing one or create a new candidate.",
+      "useExisting": "Use this one",
+      "createNew": "Create new candidate",
+      "back": "Back"
+    },
+    "sheet": {
+      "rejectionReason": "Rejection reason",
+      "moveTitle": "Stage",
+      "moveTo": "Select a stage",
+      "move": "Move",
+      "notesTitle": "Notes and interview feedback",
+      "noNotes": "No notes yet.",
+      "notePlaceholder": "Note or interview feedback",
+      "addNote": "Add note",
+      "rating": "Rating",
+      "kind": {
+        "NOTE": "Note",
+        "INTERVIEW": "Interview feedback"
+      }
+    },
+    "candidates": {
+      "searchPlaceholder": "Search by name, phone, e-mail or FİN",
+      "resultsCount": "{count, plural, =0 {No candidates} =1 {1 candidate} other {# candidates}}",
+      "emptyTitle": "No candidates found",
+      "emptyDescription": "Candidates are added from a vacancy page.",
+      "columns": {
+        "name": "Candidate",
+        "contact": "Contact",
+        "source": "Source",
+        "applications": "Applications"
+      }
+    },
+    "errors": {
+      "notFound": "Record not found.",
+      "invalidTitle": "Position title is empty or too long.",
+      "invalidOpenings": "Openings must be between 1 and 500.",
+      "invalidSalary": "The salary range is invalid.",
+      "invalidReason": "Invalid reason.",
+      "invalidTransition": "This step is not allowed.",
+      "notEditable": "A vacancy cannot be edited once sent.",
+      "notOpen": "The vacancy is not open.",
+      "invalidName": "First and last name are required.",
+      "invalidContact": "Enter a phone number or an e-mail.",
+      "invalidEmail": "Invalid e-mail format.",
+      "invalidFin": "FİN must be 7 characters.",
+      "invalidSource": "Invalid source.",
+      "alreadyApplied": "This candidate is already on this vacancy.",
+      "invalidStage": "Invalid stage.",
+      "alreadyFinal": "An application in a final stage cannot be changed.",
+      "sameStage": "The candidate is already in this stage.",
+      "reasonRequired": "Enter a rejection reason.",
+      "invalidNote": "The note is empty or too long.",
+      "unknown": "The action failed."
+    }
+  },
   "Payroll": {
     "workflow": {
       "back": "Step back",

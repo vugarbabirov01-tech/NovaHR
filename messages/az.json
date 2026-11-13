@@ -205,6 +205,193 @@
     "comingSoonTitle": "{module} modulu tezliklə",
     "comingSoonDescription": "Bu bölmə hazırlanıb — tam modul növbəti mərhələdə qurulacaq."
   },
+  "Recruitment": {
+    "tabs": {
+      "vacancies": "Vakansiyalar",
+      "candidates": "Namizədlər"
+    },
+    "kpi": {
+      "open": "Açıq vakansiyalar",
+      "pending": "Təsdiq gözləyir",
+      "inPipeline": "Prosesdəki namizədlər",
+      "filled": "Doldurulmuş"
+    },
+    "list": {
+      "newVacancy": "Yeni vakansiya",
+      "searchPlaceholder": "Kod, vəzifə, şöbə və ya filial üzrə axtar",
+      "allStatuses": "Bütün statuslar",
+      "resultsCount": "{count, plural, =0 {Vakansiya yoxdur} =1 {1 vakansiya} other {# vakansiya}}",
+      "emptyTitle": "Vakansiya tapılmadı",
+      "emptyDescription": "İlk vakansiyanı yaratmaq üçün \"Yeni vakansiya\" düyməsini basın.",
+      "columns": {
+        "title": "Vakansiya",
+        "place": "Şöbə · Filial",
+        "openings": "Dolduruldu / Say",
+        "candidates": "Namizəd",
+        "status": "Status"
+      }
+    },
+    "status": {
+      "DRAFT": "Qaralama",
+      "PENDING_APPROVAL": "Təsdiq gözləyir",
+      "OPEN": "Açıq",
+      "REJECTED": "Rədd edilib",
+      "FILLED": "Doldurulub",
+      "CLOSED": "Bağlanıb"
+    },
+    "reason": {
+      "NEW_POSITION": "Yeni ştat",
+      "REPLACEMENT": "Əvəzetmə"
+    },
+    "form": {
+      "createTitle": "Yeni vakansiya",
+      "editTitle": "Vakansiyanı redaktə et",
+      "title": "Vəzifə adı",
+      "department": "Şöbə",
+      "branch": "Filial",
+      "notSet": "Göstərilməyib",
+      "openings": "Boş yer sayı",
+      "salaryMin": "Maaş (min, AZN)",
+      "salaryMax": "Maaş (max, AZN)",
+      "reason": "Səbəb",
+      "description": "Təsvir və tələblər",
+      "save": "Yadda saxla",
+      "saving": "Saxlanılır...",
+      "cancel": "Ləğv et"
+    },
+    "workflow": {
+      "edit": "Redaktə et",
+      "cancel": "Ləğv et",
+      "confirm": "Təsdiq et",
+      "move": {
+        "DRAFT_PENDING_APPROVAL": "Təsdiqə göndər",
+        "PENDING_APPROVAL_OPEN": "Təsdiqlə",
+        "PENDING_APPROVAL_REJECTED": "Rədd et",
+        "PENDING_APPROVAL_DRAFT": "Qaralamaya qaytar",
+        "REJECTED_DRAFT": "Yenidən redaktə et",
+        "OPEN_FILLED": "Doldurulub kimi qeyd et",
+        "OPEN_CLOSED": "Bağla",
+        "CLOSED_OPEN": "Yenidən aç"
+      },
+      "confirmTitle": {
+        "DRAFT_PENDING_APPROVAL": "Təsdiqə göndərilsin?",
+        "PENDING_APPROVAL_OPEN": "Vakansiya təsdiqlənsin?",
+        "PENDING_APPROVAL_REJECTED": "Vakansiya rədd edilsin?",
+        "PENDING_APPROVAL_DRAFT": "Qaralamaya qaytarılsın?",
+        "REJECTED_DRAFT": "Redaktə üçün qaralamaya qaytarılsın?",
+        "OPEN_FILLED": "Doldurulub kimi qeyd edilsin?",
+        "OPEN_CLOSED": "Vakansiya bağlansın?",
+        "CLOSED_OPEN": "Vakansiya yenidən açılsın?"
+      },
+      "confirmText": {
+        "DRAFT_PENDING_APPROVAL": "Göndərildikdən sonra vakansiyanı redaktə etmək olmayacaq.",
+        "PENDING_APPROVAL_OPEN": "Vakansiya açılacaq və namizəd əlavə etmək mümkün olacaq.",
+        "PENDING_APPROVAL_REJECTED": "Vakansiya rədd ediləcək. Sonra redaktə edib yenidən göndərə bilərsiniz.",
+        "PENDING_APPROVAL_DRAFT": "Vakansiya redaktə edilə bilən qaralama vəziyyətinə qayıdacaq.",
+        "REJECTED_DRAFT": "Vakansiya redaktə edilə bilən qaralama vəziyyətinə qayıdacaq.",
+        "OPEN_FILLED": "Vakansiya doldurulmuş sayılacaq və yeni namizəd qəbul etməyəcək.",
+        "OPEN_CLOSED": "Yeni namizəd əlavə etmək və mərhələ dəyişmək dayanacaq. Sonra yenidən aça bilərsiniz.",
+        "CLOSED_OPEN": "Vakansiya yenidən açılacaq."
+      }
+    },
+    "detail": {
+      "back": "Vakansiyalar",
+      "openings": "Doldurulub / Say",
+      "salary": "Maaş diapazonu",
+      "history": "Status tarixçəsi"
+    },
+    "stage": {
+      "NEW": "Yeni",
+      "SCREENING": "Skrininq",
+      "INTERVIEW": "Müsahibə",
+      "OFFER": "Təklif",
+      "HIRED": "İşə qəbul",
+      "REJECTED": "Rədd edilib"
+    },
+    "source": {
+      "REFERRAL": "Tövsiyə",
+      "JOB_SITE": "Vakansiya saytı",
+      "SOCIAL": "Sosial şəbəkə",
+      "WALK_IN": "Özü müraciət",
+      "AGENCY": "Agentlik",
+      "OTHER": "Digər"
+    },
+    "pipeline": {
+      "title": "Namizədlər",
+      "notOpenHint": "Namizəd əlavə etmək üçün vakansiya açıq olmalıdır.",
+      "emptyColumn": "Namizəd yoxdur",
+      "advance": "Növbəti mərhələyə keçir"
+    },
+    "candidateForm": {
+      "add": "Namizəd əlavə et",
+      "title": "Yeni namizəd",
+      "description": "Namizəd bu vakansiyanın \"Yeni\" mərhələsinə əlavə olunacaq.",
+      "lastName": "Soyad",
+      "firstName": "Ad",
+      "fatherName": "Ata adı",
+      "phone": "Telefon",
+      "email": "E-poçt",
+      "finCode": "FİN",
+      "source": "Mənbə",
+      "notes": "Qeydlər",
+      "contactHint": "Telefon və ya e-poçtdan ən azı biri tələb olunur.",
+      "save": "Əlavə et",
+      "duplicatesTitle": "Oxşar namizəd tapıldı",
+      "duplicatesText": "Eyni FİN, telefon və ya e-poçt olan namizəd artıq bazada var. Mövcud namizədi seçə və ya yenisini yarada bilərsiniz.",
+      "useExisting": "Bunu istifadə et",
+      "createNew": "Yeni namizəd yarat",
+      "back": "Geri"
+    },
+    "sheet": {
+      "rejectionReason": "Rədd səbəbi",
+      "moveTitle": "Mərhələ",
+      "moveTo": "Mərhələ seçin",
+      "move": "Keçir",
+      "notesTitle": "Qeydlər və müsahibə rəyləri",
+      "noNotes": "Hələ qeyd yoxdur.",
+      "notePlaceholder": "Qeyd və ya müsahibə rəyi",
+      "addNote": "Qeyd əlavə et",
+      "rating": "Qiymət",
+      "kind": {
+        "NOTE": "Qeyd",
+        "INTERVIEW": "Müsahibə rəyi"
+      }
+    },
+    "candidates": {
+      "searchPlaceholder": "Ad, telefon, e-poçt və ya FİN üzrə axtar",
+      "resultsCount": "{count, plural, =0 {Namizəd yoxdur} =1 {1 namizəd} other {# namizəd}}",
+      "emptyTitle": "Namizəd tapılmadı",
+      "emptyDescription": "Namizədlər vakansiya səhifəsindən əlavə olunur.",
+      "columns": {
+        "name": "Namizəd",
+        "contact": "Əlaqə",
+        "source": "Mənbə",
+        "applications": "Müraciətlər"
+      }
+    },
+    "errors": {
+      "notFound": "Qeyd tapılmadı.",
+      "invalidTitle": "Vəzifə adı boş və ya çox uzundur.",
+      "invalidOpenings": "Boş yer sayı 1 ilə 500 arasında olmalıdır.",
+      "invalidSalary": "Maaş diapazonu yanlışdır.",
+      "invalidReason": "Səbəb yanlışdır.",
+      "invalidTransition": "Bu keçid mümkün deyil.",
+      "notEditable": "Vakansiya göndərildikdən sonra redaktə olunmur.",
+      "notOpen": "Vakansiya açıq deyil.",
+      "invalidName": "Ad və soyad tələb olunur.",
+      "invalidContact": "Telefon və ya e-poçt daxil edin.",
+      "invalidEmail": "E-poçt formatı yanlışdır.",
+      "invalidFin": "FİN 7 simvol olmalıdır.",
+      "invalidSource": "Mənbə yanlışdır.",
+      "alreadyApplied": "Bu namizəd artıq bu vakansiyadadır.",
+      "invalidStage": "Mərhələ yanlışdır.",
+      "alreadyFinal": "Son mərhələdəki müraciət dəyişdirilə bilməz.",
+      "sameStage": "Namizəd artıq bu mərhələdədir.",
+      "reasonRequired": "Rədd səbəbini yazın.",
+      "invalidNote": "Qeyd boş və ya çox uzundur.",
+      "unknown": "Əməliyyat alınmadı."
+    }
+  },
   "Payroll": {
     "workflow": {
       "back": "Geri qaytar",

@@ -205,6 +205,193 @@
     "comingSoonTitle": "Модуль «{module}» скоро появится",
     "comingSoonDescription": "Этот раздел подготовлен — полноценный модуль будет реализован на следующем этапе."
   },
+  "Recruitment": {
+    "tabs": {
+      "vacancies": "Вакансии",
+      "candidates": "Кандидаты"
+    },
+    "kpi": {
+      "open": "Открытые вакансии",
+      "pending": "Ожидают утверждения",
+      "inPipeline": "Кандидаты в процессе",
+      "filled": "Закрыто наймом"
+    },
+    "list": {
+      "newVacancy": "Новая вакансия",
+      "searchPlaceholder": "Поиск по коду, должности, отделу или филиалу",
+      "allStatuses": "Все статусы",
+      "resultsCount": "{count, plural, =0 {Вакансий нет} one {# вакансия} few {# вакансии} other {# вакансий}}",
+      "emptyTitle": "Вакансии не найдены",
+      "emptyDescription": "Нажмите «Новая вакансия», чтобы создать первую.",
+      "columns": {
+        "title": "Вакансия",
+        "place": "Отдел · Филиал",
+        "openings": "Закрыто / Мест",
+        "candidates": "Кандидаты",
+        "status": "Статус"
+      }
+    },
+    "status": {
+      "DRAFT": "Черновик",
+      "PENDING_APPROVAL": "Ожидает утверждения",
+      "OPEN": "Открыта",
+      "REJECTED": "Отклонена",
+      "FILLED": "Закрыта наймом",
+      "CLOSED": "Закрыта"
+    },
+    "reason": {
+      "NEW_POSITION": "Новая штатная единица",
+      "REPLACEMENT": "Замена"
+    },
+    "form": {
+      "createTitle": "Новая вакансия",
+      "editTitle": "Редактирование вакансии",
+      "title": "Название должности",
+      "department": "Отдел",
+      "branch": "Филиал",
+      "notSet": "Не указано",
+      "openings": "Количество мест",
+      "salaryMin": "Зарплата (мин., AZN)",
+      "salaryMax": "Зарплата (макс., AZN)",
+      "reason": "Причина",
+      "description": "Описание и требования",
+      "save": "Сохранить",
+      "saving": "Сохранение...",
+      "cancel": "Отмена"
+    },
+    "workflow": {
+      "edit": "Редактировать",
+      "cancel": "Отмена",
+      "confirm": "Подтвердить",
+      "move": {
+        "DRAFT_PENDING_APPROVAL": "Отправить на утверждение",
+        "PENDING_APPROVAL_OPEN": "Утвердить",
+        "PENDING_APPROVAL_REJECTED": "Отклонить",
+        "PENDING_APPROVAL_DRAFT": "Вернуть в черновик",
+        "REJECTED_DRAFT": "Редактировать снова",
+        "OPEN_FILLED": "Отметить как закрытую наймом",
+        "OPEN_CLOSED": "Закрыть",
+        "CLOSED_OPEN": "Открыть снова"
+      },
+      "confirmTitle": {
+        "DRAFT_PENDING_APPROVAL": "Отправить на утверждение?",
+        "PENDING_APPROVAL_OPEN": "Утвердить вакансию?",
+        "PENDING_APPROVAL_REJECTED": "Отклонить вакансию?",
+        "PENDING_APPROVAL_DRAFT": "Вернуть в черновик?",
+        "REJECTED_DRAFT": "Вернуть в черновик для редактирования?",
+        "OPEN_FILLED": "Отметить как закрытую наймом?",
+        "OPEN_CLOSED": "Закрыть вакансию?",
+        "CLOSED_OPEN": "Открыть вакансию снова?"
+      },
+      "confirmText": {
+        "DRAFT_PENDING_APPROVAL": "После отправки вакансию нельзя редактировать.",
+        "PENDING_APPROVAL_OPEN": "Вакансия откроется, можно будет добавлять кандидатов.",
+        "PENDING_APPROVAL_REJECTED": "Вакансия будет отклонена. Её можно отредактировать и отправить снова.",
+        "PENDING_APPROVAL_DRAFT": "Вакансия вернётся в редактируемый черновик.",
+        "REJECTED_DRAFT": "Вакансия вернётся в редактируемый черновик.",
+        "OPEN_FILLED": "Вакансия считается закрытой наймом и больше не принимает кандидатов.",
+        "OPEN_CLOSED": "Добавление кандидатов и смена этапов прекращается. Позже её можно открыть снова.",
+        "CLOSED_OPEN": "Вакансия будет открыта снова."
+      }
+    },
+    "detail": {
+      "back": "Вакансии",
+      "openings": "Закрыто / Мест",
+      "salary": "Вилка зарплаты",
+      "history": "История статусов"
+    },
+    "stage": {
+      "NEW": "Новые",
+      "SCREENING": "Скрининг",
+      "INTERVIEW": "Собеседование",
+      "OFFER": "Предложение",
+      "HIRED": "Принят",
+      "REJECTED": "Отклонён"
+    },
+    "source": {
+      "REFERRAL": "Рекомендация",
+      "JOB_SITE": "Сайт вакансий",
+      "SOCIAL": "Соцсети",
+      "WALK_IN": "Сам обратился",
+      "AGENCY": "Агентство",
+      "OTHER": "Другое"
+    },
+    "pipeline": {
+      "title": "Кандидаты",
+      "notOpenHint": "Чтобы добавлять кандидатов, вакансия должна быть открыта.",
+      "emptyColumn": "Кандидатов нет",
+      "advance": "На следующий этап"
+    },
+    "candidateForm": {
+      "add": "Добавить кандидата",
+      "title": "Новый кандидат",
+      "description": "Кандидат будет добавлен на этап «Новые» этой вакансии.",
+      "lastName": "Фамилия",
+      "firstName": "Имя",
+      "fatherName": "Отчество",
+      "phone": "Телефон",
+      "email": "E-mail",
+      "finCode": "FİN",
+      "source": "Источник",
+      "notes": "Заметки",
+      "contactHint": "Нужен хотя бы телефон или e-mail.",
+      "save": "Добавить",
+      "duplicatesTitle": "Найден похожий кандидат",
+      "duplicatesText": "Кандидат с таким же FİN, телефоном или e-mail уже есть. Используйте существующего или создайте нового.",
+      "useExisting": "Использовать этого",
+      "createNew": "Создать нового",
+      "back": "Назад"
+    },
+    "sheet": {
+      "rejectionReason": "Причина отказа",
+      "moveTitle": "Этап",
+      "moveTo": "Выберите этап",
+      "move": "Перевести",
+      "notesTitle": "Заметки и отзывы о собеседовании",
+      "noNotes": "Заметок пока нет.",
+      "notePlaceholder": "Заметка или отзыв о собеседовании",
+      "addNote": "Добавить заметку",
+      "rating": "Оценка",
+      "kind": {
+        "NOTE": "Заметка",
+        "INTERVIEW": "Отзыв о собеседовании"
+      }
+    },
+    "candidates": {
+      "searchPlaceholder": "Поиск по имени, телефону, e-mail или FİN",
+      "resultsCount": "{count, plural, =0 {Кандидатов нет} one {# кандидат} few {# кандидата} other {# кандидатов}}",
+      "emptyTitle": "Кандидаты не найдены",
+      "emptyDescription": "Кандидаты добавляются со страницы вакансии.",
+      "columns": {
+        "name": "Кандидат",
+        "contact": "Контакты",
+        "source": "Источник",
+        "applications": "Отклики"
+      }
+    },
+    "errors": {
+      "notFound": "Запись не найдена.",
+      "invalidTitle": "Название должности пустое или слишком длинное.",
+      "invalidOpenings": "Количество мест — от 1 до 500.",
+      "invalidSalary": "Неверная вилка зарплаты.",
+      "invalidReason": "Неверная причина.",
+      "invalidTransition": "Этот переход недоступен.",
+      "notEditable": "После отправки вакансию нельзя редактировать.",
+      "notOpen": "Вакансия не открыта.",
+      "invalidName": "Нужны имя и фамилия.",
+      "invalidContact": "Укажите телефон или e-mail.",
+      "invalidEmail": "Неверный формат e-mail.",
+      "invalidFin": "FİN должен содержать 7 символов.",
+      "invalidSource": "Неверный источник.",
+      "alreadyApplied": "Этот кандидат уже в вакансии.",
+      "invalidStage": "Неверный этап.",
+      "alreadyFinal": "Отклик на финальном этапе изменить нельзя.",
+      "sameStage": "Кандидат уже на этом этапе.",
+      "reasonRequired": "Укажите причину отказа.",
+      "invalidNote": "Заметка пустая или слишком длинная.",
+      "unknown": "Не удалось выполнить действие."
+    }
+  },
   "Payroll": {
     "workflow": {
       "back": "Вернуть",

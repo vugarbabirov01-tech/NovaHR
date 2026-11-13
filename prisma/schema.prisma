@@ -1249,3 +1249,107 @@ model AuthAuditLogEntry {
   @@index([action, timestamp])
   @@map("auth_audit_log_entries")
 }
+
+// ---------------------------------------------------------------------------
+// Recruitment — vacancies (requisitions), candidates and the hiring pipeline.
+// Statuses/stages are plain strings (SQLite has no enums here); the allowed
+// values and transitions live in src/lib/recruitment/. Cross-module ids
+// (department, branch, employee) are bare Strings, same convention as the
+// Employee model's other modules. Approval is a simple internal status flow
+// for now (actor = "system" until real authentication exists); it can move to
+// the Approval Engine later via the status history rows.
+// ---------------------------------------------------------------------------
+
+model JobRequisition {
+  id           String   @id @default(cuid())
+  /// Human-friendly number, e.g. VAC-0001
+  code         String   @unique
+  title        String
+  departmentId String?
+  branchId     String?
+  openings     Int      @default(1)
+  salaryMin    Float?
+  salaryMax    Float?
+  /// "NEW_POSITION" | "REPLACEMENT"
+  reason       String   @default("NEW_POSITION")
+  description  String   @default("")
+  /// "DRAFT" | "PENDING_APPROVAL" | "OPEN" | "REJECTED" | "FILLED" | "CLOSED"
+  status       String   @default("DRAFT")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  applications RecruitmentApplication[]
+
+  @@index([status])
+  @@map("job_requisitions")
+}
+
+model RecruitmentStatusEvent {
+  id            String   @id @default(cuid())
+  requisitionId String
+  fromStatus    String
+  toStatus      String
+  note          String   @default("")
+  actor         String   @default("system")
+  createdAt     DateTime @default(now())
+
+  @@index([requisitionId])
+  @@map("recruitment_status_events")
+}
+
+model Candidate {
+  id         String   @id @default(cuid())
+  firstName  String
+  lastName   String
+  fatherName String   @default("")
+  /// Normalised (digits only) for duplicate detection
+  phone      String   @default("")
+  email      String   @default("")
+  finCode    String   @default("")
+  /// "REFERRAL" | "JOB_SITE" | "SOCIAL" | "WALK_IN" | "AGENCY" | "OTHER"
+  source     String   @default("OTHER")
+  notes      String   @default("")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  applications RecruitmentApplication[]
+
+  @@index([finCode])
+  @@index([phone])
+  @@index([email])
+  @@map("candidates")
+}
+
+model RecruitmentApplication {
+  id              String         @id @default(cuid())
+  candidateId     String
+  candidate       Candidate      @relation(fields: [candidateId], references: [id])
+  requisitionId   String
+  requisition     JobRequisition @relation(fields: [requisitionId], references: [id])
+  /// "NEW" | "SCREENING" | "INTERVIEW" | "OFFER" | "HIRED" | "REJECTED"
+  stage           String         @default("NEW")
+  rejectionReason String         @default("")
+  stageUpdatedAt  DateTime       @default(now())
+  createdAt       DateTime       @default(now())
+
+  notes RecruitmentApplicationNote[]
+
+  @@unique([candidateId, requisitionId])
+  @@index([requisitionId, stage])
+  @@map("recruitment_applications")
+}
+
+model RecruitmentApplicationNote {
+  id            String                 @id @default(cuid())
+  applicationId String
+  application   RecruitmentApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  /// "NOTE" | "INTERVIEW"
+  kind          String                 @default("NOTE")
+  text          String
+  /// 1-5, interview feedback only
+  rating        Int?
+  createdAt     DateTime               @default(now())
+
+  @@index([applicationId])
+  @@map("recruitment_application_notes")
+}
