@@ -1758,6 +1758,7 @@
     "exportPng": "PNG ixrac et",
     "exportPdf": "PDF ixrac et",
     "noCompany": "Şirkət göstərilməyib",
+    "companyHeadcount": "{count, plural, =1 {1 əməkdaş} other {# əməkdaş}}",
     "directReports": "{count, plural, =1 {1 birbaşa tabeli} other {# birbaşa tabeli}}",
     "totalReports": "{count, plural, =1 {1 ümumi tabeli} other {# ümumi tabeli}}",
     "viewInFocus": "{count, plural, =1 {1 nəfəri fokus rejimində gör} other {# nəfəri fokus rejimində gör}}",

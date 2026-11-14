@@ -1758,6 +1758,7 @@
     "exportPng": "Экспорт PNG",
     "exportPdf": "Экспорт PDF",
     "noCompany": "Компания не указана",
+    "companyHeadcount": "{count, plural, one {# сотрудник} few {# сотрудника} other {# сотрудников}}",
     "directReports": "{count, plural, =1 {1 подчинённый} other {# подчинённых}}",
     "totalReports": "{count, plural, =1 {1 всего подчинённый} other {# всего подчинённых}}",
     "viewInFocus": "{count, plural, =1 {Показать 1 в фокусе} other {Показать # в фокусе}}",

@@ -97,6 +97,7 @@ export function OrganizationView({ tree, employees, managerNames, companies, bra
                   employees={employees}
                   query={query}
                   filters={filters}
+                  companyName={group.company || undefined}
                   exportFileName={companyGroups.length > 1 ? `organization-chart-${group.company}` : "organization-chart"}
                 />
                 <UnassignedEmployeesPanel

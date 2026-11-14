@@ -1758,6 +1758,7 @@
     "exportPng": "Export PNG",
     "exportPdf": "Export PDF",
     "noCompany": "No company set",
+    "companyHeadcount": "{count, plural, =1 {1 employee} other {# employees}}",
     "directReports": "{count, plural, =1 {1 direct report} other {# direct reports}}",
     "totalReports": "{count, plural, =1 {1 total report} other {# total reports}}",
     "viewInFocus": "{count, plural, =1 {View 1 in focus} other {View # in focus}}",

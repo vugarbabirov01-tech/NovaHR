@@ -5,6 +5,8 @@ import {
   Background,
   BackgroundVariant,
   Controls,
+  getNodesBounds,
+  getViewportForBounds,
   Panel,
   ReactFlow,
   ReactFlowProvider,
@@ -19,17 +21,18 @@ import { ArrowLeft, ChevronRight, Download, FileImage, Maximize, Minimize, Netwo
 
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/common/empty-state"
+import { OrgChartCompanyNode } from "@/components/organization/org-chart-company-node"
 import { OrgChartFlowNode, type OrgChartFlowNodeType } from "@/components/organization/org-chart-flow-node"
 import { buildAncestorPathsById, findNodeById, flattenOrganizationTree } from "@/lib/organization/build-tree"
 import { computeOrganizationChartVisibility } from "@/lib/organization/filter-tree"
-import { layoutOrganizationChart } from "@/lib/organization/layout-tree"
+import { layoutOrganizationChart, ORG_CHART_LEVEL_PITCH, type OrgChartLayoutNode } from "@/lib/organization/layout-tree"
 import { getFullName } from "@/lib/employees"
 import type { OrganizationChartFilters, OrganizationTreeNode } from "@/types/organization"
 import type { EmployeeListItem } from "@/types/employee-profile"
 
 // A stable reference, defined once at module scope — React Flow re-renders
 // (and warns) if `nodeTypes` is a fresh object every render.
-const nodeTypes: NodeTypes = { orgChartNode: OrgChartFlowNode }
+const nodeTypes: NodeTypes = { orgChartNode: OrgChartFlowNode, orgChartCompany: OrgChartCompanyNode }
 
 // Elements html-to-image should never bake into an export — the zoom
 // controls and this panel's own export/fullscreen buttons aren't part of
@@ -46,6 +49,8 @@ interface OrgChartCanvasProps {
   query: string
   filters: OrganizationChartFilters
   exportFileName: string
+  /** Shown on the card that joins several top-level managers; omitted = no company card. */
+  companyName?: string
 }
 
 /**
@@ -60,18 +65,26 @@ interface OrgChartCanvasProps {
  * between covers both "exit focus entirely" and "go back one level" with
  * the same control.
  */
-function OrgChartCanvasInner({ roots, employees, query, filters, exportFileName }: OrgChartCanvasProps) {
+function OrgChartCanvasInner({ roots, employees, query, filters, exportFileName, companyName }: OrgChartCanvasProps) {
   const t = useTranslations("OrganizationChart")
-  const { fitView } = useReactFlow()
+  const { fitView, getNodes } = useReactFlow()
+  // Under a company card the overview starts with just the top managers, collapsed;
+  // without a company name the top managers start open.
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
-    () => new Set(roots.map((root) => root.employee.id))
+    () => (companyName ? new Set<string>() : new Set(roots.map((root) => root.employee.id)))
   )
   const [focusedId, setFocusedId] = useState<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
+  // The card the user just opened/closed: after the layout changes the view
+  // moves to it (and its first reports) instead of fitting a possibly very tall
+  // column into the screen, which would shrink every card to a speck.
+  const pendingFocusId = useRef<string | null>(null)
+
   const toggle = useCallback((employeeId: string) => {
+    pendingFocusId.current = employeeId
     setExpandedIds((prev) => {
       const next = new Set(prev)
       if (next.has(employeeId)) next.delete(employeeId)
@@ -137,13 +150,22 @@ function OrgChartCanvasInner({ roots, employees, query, filters, exportFileName 
   const layoutRoots = useMemo(() => (focusedNode ? [focusedNode] : roots), [focusedNode, roots])
 
   const { nodes, edges } = useMemo(() => {
-    const layout = layoutOrganizationChart(layoutRoots, expandedIds, visibility)
-    const nodes: OrgChartFlowNodeType[] = layout.nodes.map((node) => ({
-      ...node,
-      data: { ...node.data, employees, onToggle: toggle, onFocus: focusOn },
-    }))
+    // The company card belongs to the full overview, not to a focused branch.
+    const company =
+      companyName && !focusedNode
+        ? {
+            label: companyName,
+            headcount: roots.reduce((sum, root) => sum + 1 + root.descendantCount, 0),
+          }
+        : undefined
+    const layout = layoutOrganizationChart(layoutRoots, expandedIds, visibility, company)
+    const nodes: Array<OrgChartFlowNodeType | OrgChartLayoutNode> = layout.nodes.map((node) =>
+      node.type === "orgChartNode"
+        ? { ...node, data: { ...node.data, employees, onToggle: toggle, onFocus: focusOn } }
+        : node
+    )
     return { nodes, edges: layout.edges }
-  }, [layoutRoots, expandedIds, visibility, employees, toggle, focusOn])
+  }, [layoutRoots, expandedIds, visibility, employees, toggle, focusOn, companyName, focusedNode, roots])
 
   // Recenter on every structural change (focus in/out, expand/collapse),
   // not just on mount — "fokuslanmış rəhbər mərkəzdə göstərilsin" has to
@@ -152,7 +174,36 @@ function OrgChartCanvasInner({ roots, employees, query, filters, exportFileName 
   // instead of cramming the whole subtree to fit.
   const nodeIdsKey = nodes.map((node) => node.id).join(",")
   useEffect(() => {
-    fitView({ padding: 0.3, maxZoom: 1, duration: 200 })
+    const targetId = pendingFocusId.current
+    pendingFocusId.current = null
+    if (nodes.length === 0) return
+
+    let ids: string[]
+    if (targetId && nodes.some((node) => node.id === targetId)) {
+      // The manager sits centred against a (possibly long) column of reports: show the
+      // reports closest to it, not the first ones, so the card and its branches stay on screen together.
+      const centreY = (id: string) => {
+        const node = nodes.find((candidate) => candidate.id === id)
+        return node ? node.position.y + Number((node.style as { height?: number } | undefined)?.height ?? 0) / 2 : 0
+      }
+      const targetY = centreY(targetId)
+      const reports = edges
+        .filter((edge) => edge.source === targetId)
+        .map((edge) => edge.target)
+        .sort((x, y) => Math.abs(centreY(x) - targetY) - Math.abs(centreY(y) - targetY))
+        .slice(0, 6)
+      ids = [targetId, ...reports]
+    } else {
+      // No specific card: show the first three columns, at most one screen tall.
+      const left = Math.min(...nodes.map((node) => node.position.x))
+      const top = Math.min(...nodes.map((node) => node.position.y))
+      ids = nodes
+        .filter((node) => node.position.x - left <= ORG_CHART_LEVEL_PITCH * 2 && node.position.y - top <= 700)
+        .map((node) => node.id)
+    }
+    fitView({ nodes: ids.map((id) => ({ id })), padding: 0.2, minZoom: 0.6, maxZoom: 1, duration: 200 })
+    // Only a structural change (nodeIdsKey) recentres; nodes and edges are read as of that change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodeIdsKey, fitView])
 
   const breadcrumbAncestors = focusedId
@@ -175,15 +226,50 @@ function OrgChartCanvasInner({ roots, employees, query, filters, exportFileName 
     }
   }
 
-  async function exportPng() {
+  /**
+   * Renders EVERY card currently on the canvas (all opened branches) into one
+   * image, however far it extends beyond the screen. The earlier export
+   * screenshotted the canvas element, so it only ever contained the slice that
+   * happened to be visible. The viewport layer is drawn at 1:1 inside a canvas
+   * sized to the nodes' bounds plus a margin.
+   */
+  async function renderFullChart(): Promise<{ dataUrl: string; width: number; height: number } | null> {
     const wrapper = wrapperRef.current
-    if (!wrapper) return
+    const viewportEl = wrapper?.querySelector<HTMLElement>(".react-flow__viewport")
+    const allNodes = getNodes()
+    if (!wrapper || !viewportEl || allNodes.length === 0) return null
+
+    const margin = 48
+    const bounds = getNodesBounds(allNodes)
+    const width = Math.ceil(bounds.width + margin * 2)
+    const height = Math.ceil(bounds.height + margin * 2)
+    const view = getViewportForBounds(bounds, width, height, 0.1, 2, 0)
+    // Crisp output, but keep the bitmap inside what browsers can allocate.
+    const pixelRatio = Math.max(0.5, Math.min(2, 14000 / Math.max(width, height)))
+
+    const dataUrl = await toPng(viewportEl, {
+      backgroundColor: getComputedStyle(document.body).backgroundColor || "#ffffff",
+      width,
+      height,
+      pixelRatio,
+      filter: isExportableNode,
+      style: {
+        width: width + "px",
+        height: height + "px",
+        transform: "translate(" + view.x + "px, " + view.y + "px) scale(" + view.zoom + ")",
+      },
+    })
+    return { dataUrl, width, height }
+  }
+
+  async function exportPng() {
     setIsExporting(true)
     try {
-      const dataUrl = await toPng(wrapper, { filter: isExportableNode, pixelRatio: 2 })
+      const image = await renderFullChart()
+      if (!image) return
       const link = document.createElement("a")
-      link.download = `${exportFileName}.png`
-      link.href = dataUrl
+      link.download = exportFileName + ".png"
+      link.href = image.dataUrl
       link.click()
     } finally {
       setIsExporting(false)
@@ -191,24 +277,19 @@ function OrgChartCanvasInner({ roots, employees, query, filters, exportFileName 
   }
 
   async function exportPdf() {
-    const wrapper = wrapperRef.current
-    if (!wrapper) return
     setIsExporting(true)
     try {
-      const dataUrl = await toPng(wrapper, { filter: isExportableNode, pixelRatio: 2 })
-      const image = new Image()
-      await new Promise<void>((resolve, reject) => {
-        image.onload = () => resolve()
-        image.onerror = () => reject(new Error("image-load-failed"))
-        image.src = dataUrl
-      })
+      const image = await renderFullChart()
+      if (!image) return
+      // The page is exactly the chart's size (in CSS px), so nothing is cropped or scaled.
       const doc = new jsPDF({
         orientation: image.width >= image.height ? "landscape" : "portrait",
         unit: "px",
         format: [image.width, image.height],
+        compress: true,
       })
-      doc.addImage(dataUrl, "PNG", 0, 0, image.width, image.height)
-      doc.save(`${exportFileName}.pdf`)
+      doc.addImage(image.dataUrl, "PNG", 0, 0, image.width, image.height, undefined, "FAST")
+      doc.save(exportFileName + ".pdf")
     } finally {
       setIsExporting(false)
     }
@@ -221,7 +302,7 @@ function OrgChartCanvasInner({ roots, employees, query, filters, exportFileName 
   return (
     <div
       ref={wrapperRef}
-      className="h-[70vh] min-h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background"
+      className="h-[75vh] min-h-[520px] w-full overflow-hidden rounded-xl border border-border bg-background"
     >
       {nodes.length === 0 ? (
         <EmptyState icon={Network} title={t("noResults")} description={t("noResultsDescription")} />
