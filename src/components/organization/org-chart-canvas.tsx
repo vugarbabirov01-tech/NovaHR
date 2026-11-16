@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import {
   Background,
   BackgroundVariant,
@@ -25,6 +25,7 @@ import { OrgChartCompanyNode } from "@/components/organization/org-chart-company
 import { OrgChartFlowNode, type OrgChartFlowNodeType } from "@/components/organization/org-chart-flow-node"
 import { buildAncestorPathsById, findNodeById, flattenOrganizationTree } from "@/lib/organization/build-tree"
 import { computeOrganizationChartVisibility } from "@/lib/organization/filter-tree"
+import { isDarkNow, subscribeToTheme } from "@/lib/theme"
 import { layoutOrganizationChart, ORG_CHART_LEVEL_PITCH, type OrgChartLayoutNode } from "@/lib/organization/layout-tree"
 import { getFullName } from "@/lib/employees"
 import type { OrganizationChartFilters, OrganizationTreeNode } from "@/types/organization"
@@ -68,6 +69,7 @@ interface OrgChartCanvasProps {
 function OrgChartCanvasInner({ roots, employees, query, filters, exportFileName, companyName }: OrgChartCanvasProps) {
   const t = useTranslations("OrganizationChart")
   const { fitView, getNodes } = useReactFlow()
+  const isDark = useSyncExternalStore(subscribeToTheme, isDarkNow, () => false)
   // Under a company card the overview starts with just the top managers, collapsed;
   // without a company name the top managers start open.
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
@@ -315,6 +317,7 @@ function OrgChartCanvasInner({ roots, employees, query, filters, exportFileName,
           maxZoom={1.5}
           nodesDraggable={false}
           edgesFocusable={false}
+          colorMode={isDark ? "dark" : "light"}
           proOptions={{ hideAttribution: true }}
         >
           <Background variant={BackgroundVariant.Dots} gap={20} size={1} />

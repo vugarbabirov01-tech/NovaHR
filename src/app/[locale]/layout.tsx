@@ -7,6 +7,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing, type AppLocale } from "@/i18n/routing";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toast";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "../globals.css";
 
 const fontSans = Inter({
@@ -55,7 +56,12 @@ export default async function RootLayout({ children, params }: Props) {
     <html
       lang={locale}
       className={`${fontSans.variable} ${fontMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        {/* Applies the saved (or system) theme before first paint, so there is no light flash. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <NextIntlClientProvider>
           <TooltipProvider delay={200}>

@@ -30,6 +30,8 @@ interface DepartmentChartProps {
   data: DepartmentHeadcount[]
 }
 
+const ROW_HEIGHT = 30
+
 export function DepartmentChart({ data }: DepartmentChartProps) {
   const t = useTranslations("Charts")
   const format = useFormatter()
@@ -64,7 +66,8 @@ export function DepartmentChart({ data }: DepartmentChartProps) {
         <CardTitle>{t("departmentTitle")}</CardTitle>
         <CardDescription>{t("departmentDescription")}</CardDescription>
       </CardHeader>
-      <CardContent className="h-72 pr-4 pl-0">
+      {/* One row per department: without a fixed row height Recharts hides every other label to avoid overlap. */}
+      <CardContent className="pr-4 pl-0" style={{ height: Math.max(288, data.length * ROW_HEIGHT + 48) }}>
         {data.length === 0 ? (
           <EmptyState
             icon={Building2}
@@ -92,7 +95,8 @@ export function DepartmentChart({ data }: DepartmentChartProps) {
                 dataKey="department"
                 axisLine={false}
                 tickLine={false}
-                width={96}
+                width={150}
+                interval={0}
                 tick={{ fill: "var(--foreground)", fontSize: 12.5 }}
               />
               <Tooltip

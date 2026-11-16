@@ -1,17 +1,13 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { Menu, Moon } from "lucide-react"
+import { Menu } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import { GlobalSearch } from "@/components/layout/global-search"
 import { UserMenu } from "@/components/layout/user-menu"
 import { LanguageSwitcher } from "@/components/layout/language-switcher"
+import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { NotificationBell } from "@/components/layout/notification-bell"
 
 interface HeaderProps {
@@ -36,21 +32,7 @@ export function Header({ onOpenMobileNav }: HeaderProps) {
       <GlobalSearch />
 
       <div className="flex items-center gap-1.5">
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-disabled="true"
-                className="cursor-not-allowed text-muted-foreground/60"
-              />
-            }
-          >
-            <Moon className="size-4" strokeWidth={1.75} />
-          </TooltipTrigger>
-          <TooltipContent>{t("darkTheme")}</TooltipContent>
-        </Tooltip>
+        <ThemeToggle />
 
         <LanguageSwitcher />
 

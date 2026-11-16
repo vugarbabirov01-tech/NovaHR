@@ -93,37 +93,43 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  color-scheme: dark;
+  --background: #111215;
+  --foreground: #ecebe8;
+  --card: #1a1c20;
+  --card-foreground: #ecebe8;
+  --popover: #1a1c20;
+  --popover-foreground: #ecebe8;
+  --primary: #4a8fe7;
+  --primary-foreground: #0a1220;
+  --secondary: #23262b;
+  --secondary-foreground: #ecebe8;
+  --muted: #23262b;
+  --muted-foreground: #9b9da4;
+  --accent: #1e2c44;
+  --accent-foreground: #a6c8f6;
+  --destructive: #ef6a6a;
+  --border: #2a2d33;
+  --input: #353941;
+  --ring: #4a8fe7;
+  --chart-1: #4a8fe7;
+  --chart-2: #f08a5d;
+  --chart-3: #3fc79b;
+  --chart-4: #f2b83a;
+  --chart-5: #ee94b6;
+  --sidebar: #16181c;
+  --sidebar-foreground: #ecebe8;
+  --sidebar-primary: #4a8fe7;
+  --sidebar-primary-foreground: #0a1220;
+  --sidebar-accent: #1e2c44;
+  --sidebar-accent-foreground: #a6c8f6;
+  --sidebar-border: #25282d;
+  --sidebar-ring: #4a8fe7;
+
+  --status-good: #34c759;
+  --status-warning: #f5b82e;
+  --status-serious: #f08a5d;
+  --status-critical: #ef6a6a;
 }
 
 @layer base {
