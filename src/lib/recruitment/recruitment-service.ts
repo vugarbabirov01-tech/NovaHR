@@ -1,5 +1,6 @@
 import { getFullLegalName } from "@/lib/employees"
 import { prisma, type PrismaClientOrTransaction } from "@/lib/prisma"
+import { notify } from "@/lib/notifications/notification-service"
 import { buildReplacementRequisition } from "@/lib/recruitment/replacement-vacancy"
 import { findAllDepartments } from "@/repositories/department-repository"
 import { findAllEmployees, findEmployeeById } from "@/repositories/employee-repository"
@@ -102,7 +103,7 @@ function requisitionData(input: RequisitionInput) {
 export async function createRequisition(input: RequisitionInput): Promise<{ id: string; code: string }> {
   const invalid = validateRequisitionInput(input)
   if (invalid) throw new RecruitmentError(REQUISITION_ERRORS[invalid])
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const code = await nextRequisitionCode(tx)
     const created = await tx.jobRequisition.create({ data: { code, ...requisitionData(input) } })
     await tx.recruitmentStatusEvent.create({
@@ -110,6 +111,14 @@ export async function createRequisition(input: RequisitionInput): Promise<{ id: 
     })
     return { id: created.id, code }
   })
+  await notify({
+    type: "recruitment.vacancy",
+    params: { title: input.title.trim(), code: result.code },
+    href: `/recruitment/${result.id}`,
+    entityType: "requisition",
+    entityId: result.id,
+  })
+  return result
 }
 
 export async function updateRequisition(id: string, input: RequisitionInput): Promise<void> {
@@ -176,7 +185,7 @@ export async function addCandidateToRequisition(
   input: CandidateInput,
   options: { existingCandidateId?: string; confirmNew?: boolean } = {}
 ): Promise<AddCandidateResult> {
-  return prisma.$transaction(async (tx) => {
+  const outcome = await prisma.$transaction(async (tx) => {
     const requisition = await tx.jobRequisition.findUnique({ where: { id: requisitionId } })
     if (!requisition) throw new RecruitmentError("notFound")
     if (!acceptsApplications(requisition.status as RequisitionStatus)) throw new RecruitmentError("notOpen")
@@ -226,6 +235,25 @@ export async function addCandidateToRequisition(
     if (already) throw new RecruitmentError("alreadyApplied")
     const application = await tx.recruitmentApplication.create({ data: { candidateId, requisitionId } })
     return { status: "created" as const, applicationId: application.id }
+  })
+  if (outcome.status === "created") await notifyApplication("recruitment.candidate", outcome.applicationId)
+  return outcome
+}
+
+/** Raises a notification about an application: who the candidate is and which vacancy it is for. */
+async function notifyApplication(type: "recruitment.candidate" | "recruitment.offerAccepted" | "recruitment.offerDeclined" | "recruitment.hired", applicationId: string) {
+  const application = await prisma.recruitmentApplication.findUnique({
+    where: { id: applicationId },
+    include: { candidate: true, requisition: true },
+  })
+  if (!application) return
+  const { candidate, requisition } = application
+  await notify({
+    type,
+    params: { name: `${candidate.lastName} ${candidate.firstName}`.trim(), role: requisition.title },
+    href: `/recruitment/${requisition.id}`,
+    entityType: "application",
+    entityId: applicationId,
   })
 }
 
@@ -331,6 +359,8 @@ export async function transitionOffer(applicationId: string, to: OfferStatus): P
       },
     })
   })
+  if (to === "ACCEPTED") await notifyApplication("recruitment.offerAccepted", applicationId)
+  if (to === "DECLINED") await notifyApplication("recruitment.offerDeclined", applicationId)
 }
 
 /** Everything the hire page needs; throws unless the application is ready to be hired. */
@@ -382,6 +412,7 @@ export async function completeHire(applicationId: string, employeeId: string): P
       })
     }
   })
+  await notifyApplication("recruitment.hired", applicationId)
 }
 
 // ---------------------------------------------------------------------------
@@ -403,7 +434,7 @@ export async function createReplacementVacancy(
   const departments = await findAllDepartments()
   const input = buildReplacementRequisition(employee, departments)
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const existing = await tx.jobRequisition.findFirst({ where: { replacesEmployeeId: employeeId } })
     if (existing) return { id: existing.id, code: existing.code, created: false }
 
@@ -416,6 +447,16 @@ export async function createReplacementVacancy(
     })
     return { id: created.id, code, created: true }
   })
+  if (result.created) {
+    await notify({
+      type: "recruitment.vacancy",
+      params: { title: input.title, code: result.code },
+      href: `/recruitment/${result.id}`,
+      entityType: "requisition",
+      entityId: result.id,
+    })
+  }
+  return result
 }
 
 export interface VacantPlace {

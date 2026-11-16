@@ -1,4 +1,5 @@
 import { prisma, type PrismaClientOrTransaction } from "@/lib/prisma"
+import { notify } from "@/lib/notifications/notification-service"
 import {
   findAdjustmentsByRecordIds,
   findPayrollPeriodById,
@@ -43,7 +44,7 @@ export async function transitionPayrollPeriod(
   to: PayrollPeriodStatus,
   actor = "system"
 ): Promise<void> {
-  await prisma.$transaction(async (tx) => {
+  const moved = await prisma.$transaction(async (tx) => {
     const period = await findPayrollPeriodById(periodId, tx)
     if (!period) throw new PayrollWorkflowError("notFound")
     const from = period.status as PayrollPeriodStatus
@@ -60,6 +61,14 @@ export async function transitionPayrollPeriod(
     await tx.payrollPeriodEvent.create({
       data: { payrollPeriodId: periodId, fromStatus: from, toStatus: to, actor },
     })
+    return { year: period.year, month: period.month }
+  })
+  await notify({
+    type: "payroll.status",
+    params: { year: moved.year, month: moved.month, status: to },
+    href: "/payroll",
+    entityType: "payrollPeriod",
+    entityId: periodId,
   })
 }
 

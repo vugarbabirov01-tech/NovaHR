@@ -73,12 +73,53 @@
   },
   "Notifications": {
     "title": "Уведомления",
-    "leaveRequestTitle": "Заявка на отпуск от {name}",
-    "leaveRequestDescription": "Запросил(а) {days} дн. ежегодного отпуска начиная с {date}.",
-    "newCandidateTitle": "Новый кандидат откликнулся",
-    "newCandidateDescription": "Откликнулся(-ась) на вакансию {role}.",
-    "payrollCompletedTitle": "Расчёт зарплаты завершён",
-    "payrollCompletedDescription": "Зарплата за {month} успешно рассчитана."
+    "empty": "Новых уведомлений нет",
+    "markAll": "Отметить все как прочитанные",
+    "items": {
+      "leave_created": {
+        "title": "Оформлен отпуск: {name}",
+        "body": "{start} – {end}, {days} дн."
+      },
+      "leave_cancelled": {
+        "title": "Отпуск отменён: {name}",
+        "body": "Отпуск {start} – {end} отменён."
+      },
+      "recruitment_candidate": {
+        "title": "Новый кандидат откликнулся",
+        "body": "{name} — вакансия {role}."
+      },
+      "recruitment_offerAccepted": {
+        "title": "Предложение принято",
+        "body": "{name} принял(а) предложение на {role}."
+      },
+      "recruitment_offerDeclined": {
+        "title": "Предложение отклонено",
+        "body": "{name} отклонил(а) предложение на {role}."
+      },
+      "recruitment_hired": {
+        "title": "Кандидат принят на работу",
+        "body": "{name} — {role}."
+      },
+      "recruitment_vacancy": {
+        "title": "Открыта новая вакансия",
+        "body": "{title} ({code})."
+      },
+      "payroll_status": {
+        "title": "Период зарплаты: {status}",
+        "body": "Статус периода {period} изменён."
+      },
+      "offboarding_terminated": {
+        "title": "Сотрудник уволен",
+        "body": "{name} уволен(а), место вакантно."
+      }
+    },
+    "payrollStatus": {
+      "DRAFT": "Черновик",
+      "CALCULATED": "Рассчитан",
+      "APPROVED": "Утверждён",
+      "PAID": "Выплачен",
+      "CLOSED": "Закрыт"
+    }
   },
   "Status": {
     "active": "Активен",

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { employeeDisplayName, notify } from "@/lib/notifications/notification-service"
 import {
   createLeaveRequest,
   findLeaveRequestById,
@@ -117,6 +118,18 @@ export async function createApprovedLeaveRequest(
     return created
   })
 
+  await notify({
+    type: "leave.created",
+    params: {
+      name: await employeeDisplayName(leaveRequest.employeeId),
+      days: leaveRequest.requestedUnits,
+      start: leaveRequest.startDate.toISOString().slice(0, 10),
+      end: leaveRequest.endDate.toISOString().slice(0, 10),
+    },
+    href: `/employees/${leaveRequest.employeeId}`,
+    entityType: "leaveRequest",
+    entityId: leaveRequest.id,
+  })
   return { leaveRequest }
 }
 
@@ -280,5 +293,16 @@ export async function cancelLeaveRequest(leaveRequestId: string, reason?: string
     return updated
   })
 
+  await notify({
+    type: "leave.cancelled",
+    params: {
+      name: await employeeDisplayName(leaveRequest.employeeId),
+      start: leaveRequest.startDate.toISOString().slice(0, 10),
+      end: leaveRequest.endDate.toISOString().slice(0, 10),
+    },
+    href: `/employees/${leaveRequest.employeeId}`,
+    entityType: "leaveRequest",
+    entityId: leaveRequest.id,
+  })
   return { leaveRequest }
 }

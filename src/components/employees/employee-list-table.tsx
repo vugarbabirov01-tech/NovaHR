@@ -32,6 +32,7 @@ import {
 
 import { useRouter } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
+import { formatMoney } from "@/lib/format-money"
 import {
   Table,
   TableBody,
@@ -260,9 +261,7 @@ export function EmployeeListTable({
         cell: ({ row }) =>
           row.original.grossSalary != null ? (
             <span className="tabular-nums">
-              {new Intl.NumberFormat(locale, { style: "currency", currency: row.original.currency }).format(
-                row.original.grossSalary
-              )}
+              {formatMoney(row.original.grossSalary, row.original.currency)}
             </span>
           ) : (
             <span className="text-muted-foreground">—</span>

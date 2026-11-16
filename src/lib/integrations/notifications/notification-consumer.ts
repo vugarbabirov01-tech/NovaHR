@@ -1,6 +1,7 @@
 import { eventBus } from "@/lib/event-bus/in-memory-event-bus"
 import { OffboardingEventType } from "@/lib/event-bus/event-types"
 import type { DomainEvent } from "@/lib/event-bus/domain-event"
+import { employeeDisplayName, notify } from "@/lib/notifications/notification-service"
 
 /**
  * Illustrative consumer proving the Event Bus decoupling actually works:
@@ -22,6 +23,23 @@ export function registerNotificationConsumer(): void {
     OffboardingEventType.PayrollNotification,
     OffboardingEventType.ITNotification,
   ]
+
+  // The visible bell notification when an employee has been terminated.
+  eventBus.subscribe(OffboardingEventType.EmployeeTerminated, async (event) => {
+    try {
+      const employeeId = (event.payload as { employeeId?: string } | undefined)?.employeeId
+      if (!employeeId) return
+      await notify({
+        type: "offboarding.terminated",
+        params: { name: await employeeDisplayName(employeeId) },
+        href: `/employees/${employeeId}`,
+        entityType: "employee",
+        entityId: employeeId,
+      })
+    } catch (error) {
+      console.error("[notifications] termination notification failed", error)
+    }
+  })
 
   for (const type of types) {
     eventBus.subscribe(type, (event) => {

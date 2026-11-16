@@ -73,12 +73,53 @@
   },
   "Notifications": {
     "title": "Bildirişlər",
-    "leaveRequestTitle": "{name} tərəfindən məzuniyyət sorğusu",
-    "leaveRequestDescription": "{date} tarixindən başlayaraq {days} gün illik məzuniyyət tələb etdi.",
-    "newCandidateTitle": "Yeni namizəd müraciət etdi",
-    "newCandidateDescription": "{role} vəzifəsinə müraciət etdi.",
-    "payrollCompletedTitle": "Əmək haqqı hesablaması tamamlandı",
-    "payrollCompletedDescription": "{month} ayı üçün əmək haqqı uğurla hesablandı."
+    "empty": "Yeni bildiriş yoxdur",
+    "markAll": "Hamısını oxunmuş et",
+    "items": {
+      "leave_created": {
+        "title": "{name} üçün məzuniyyət rəsmiləşdirildi",
+        "body": "{start} – {end}, {days} gün."
+      },
+      "leave_cancelled": {
+        "title": "{name} üçün məzuniyyət ləğv edildi",
+        "body": "{start} – {end} məzuniyyəti ləğv olundu."
+      },
+      "recruitment_candidate": {
+        "title": "Yeni namizəd müraciət etdi",
+        "body": "{name} — {role} vakansiyası."
+      },
+      "recruitment_offerAccepted": {
+        "title": "Təklif qəbul edildi",
+        "body": "{name} {role} üçün təklifi qəbul etdi."
+      },
+      "recruitment_offerDeclined": {
+        "title": "Təklif rədd edildi",
+        "body": "{name} {role} üçün təklifi rədd etdi."
+      },
+      "recruitment_hired": {
+        "title": "Namizəd işə götürüldü",
+        "body": "{name} — {role}."
+      },
+      "recruitment_vacancy": {
+        "title": "Yeni vakansiya açıldı",
+        "body": "{title} ({code})."
+      },
+      "payroll_status": {
+        "title": "Əmək haqqı dövrü: {status}",
+        "body": "{period} dövrünün statusu dəyişdi."
+      },
+      "offboarding_terminated": {
+        "title": "İşçi işdən çıxarıldı",
+        "body": "{name} işdən çıxarıldı, yeri vakantdır."
+      }
+    },
+    "payrollStatus": {
+      "DRAFT": "Qaralama",
+      "CALCULATED": "Hesablandı",
+      "APPROVED": "Təsdiqləndi",
+      "PAID": "Ödənildi",
+      "CLOSED": "Bağlandı"
+    }
   },
   "Status": {
     "active": "Aktiv",

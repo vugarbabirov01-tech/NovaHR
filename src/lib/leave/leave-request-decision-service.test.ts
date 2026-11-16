@@ -1,4 +1,11 @@
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
+
+// These tests create and cancel real leave rows in the dev DB; they must not
+// also raise bell notifications there.
+vi.mock("@/lib/notifications/notification-service", () => ({
+  notify: async () => {},
+  employeeDisplayName: async () => "",
+}))
 
 import { prisma } from "@/lib/prisma"
 import { createLeaveRequest, updateLeaveRequestDecisionIfStatusIn } from "@/repositories/leave-request-repository"

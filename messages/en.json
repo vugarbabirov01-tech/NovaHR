@@ -73,12 +73,53 @@
   },
   "Notifications": {
     "title": "Notifications",
-    "leaveRequestTitle": "Leave request from {name}",
-    "leaveRequestDescription": "Requested {days} days of annual leave starting {date}.",
-    "newCandidateTitle": "New candidate applied",
-    "newCandidateDescription": "Applied for {role} role.",
-    "payrollCompletedTitle": "Payroll run completed",
-    "payrollCompletedDescription": "{month} payroll was processed successfully."
+    "empty": "No new notifications",
+    "markAll": "Mark all as read",
+    "items": {
+      "leave_created": {
+        "title": "Leave recorded for {name}",
+        "body": "{start} – {end}, {days} days."
+      },
+      "leave_cancelled": {
+        "title": "Leave cancelled for {name}",
+        "body": "The {start} – {end} leave was cancelled."
+      },
+      "recruitment_candidate": {
+        "title": "New candidate applied",
+        "body": "{name} — {role} vacancy."
+      },
+      "recruitment_offerAccepted": {
+        "title": "Offer accepted",
+        "body": "{name} accepted the offer for {role}."
+      },
+      "recruitment_offerDeclined": {
+        "title": "Offer declined",
+        "body": "{name} declined the offer for {role}."
+      },
+      "recruitment_hired": {
+        "title": "Candidate hired",
+        "body": "{name} — {role}."
+      },
+      "recruitment_vacancy": {
+        "title": "New vacancy opened",
+        "body": "{title} ({code})."
+      },
+      "payroll_status": {
+        "title": "Payroll period: {status}",
+        "body": "The status of {period} changed."
+      },
+      "offboarding_terminated": {
+        "title": "Employee terminated",
+        "body": "{name} has left; the position is vacant."
+      }
+    },
+    "payrollStatus": {
+      "DRAFT": "Draft",
+      "CALCULATED": "Calculated",
+      "APPROVED": "Approved",
+      "PAID": "Paid",
+      "CLOSED": "Closed"
+    }
   },
   "Status": {
     "active": "Active",

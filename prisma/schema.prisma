@@ -1379,3 +1379,24 @@ model RecruitmentOffer {
 
   @@map("recruitment_offers")
 }
+
+/// In-app notifications shown in the header bell. Shared by everyone until
+/// authentication exists (then a userId can scope them). The text is rendered
+/// from `type` + `params` in the viewer's language, so nothing translated is
+/// stored.
+model Notification {
+  id         String    @id @default(cuid())
+  /// e.g. "leave.created", "recruitment.hired", "payroll.status"
+  type       String
+  /// JSON object of the values the message needs (names, counts, dates).
+  params     String    @default("{}")
+  /// App path (without locale) the notification opens, e.g. "/recruitment/abc".
+  href       String    @default("")
+  entityType String    @default("")
+  entityId   String    @default("")
+  createdAt  DateTime  @default(now())
+  readAt     DateTime?
+
+  @@index([readAt, createdAt])
+  @@map("notifications")
+}
