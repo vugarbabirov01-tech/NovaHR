@@ -15,6 +15,8 @@ import { DocumentsTab } from "@/components/employees/profile/documents-tab"
 import { EducationTab } from "@/components/employees/profile/education-tab"
 import { AssetsTab } from "@/components/employees/profile/assets-tab"
 import { NotesTab } from "@/components/employees/profile/notes-tab"
+import { DisciplineTab } from "@/components/employees/profile/discipline-tab"
+import type { DisciplinaryActionView } from "@/lib/discipline/discipline-service"
 import { AuditLogTab } from "@/components/employees/profile/audit-log-tab"
 import type { LeaveEntitlementSummary } from "@/lib/leave/entitlement-summary"
 import type { EmployeeProfile } from "@/types/employee-profile"
@@ -33,6 +35,8 @@ interface EmployeeProfileTabsProps {
   resolvedWorkLocation: string
   /** Annual leave entitlement broken down by the leave engine (server-side). */
   leaveEntitlement: LeaveEntitlementSummary
+  /** Disciplinary measures on record for this employee (newest first). */
+  disciplinaryActions: DisciplinaryActionView[]
 }
 
 const tabKeys = [
@@ -41,6 +45,7 @@ const tabKeys = [
   "personal",
   "labourLaw",
   "leave",
+  "discipline",
   "payroll",
   "documents",
   "education",
@@ -55,7 +60,7 @@ function isTabKey(value: string | null): value is TabKey {
   return tabKeys.includes(value as TabKey)
 }
 
-export function EmployeeProfileTabs({ profile, managerChain, resolvedWorkLocation, leaveEntitlement }: EmployeeProfileTabsProps) {
+export function EmployeeProfileTabs({ profile, managerChain, resolvedWorkLocation, leaveEntitlement, disciplinaryActions }: EmployeeProfileTabsProps) {
   const t = useTranslations("Employees.profile.tabs")
   const searchParams = useSearchParams()
   const requestedTab = searchParams.get("tab")
@@ -97,6 +102,9 @@ export function EmployeeProfileTabs({ profile, managerChain, resolvedWorkLocatio
       </TabsContent>
       <TabsContent value="leave">
         <LeaveTab profile={profile} />
+      </TabsContent>
+      <TabsContent value="discipline">
+        <DisciplineTab employeeId={profile.id} actions={disciplinaryActions} />
       </TabsContent>
       <TabsContent value="payroll">
         <PayrollTab profile={profile} />

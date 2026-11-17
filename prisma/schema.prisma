@@ -1400,3 +1400,25 @@ model Notification {
   @@index([readAt, createdAt])
   @@map("notifications")
 }
+
+/// A disciplinary measure given to an employee (Labour Code art. 189):
+/// WARNING | REPRIMAND | SEVERE_REPRIMAND. Dismissal is handled by the
+/// termination module, not here. employeeId is a bare String like other
+/// cross-module ids (employees live in a JSON blob).
+model DisciplinaryAction {
+  id            String   @id @default(cuid())
+  employeeId    String
+  type          String
+  /// yyyy-mm-dd — the day the measure was imposed
+  issuedDate    String
+  /// yyyy-mm-dd — the day of the violation
+  violationDate String
+  reason        String
+  /// Order number / date or other grounds, free text
+  basis         String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([employeeId, issuedDate])
+  @@map("disciplinary_actions")
+}

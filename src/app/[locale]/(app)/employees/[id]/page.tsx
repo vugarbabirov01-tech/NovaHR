@@ -12,6 +12,7 @@ import { getFullName, toBranchesById } from "@/lib/employees"
 import { resolveWorkStatus } from "@/lib/employee-work-status"
 import { loadWorkStatusContext } from "@/lib/employee-work-status-loader"
 import { buildManagerChain } from "@/lib/organization/build-tree"
+import { listDisciplinaryActions } from "@/lib/discipline/discipline-service"
 import { summarizeEntitlement } from "@/lib/leave/entitlement-summary"
 import { resolveAnnualLeaveEntitlement } from "@/lib/leave/leave-policy-resolution-service"
 import { toListItem } from "@/types/employee-profile"
@@ -61,6 +62,7 @@ export default async function EmployeeProfilePage({ params, searchParams }: Prop
     ? branchesById.get(employee.employment.branchId)?.name ?? employee.employment.workLocation
     : employee.employment.workLocation
 
+  const disciplinaryActions = await listDisciplinaryActions(employee.id)
   const leaveEntitlement = summarizeEntitlement(resolveAnnualLeaveEntitlement(employee))
 
   const backHref = returnTo && returnTo.startsWith("/employees") ? returnTo : "/employees"
@@ -80,6 +82,7 @@ export default async function EmployeeProfilePage({ params, searchParams }: Prop
           managerChain={managerChain}
           resolvedWorkLocation={resolvedWorkLocation}
           leaveEntitlement={leaveEntitlement}
+          disciplinaryActions={disciplinaryActions}
         />
       </Suspense>
     </div>

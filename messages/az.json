@@ -1006,6 +1006,7 @@
         "personal": "Şəxsi Məlumatlar",
         "labourLaw": "Əmək Hüququ",
         "leave": "Məzuniyyət Məlumatı",
+        "discipline": "İntizam",
         "payroll": "Əmək Haqqı",
         "documents": "Sənədlər",
         "education": "Təhsil",
@@ -1312,6 +1313,45 @@
           "recordCreated": "bu qeydi yaratdı",
           "fieldUpdated": "bir sahəni yenilədi",
           "employeeTerminated": "bu əməkdaşın iş münasibətinə xitam verdi"
+        }
+      },
+      "discipline": {
+        "title": "İntizam Tənbehləri",
+        "description": "İşçiyə verilmiş xəbərdarlıq, töhmət və ağır töhmətlər (Əmək Məcəlləsi, md. 189).",
+        "add": "Tənbeh əlavə et",
+        "empty": "Bu işçiyə intizam tənbehi verilməyib.",
+        "inForce": "Qüvvədədir",
+        "expired": "Müddəti bitib",
+        "edit": "Redaktə et",
+        "delete": "Sil",
+        "basis": "Əsaslandırma",
+        "basisPlaceholder": "Əmr №, tarix və s.",
+        "issued": "Tənbeh tarixi",
+        "violation": "Pozuntu tarixi",
+        "validUntil": "Qüvvədə qalma müddəti",
+        "type": "Növ",
+        "reason": "Səbəb / təsvir",
+        "cancel": "Ləğv et",
+        "save": "Yadda saxla",
+        "saving": "Saxlanılır...",
+        "addTitle": "Yeni intizam tənbehi",
+        "editTitle": "Tənbehi redaktə et",
+        "formHint": "Tənbeh qeydə alınır və işçinin profilində saxlanılır. Tənbehdən 1 il keçdikdə müddəti bitmiş sayılır.",
+        "deleteTitle": "Qeyd silinsin?",
+        "deleteText": "Bu intizam tənbehi qeydi birdəfəlik silinəcək.",
+        "types": {
+          "WARNING": "Xəbərdarlıq",
+          "REPRIMAND": "Töhmət",
+          "SEVERE_REPRIMAND": "Ağır töhmət"
+        },
+        "errors": {
+          "invalidType": "Tənbeh növü düzgün deyil.",
+          "invalidDate": "Tarix düzgün deyil.",
+          "futureDate": "Tarix gələcəkdə ola bilməz.",
+          "issuedBeforeViolation": "Tənbeh tarixi pozuntu tarixindən əvvəl ola bilməz.",
+          "reasonRequired": "Səbəb daxil edilməlidir.",
+          "notFound": "Qeyd tapılmadı.",
+          "unknown": "Xəta baş verdi."
         }
       }
     },

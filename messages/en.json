@@ -1006,6 +1006,7 @@
         "personal": "Personal Information",
         "labourLaw": "Labour Law",
         "leave": "Leave Information",
+        "discipline": "Discipline",
         "payroll": "Payroll",
         "documents": "Documents",
         "education": "Education",
@@ -1312,6 +1313,45 @@
           "recordCreated": "created this record",
           "fieldUpdated": "updated a field",
           "employeeTerminated": "terminated this employee's employment"
+        }
+      },
+      "discipline": {
+        "title": "Disciplinary Measures",
+        "description": "Warnings, reprimands and severe reprimands given to the employee (Labour Code, art. 189).",
+        "add": "Add measure",
+        "empty": "No disciplinary measures on record for this employee.",
+        "inForce": "In force",
+        "expired": "Expired",
+        "edit": "Edit",
+        "delete": "Delete",
+        "basis": "Grounds",
+        "basisPlaceholder": "Order no., date, etc.",
+        "issued": "Date imposed",
+        "violation": "Violation date",
+        "validUntil": "In force until",
+        "type": "Type",
+        "reason": "Reason / description",
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving...",
+        "addTitle": "New disciplinary measure",
+        "editTitle": "Edit measure",
+        "formHint": "The measure is recorded on the employee's profile. It counts as expired one year after it was imposed.",
+        "deleteTitle": "Delete this record?",
+        "deleteText": "This disciplinary record will be permanently deleted.",
+        "types": {
+          "WARNING": "Warning",
+          "REPRIMAND": "Reprimand",
+          "SEVERE_REPRIMAND": "Severe reprimand"
+        },
+        "errors": {
+          "invalidType": "Invalid measure type.",
+          "invalidDate": "Invalid date.",
+          "futureDate": "The date cannot be in the future.",
+          "issuedBeforeViolation": "The measure cannot be dated before the violation.",
+          "reasonRequired": "A reason is required.",
+          "notFound": "Record not found.",
+          "unknown": "Something went wrong."
         }
       }
     },
