@@ -26,7 +26,7 @@ import { OrgChartFlowNode, type OrgChartFlowNodeType } from "@/components/organi
 import { buildAncestorPathsById, findNodeById, flattenOrganizationTree } from "@/lib/organization/build-tree"
 import { computeOrganizationChartVisibility } from "@/lib/organization/filter-tree"
 import { isDarkNow, subscribeToTheme } from "@/lib/theme"
-import { layoutOrganizationChart, ORG_CHART_LEVEL_PITCH, type OrgChartLayoutNode } from "@/lib/organization/layout-tree"
+import { layoutOrganizationChart, type OrgChartLayoutNode } from "@/lib/organization/layout-tree"
 import { getFullName } from "@/lib/employees"
 import type { OrganizationChartFilters, OrganizationTreeNode } from "@/types/organization"
 import type { EmployeeListItem } from "@/types/employee-profile"
@@ -182,25 +182,25 @@ function OrgChartCanvasInner({ roots, employees, query, filters, exportFileName,
 
     let ids: string[]
     if (targetId && nodes.some((node) => node.id === targetId)) {
-      // The manager sits centred against a (possibly long) column of reports: show the
-      // reports closest to it, not the first ones, so the card and its branches stay on screen together.
-      const centreY = (id: string) => {
+      // Show the manager with the reports nearest to it, so the card and its branches stay on screen together.
+      const centreX = (id: string) => {
         const node = nodes.find((candidate) => candidate.id === id)
-        return node ? node.position.y + Number((node.style as { height?: number } | undefined)?.height ?? 0) / 2 : 0
+        return node ? node.position.x + Number((node.style as { width?: number } | undefined)?.width ?? 0) / 2 : 0
       }
-      const targetY = centreY(targetId)
+      const targetX = centreX(targetId)
       const reports = edges
         .filter((edge) => edge.source === targetId)
         .map((edge) => edge.target)
-        .sort((x, y) => Math.abs(centreY(x) - targetY) - Math.abs(centreY(y) - targetY))
+        .sort((x, y) => Math.abs(centreX(x) - targetX) - Math.abs(centreX(y) - targetX))
         .slice(0, 6)
       ids = [targetId, ...reports]
     } else {
-      // No specific card: show the first three columns, at most one screen tall.
-      const left = Math.min(...nodes.map((node) => node.position.x))
+      // No specific card: show the top two levels, at most about one screen wide around the first card.
       const top = Math.min(...nodes.map((node) => node.position.y))
+      const first = nodes.find((node) => node.position.y === top)
+      const centre = first ? first.position.x : 0
       ids = nodes
-        .filter((node) => node.position.x - left <= ORG_CHART_LEVEL_PITCH * 2 && node.position.y - top <= 700)
+        .filter((node) => node.position.y - top <= 400 && Math.abs(node.position.x - centre) <= 900)
         .map((node) => node.id)
     }
     fitView({ nodes: ids.map((id) => ({ id })), padding: 0.2, minZoom: 0.6, maxZoom: 1, duration: 200 })

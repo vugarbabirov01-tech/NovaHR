@@ -5,7 +5,9 @@ import {
   ORG_CHART_COMPANY_NODE_HEIGHT,
   ORG_CHART_COMPANY_NODE_ID,
   ORG_CHART_LEAF_HEIGHT,
-  ORG_CHART_LEVEL_PITCH,
+  ORG_CHART_LEVEL_GAP,
+  ORG_CHART_ROW_LIMIT,
+  ORG_CHART_GRID_COLUMNS,
   ORG_CHART_NODE_HEIGHT,
   ORG_CHART_NODE_WIDTH,
   layoutOrganizationChart,
@@ -57,42 +59,75 @@ function assertNoOverlaps(nodes: OrgChartLayoutNode[]) {
 
 const byId = (nodes: OrgChartLayoutNode[], id: string) => nodes.find((n) => n.id === id)!
 
-describe("layoutOrganizationChart (left to right)", () => {
-  it("puts each level in its own column to the right of its manager", () => {
+describe("layoutOrganizationChart (top-down, hybrid)", () => {
+  it("puts each level in its own row below its manager, centred under it", () => {
     const root = node("boss", [node("m", leaves("a", 2)), node("n")])
     const { nodes } = layoutOrganizationChart([root], expandAll(root), visibility)
 
-    expect(byId(nodes, "boss").position.x).toBe(0)
-    expect(byId(nodes, "m").position.x).toBe(ORG_CHART_LEVEL_PITCH)
-    expect(byId(nodes, "n").position.x).toBe(ORG_CHART_LEVEL_PITCH)
-    expect(byId(nodes, "a0").position.x).toBe(ORG_CHART_LEVEL_PITCH * 2)
+    // Reports of m sit one more row down.
+    expect(byId(nodes, "a0").position.y).toBe(byId(nodes, "m").position.y + ORG_CHART_NODE_HEIGHT + ORG_CHART_LEVEL_GAP)
+
+    const boss = byId(nodes, "boss")
+    const m = byId(nodes, "m")
+    const n = byId(nodes, "n")
+    expect(boss.position.y).toBe(0)
+    expect(m.position.y).toBe(ORG_CHART_NODE_HEIGHT + ORG_CHART_LEVEL_GAP)
+    expect(n.position.y).toBe(m.position.y)
+    expect(m.position.x).toBeLessThan(n.position.x)
     assertNoOverlaps(nodes)
   })
 
-  it("stacks siblings in one column and centres the manager against them", () => {
-    const root = node("boss", leaves("r", 5))
+  it("centres a manager over a flat row of reports", () => {
+    const root = node("boss", leaves("r", 4))
     const { nodes } = layoutOrganizationChart([root], expandAll(root), visibility)
-
     const reports = nodes.filter((n) => n.id.startsWith("r"))
-    expect(new Set(reports.map((n) => n.position.x)).size).toBe(1)
-    const ys = reports.map((n) => n.position.y)
-    expect([...ys].sort((a, b) => a - b)).toEqual(ys)
-
     const first = reports[0]
     const last = reports[reports.length - 1]
-    const reportsMid = (first.position.y + last.position.y + height(last)) / 2
-    const boss = byId(nodes, "boss")
-    expect(boss.position.y + height(boss) / 2).toBeCloseTo(reportsMid, 5)
+    expect(byId(nodes, "boss").position.x + ORG_CHART_NODE_WIDTH / 2).toBeCloseTo(
+      (first.position.x + last.position.x + ORG_CHART_NODE_WIDTH) / 2,
+      5
+    )
   })
 
-  it("keeps 25 reports in one narrow column and gives sub-branches their own columns without overlaps", () => {
+  it("keeps up to the row limit side by side", () => {
+    const root = node("boss", leaves("r", ORG_CHART_ROW_LIMIT))
+    const { nodes, edges } = layoutOrganizationChart([root], expandAll(root), visibility)
+    const reports = nodes.filter((n) => n.id.startsWith("r"))
+    expect(new Set(reports.map((n) => n.position.y)).size).toBe(1)
+    expect(edges.every((edge) => edge.sourceHandle == null && edge.targetHandle == null)).toBe(true)
+    assertNoOverlaps(nodes)
+  })
+
+  it("wraps more reports than the row limit into a grid", () => {
+    const count = ORG_CHART_ROW_LIMIT + 3
+    const root = node("boss", leaves("r", count))
+    const { nodes, edges } = layoutOrganizationChart([root], expandAll(root), visibility)
+
+    const reports = nodes.filter((n) => n.id.startsWith("r"))
+    const rows = new Set(reports.map((n) => n.position.y))
+    expect(rows.size).toBe(Math.ceil(count / ORG_CHART_GRID_COLUMNS))
+    // No more than the configured number of columns.
+    expect(new Set(reports.map((n) => n.position.x)).size).toBeLessThanOrEqual(ORG_CHART_GRID_COLUMNS)
+    // Reports in a column line up.
+    const first = reports[0]
+    expect(reports[ORG_CHART_GRID_COLUMNS].position.x).toBe(first.position.x)
+    const boss = byId(nodes, "boss")
+    expect(first.position.y).toBe(boss.position.y + ORG_CHART_NODE_HEIGHT + ORG_CHART_LEVEL_GAP)
+    expect(edges).toHaveLength(count)
+    expect(edges.every((edge) => edge.source === "boss" && edge.sourceHandle == null)).toBe(true)
+    assertNoOverlaps(nodes)
+  })
+
+  it("keeps a big team compact: 25 reports are neither one tall column nor one wide row", () => {
     const managers = Array.from({ length: 6 }, (_, i) => node(`m${i}`, leaves(`m${i}-`, 3)))
     const root = node("boss", [...managers, ...leaves("x", 19)])
     const { nodes } = layoutOrganizationChart([root], expandAll(root), visibility)
 
     expect(nodes).toHaveLength(1 + 25 + 18)
     const maxX = Math.max(...nodes.map((n) => n.position.x + ORG_CHART_NODE_WIDTH))
-    expect(maxX).toBe(ORG_CHART_LEVEL_PITCH * 2 + ORG_CHART_NODE_WIDTH)
+    const minX = Math.min(...nodes.map((n) => n.position.x))
+    // With every sub-branch open (3 reports each) it is still about half of one 25-card row.
+    expect(maxX - minX).toBeLessThan(ORG_CHART_NODE_WIDTH * 14)
     assertNoOverlaps(nodes)
   })
 
@@ -119,7 +154,7 @@ describe("layoutOrganizationChart (left to right)", () => {
     expect(nodes.map((n) => n.id).sort()).toEqual(["a", "b", "boss"])
   })
 
-  it("branches the top-level managers from a company card on the left", () => {
+  it("branches the top-level managers from a company card on top", () => {
     const roots = Array.from({ length: 3 }, (_, i) => node(`top${i}`, leaves(`t${i}-`, 2)))
     const { nodes, edges } = layoutOrganizationChart(roots, new Set(), visibility, { label: "Şirkət", headcount: 12 })
 
@@ -127,8 +162,9 @@ describe("layoutOrganizationChart (left to right)", () => {
     expect(company.type).toBe("orgChartCompany")
     expect(company.data).toMatchObject({ label: "Şirkət", headcount: 12 })
     expect(height(company)).toBe(ORG_CHART_COMPANY_NODE_HEIGHT)
-    expect(company.position.x).toBe(0)
-    expect(roots.every((_, i) => byId(nodes, `top${i}`).position.x === ORG_CHART_LEVEL_PITCH)).toBe(true)
+    expect(company.position.y).toBe(0)
+    const rowY = ORG_CHART_COMPANY_NODE_HEIGHT + ORG_CHART_LEVEL_GAP
+    expect(roots.every((_, i) => byId(nodes, `top${i}`).position.y === rowY)).toBe(true)
     expect(nodes).toHaveLength(4)
     expect(edges).toHaveLength(3)
     expect(edges.every((edge) => edge.source === ORG_CHART_COMPANY_NODE_ID)).toBe(true)
@@ -143,10 +179,10 @@ describe("layoutOrganizationChart (left to right)", () => {
     expect(edges[0]).toMatchObject({ source: ORG_CHART_COMPANY_NODE_ID, target: "boss" })
   })
 
-  it("lays several roots in one column when there is no company card", () => {
+  it("lays several roots in one row when there is no company card", () => {
     const roots = [node("a"), node("b"), node("c")]
     const { nodes, edges } = layoutOrganizationChart(roots, new Set(), visibility)
-    expect(nodes.map((n) => n.position.x)).toEqual([0, 0, 0])
+    expect(new Set(nodes.map((n) => n.position.y)).size).toBe(1)
     expect(edges).toEqual([])
     assertNoOverlaps(nodes)
   })

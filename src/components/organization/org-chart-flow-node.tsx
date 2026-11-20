@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react"
 import { useTranslations } from "next-intl"
-import { ChevronLeft, ChevronRight, Crown, Focus, MoreVertical, UserCog } from "lucide-react"
+import { ChevronDown, ChevronUp, Crown, Focus, MoreVertical, UserCog } from "lucide-react"
 
 import { Link, useRouter } from "@/i18n/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -71,8 +71,8 @@ export function OrgChartFlowNode({ data }: NodeProps<OrgChartFlowNodeType>) {
         isMatch && "ring-2 ring-primary"
       )}
     >
-      {/* The chart grows left to right: connectors enter on the left and leave on the right. */}
-      <Handle type="target" position={Position.Left} className="!bg-border" />
+      {/* The chart grows top-down: connectors enter on top and leave at the bottom. */}
+      <Handle type="target" position={Position.Top} className="!pointer-events-none !bg-border" />
 
       <div className="flex items-start gap-2.5">
         <Link href={`/employees/${employee.id}`} className="nodrag flex min-w-0 flex-1 items-start gap-2.5">
@@ -158,17 +158,17 @@ export function OrgChartFlowNode({ data }: NodeProps<OrgChartFlowNodeType>) {
           onClick={() => onToggle(employee.id)}
           aria-expanded={isExpanded}
           aria-label={isExpanded ? t("collapse") : t("expand")}
-          className="nodrag nopan absolute top-1/2 -right-3 flex size-6 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm hover:bg-accent hover:text-accent-foreground"
+          className="nodrag nopan absolute -bottom-3 left-1/2 flex size-6 -translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm hover:bg-accent hover:text-accent-foreground"
         >
           {isExpanded ? (
-            <ChevronLeft className="size-3.5" strokeWidth={2} />
+            <ChevronUp className="size-3.5" strokeWidth={2} />
           ) : (
-            <ChevronRight className="size-3.5" strokeWidth={2} />
+            <ChevronDown className="size-3.5" strokeWidth={2} />
           )}
         </button>
       ) : null}
 
-      <Handle type="source" position={Position.Right} className="!bg-border" />
+      <Handle type="source" position={Position.Bottom} className="!pointer-events-none !bg-border" />
 
       {isChangeManagerOpen ? (
         <ChangeManagerDialog

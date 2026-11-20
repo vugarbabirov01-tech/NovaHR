@@ -11,17 +11,21 @@ export const ORG_CHART_LEAF_HEIGHT = 72
 export const ORG_CHART_COMPANY_NODE_HEIGHT = 64
 export const ORG_CHART_COMPANY_NODE_ID = "__company__"
 
-/** Gap between a level and the next one (the connector runs through it). */
-export const ORG_CHART_LEVEL_GAP = 64
-/** Horizontal distance between two levels' left edges. */
-export const ORG_CHART_LEVEL_PITCH = ORG_CHART_NODE_WIDTH + ORG_CHART_LEVEL_GAP
-/** Vertical gap between stacked siblings. */
-const SIBLING_GAP = 16
+/** Vertical gap between a manager and the row of reports below (the connector runs through it). */
+export const ORG_CHART_LEVEL_GAP = 56
+/** Horizontal gap between two siblings in a row. */
+export const ORG_CHART_SIBLING_GAP = 24
+/** Vertical gap between the rows of a grid of reports (room for the connector and the expand button). */
+export const ORG_CHART_GRID_ROW_GAP = 40
+/** A manager with up to this many reports spreads them in one row below; more reports are
+ * wrapped into a grid of ORG_CHART_GRID_COLUMNS per row so the chart stays neither extremely
+ * wide nor extremely tall. */
+export const ORG_CHART_ROW_LIMIT = 5
+export const ORG_CHART_GRID_COLUMNS = 4
 
 /** A manager with more direct reports than this never expands inline — the
  * card offers "view in focus" instead of a chevron. It only protects against
- * a runaway list: the tree grows sideways, so a normal team is fine. Never
- * applies to a call's own top-level roots (depth 0). */
+ * a runaway list. Never applies to a call's own top-level roots (depth 0). */
 export const INLINE_FANOUT_LIMIT = 40
 
 export interface OrgChartNodeData extends Record<string, unknown> {
@@ -33,7 +37,7 @@ export interface OrgChartNodeData extends Record<string, unknown> {
   exceedsInlineFanout: boolean
 }
 
-/** The synthetic card on the left that the top-level managers branch from. */
+/** The synthetic card on top that the top-level managers branch from. */
 export interface OrgChartCompanyData extends Record<string, unknown> {
   label: string
   headcount: number
@@ -57,30 +61,69 @@ interface Item {
 interface Block {
   item: Item
   kids: Block[]
-  /** Height of this card's whole branch: the taller of the card itself and its stacked children. */
+  /** "row": reports side by side below; "grid": reports wrapped into rows; "none": no visible reports. */
+  mode: "row" | "grid" | "none"
+  /** Width / height of this card's whole branch, reports included. */
+  width: number
   height: number
+  /** Grid only: reports split into rows, and each column's / row's size. */
+  gridRows?: Block[][]
+  colWidths?: number[]
+  rowHeights?: number[]
 }
 
+/** The company card and the invisible root always use a single row. */
 function measure(item: Item): Block {
+  const isVirtual = item.kind === "virtual"
+  const cardWidth = isVirtual ? 0 : ORG_CHART_NODE_WIDTH
+  if (item.children.length === 0) return { item, kids: [], mode: "none", width: cardWidth, height: item.height }
+
   const kids = item.children.map(measure)
-  const stacked = kids.reduce((sum, kid) => sum + kid.height, 0) + SIBLING_GAP * Math.max(0, kids.length - 1)
-  return { item, kids, height: Math.max(item.height, stacked) }
+  const levelGap = isVirtual ? 0 : ORG_CHART_LEVEL_GAP
+
+  if (item.kind === "employee" && kids.length > ORG_CHART_ROW_LIMIT) {
+    const gridRows: Block[][] = []
+    for (let i = 0; i < kids.length; i += ORG_CHART_GRID_COLUMNS) gridRows.push(kids.slice(i, i + ORG_CHART_GRID_COLUMNS))
+    const colWidths = Array.from({ length: ORG_CHART_GRID_COLUMNS }, (_, c) =>
+      Math.max(0, ...gridRows.map((row) => row[c]?.width ?? 0))
+    ).filter((w) => w > 0)
+    const rowHeights = gridRows.map((row) => Math.max(...row.map((kid) => kid.height)))
+    const gridWidth = colWidths.reduce((sum, w) => sum + w, 0) + ORG_CHART_SIBLING_GAP * (colWidths.length - 1)
+    const gridHeight = rowHeights.reduce((sum, h) => sum + h, 0) + ORG_CHART_GRID_ROW_GAP * (rowHeights.length - 1)
+    return {
+      item,
+      kids,
+      mode: "grid",
+      width: Math.max(cardWidth, gridWidth),
+      height: item.height + levelGap + gridHeight,
+      gridRows,
+      colWidths,
+      rowHeights,
+    }
+  }
+
+  const rowWidth = kids.reduce((sum, kid) => sum + kid.width, 0) + ORG_CHART_SIBLING_GAP * (kids.length - 1)
+  return {
+    item,
+    kids,
+    mode: "row",
+    width: Math.max(cardWidth, rowWidth),
+    height: item.height + levelGap + Math.max(...kids.map((kid) => kid.height)),
+  }
 }
 
 /**
  * Converts one company's top-level OrganizationTreeNode[] into React Flow
- * nodes/edges as a left-to-right branching tree: each level is a column, a
- * manager's reports are stacked in the next column to its right and the
- * manager sits centred against them, joined by elbow connectors. A manager
- * with 25 reports is therefore one tall column of branches rather than one
- * 25-card-wide row (which is what made the old top-down chart unreadable).
+ * nodes/edges as a top-down tree. A manager with up to ORG_CHART_ROW_LIMIT
+ * reports spreads them in one row below, centred under the manager; a manager
+ * with more reports wraps them into a grid (ORG_CHART_GRID_COLUMNS per row), so
+ * a 25-person team is a compact block rather than 7000px wide or one endless column.
  *
  * A node's children are only walked into the graph when expandedIds has it
  * (or visibility.forceExpandIds does — a search/filter match's ancestors
  * auto-expand regardless of manual state) AND visibility allows it. When a
- * `company` is given, a synthetic card sits on the far left and the roots
- * branch from it (also for a single root, so the company name is always
- * visible).
+ * `company` is given, a synthetic card sits on top and the roots branch from
+ * it (also for a single root, so the company name is always visible).
  */
 export function layoutOrganizationChart(
   roots: OrganizationTreeNode[],
@@ -128,25 +171,23 @@ export function layoutOrganizationChart(
       }
     : rootItems.length === 1
       ? rootItems[0]
-      : // Several roots and no company card: stack them as siblings under an invisible parent.
+      : // Several roots and no company card: lay them side by side under an invisible parent.
         { id: "__virtual__", height: 0, kind: "virtual", data: { label: "", headcount: 0 }, children: rootItems }
 
   const nodes: OrgChartLayoutNode[] = []
   const edges: Edge[] = []
 
-  function place(block: Block, level: number, blockTop: number, parent: Item | null) {
+  function place(block: Block, x: number, y: number, parent: Item | null, inGrid: boolean) {
     const { item } = block
     const isVirtual = item.kind === "virtual"
-    const x = level * ORG_CHART_LEVEL_PITCH
-    // The card sits vertically centred against its own branch.
-    const y = blockTop + (block.height - item.height) / 2
+    const cardX = x + (block.width - ORG_CHART_NODE_WIDTH) / 2
 
     if (!isVirtual) {
       if (item.kind === "company") {
         nodes.push({
           id: item.id,
           type: "orgChartCompany",
-          position: { x, y },
+          position: { x: cardX, y },
           style: { width: ORG_CHART_NODE_WIDTH, height: item.height },
           data: item.data as OrgChartCompanyData,
           draggable: false,
@@ -156,7 +197,7 @@ export function layoutOrganizationChart(
         nodes.push({
           id: item.id,
           type: "orgChartNode",
-          position: { x, y },
+          position: { x: cardX, y },
           style: { width: ORG_CHART_NODE_WIDTH, height: item.height },
           data: item.data as OrgChartNodeData,
           draggable: false,
@@ -166,21 +207,45 @@ export function layoutOrganizationChart(
     }
 
     if (parent && parent.kind !== "virtual") {
-      edges.push({ id: `${parent.id}->${item.id}`, source: parent.id, target: item.id, type: "smoothstep" })
+      const edge: Edge & { pathOptions?: { stepPosition: number } } = {
+        id: `${parent.id}->${item.id}`,
+        source: parent.id,
+        target: item.id,
+        type: "smoothstep",
+      }
+      // Reports in a grid all branch off one bus line just below the manager, then drop straight down.
+      if (inGrid) edge.pathOptions = { stepPosition: 0 }
+      edges.push(edge)
     }
 
-    if (block.kids.length === 0) return
-    const stacked = block.kids.reduce((sum, kid) => sum + kid.height, 0) + SIBLING_GAP * (block.kids.length - 1)
-    // Children are centred against the card when they are shorter than it.
-    let cursor = blockTop + (block.height - stacked) / 2
-    // An invisible parent takes no column: its children start at the same level.
-    const childLevel = isVirtual ? level : level + 1
+    if (block.mode === "none") return
+    const childY = y + item.height + (isVirtual ? 0 : ORG_CHART_LEVEL_GAP)
+
+    if (block.mode === "grid" && block.gridRows && block.colWidths && block.rowHeights) {
+      const gridWidth =
+        block.colWidths.reduce((sum, w) => sum + w, 0) + ORG_CHART_SIBLING_GAP * (block.colWidths.length - 1)
+      const gridX = x + (block.width - gridWidth) / 2
+      let rowY = childY
+      block.gridRows.forEach((row, r) => {
+        let colX = gridX
+        row.forEach((kid, c) => {
+          place(kid, colX + (block.colWidths![c] - kid.width) / 2, rowY, item, true)
+          colX += block.colWidths![c] + ORG_CHART_SIBLING_GAP
+        })
+        rowY += block.rowHeights![r] + ORG_CHART_GRID_ROW_GAP
+      })
+      return
+    }
+
+    const rowWidth =
+      block.kids.reduce((sum, kid) => sum + kid.width, 0) + ORG_CHART_SIBLING_GAP * (block.kids.length - 1)
+    let cursorX = x + (block.width - rowWidth) / 2
     for (const kid of block.kids) {
-      place(kid, childLevel, cursor, item)
-      cursor += kid.height + SIBLING_GAP
+      place(kid, cursorX, childY, item, false)
+      cursorX += kid.width + ORG_CHART_SIBLING_GAP
     }
   }
 
-  place(measure(top), 0, 0, null)
+  place(measure(top), 0, 0, null, false)
   return { nodes, edges }
 }

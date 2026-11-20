@@ -24,7 +24,7 @@ export function OrgChartCompanyNode({ data }: NodeProps<OrgChartCompanyNodeType>
         <span className="truncate text-sm font-semibold text-foreground">{data.label}</span>
         <span className="text-xs text-muted-foreground tabular-nums">{t("companyHeadcount", { count: data.headcount })}</span>
       </div>
-      <Handle type="source" position={Position.Right} className="!bg-border" />
+      <Handle type="source" position={Position.Bottom} className="!bg-border" />
     </div>
   )
 }
