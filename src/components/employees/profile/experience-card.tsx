@@ -16,7 +16,7 @@ import { useRouter } from "@/i18n/navigation"
 import { addDurations, calculateServiceDuration } from "@/lib/employees"
 import { previewWorkBookReviewAction, saveWorkBookReviewAction, type WorkBookActionResult } from "@/lib/experience/work-book-actions"
 import type { WorkBookReviewInput } from "@/lib/experience/work-book-review"
-import { actualCompanyService, officialExperience, resolveExperience, reviewReasons } from "@/lib/experience/work-experience"
+import { actualCompanyService, companyStart, officialExperience, resolveExperience, reviewReasons } from "@/lib/experience/work-experience"
 import type { EmployeeProfile, WorkBookStatus, WorkExperienceDuration } from "@/types/employee-profile"
 
 type Preview = Extract<WorkBookActionResult, { success: true }>
@@ -54,7 +54,9 @@ export function ExperienceCard({ profile }: { profile: EmployeeProfile }) {
   const resolved = resolveExperience(profile)
   const company = calculateServiceDuration(employment.hireDate)
   const total = addDurations(labourLaw.previousWorkExperience, company)
-  const actual = actualCompanyService(employment)
+  // Shown only when it says something the official hire date does not.
+  const actual =
+    companyStart(employment)?.date === employment.hireDate ? undefined : actualCompanyService(employment)
   const reasons = book?.status === "pending" ? reviewReasons(profile) : []
   const duplicateRisk = reasons.includes("likelyDuplicate")
 
@@ -129,16 +131,15 @@ export function ExperienceCard({ profile }: { profile: EmployeeProfile }) {
         <p className="text-xs text-muted-foreground">{t(`source.${resolved.source}`)}</p>
 
         {/* Company information only: set apart so it is not read as part of the leave figures above. */}
-        <div className="flex flex-col gap-3 rounded-lg border border-dashed border-border p-3">
-          <InfoGrid>
-            <InfoField label={t("actualStart")} value={employment.actualStartDate || "—"} />
-            <InfoField
-              label={t("actualService")}
-              value={actual ? `${actual.approximate ? "≈ " : ""}${format(actual.duration)}` : "—"}
-            />
-          </InfoGrid>
-          <p className="text-xs text-muted-foreground">{t("actualHint")}</p>
-        </div>
+        {actual && (
+          <div className="flex flex-col gap-3 rounded-lg border border-dashed border-border p-3">
+            <InfoGrid>
+              <InfoField label={t("actualStart")} value={employment.actualStartDate} />
+              <InfoField label={t("actualService")} value={`${actual.approximate ? "≈ " : ""}${format(actual.duration)}`} />
+            </InfoGrid>
+            <p className="text-xs text-muted-foreground">{t("actualHint")}</p>
+          </div>
+        )}
 
         {reasons.length > 0 && (
           <ul className="flex flex-col gap-1 text-xs text-destructive">
