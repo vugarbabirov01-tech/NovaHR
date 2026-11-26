@@ -56,6 +56,7 @@ export function ExperienceCard({ profile }: { profile: EmployeeProfile }) {
   const total = addDurations(labourLaw.previousWorkExperience, company)
   const actual = actualCompanyService(employment)
   const reasons = book?.status === "pending" ? reviewReasons(profile) : []
+  const duplicateRisk = reasons.includes("likelyDuplicate")
 
   const format = (d: WorkExperienceDuration) =>
     `${d.years} ${tLabour("durationYears")} ${d.months} ${tLabour("durationMonths")} ${d.days} ${tLabour("durationDays")}`
@@ -178,6 +179,11 @@ export function ExperienceCard({ profile }: { profile: EmployeeProfile }) {
           </DialogHeader>
 
           <div className="flex flex-col gap-4">
+            {duplicateRisk && (
+              <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                {t("duplicateWarning")}
+              </p>
+            )}
             <p className="text-sm text-muted-foreground">
               {t("official")}: <span className="text-foreground">{format(official)}</span>
             </p>

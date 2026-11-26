@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { applyWorkBookReview, validateWorkBookReview, type WorkBookReviewInput } from "@/lib/experience/work-book-review"
+import {
+  applyWorkBookReview,
+  reviewBlocker,
+  validateWorkBookReview,
+  type WorkBookReviewInput,
+} from "@/lib/experience/work-book-review"
 import {
   actualCompanyService,
   analyzeWorkBookPeriods,
@@ -100,6 +105,24 @@ describe("reviewReasons", () => {
     expect(reviewReasons(p, NOW)).toContain("likelyDuplicate")
   })
 
+  it("flags a total equal to the current job, even when ƏMAS also has experience", () => {
+    // About 6 years 11 months at the company.
+    for (const declared of [d(6, 11), d(9, 11)]) {
+      const p = profile({ workBook: book({ status: "pending", declaredTotal: declared }) })
+      expect(reviewReasons(p, NOW)).toContain("likelyDuplicate")
+    }
+  })
+
+  it("keeps the warning as time passes, measuring on the date the figure was stated", () => {
+    const p = profile({ workBook: book({ status: "pending", declaredTotal: d(6, 11), declaredAsOf: "2026-11-24" }) })
+    expect(reviewReasons(p, new Date("2028-06-01T00:00:00Z"))).toContain("likelyDuplicate")
+  })
+
+  it("does not flag an unrelated figure", () => {
+    const p = profile({ workBook: book({ status: "pending", declaredTotal: d(15) }) })
+    expect(reviewReasons(p, NOW)).not.toContain("likelyDuplicate")
+  })
+
   it("has nothing to say when HR's figure is not larger", () => {
     expect(reviewReasons(profile({ workBook: book({ declaredTotal: d(3) }) }), NOW)).toEqual([])
   })
@@ -174,6 +197,30 @@ describe("protection of ƏMAS data", () => {
       NOW
     )
     expect(out.profile.labourLaw.officialPreviousExperience).toEqual(d(3))
+  })
+})
+
+describe("reviewBlocker", () => {
+  const input = (over: Partial<WorkBookReviewInput>): WorkBookReviewInput => ({
+    status: "confirmed",
+    declaredTotal: d(6, 11),
+    periods: [],
+    note: "n",
+    reviewedBy: "HR",
+    ...over,
+  })
+
+  it("demands dated periods before a suspicious total is confirmed", () => {
+    expect(reviewBlocker(profile(), input({}), NOW)).toBe("periodsRequired")
+  })
+
+  it("lets periods, rejection and unrelated totals through", () => {
+    const withPeriod = input({
+      periods: [{ organization: "B", position: "", startDate: "2000-01-01", endDate: "2001-01-01" }],
+    })
+    expect(reviewBlocker(profile(), withPeriod, NOW)).toBeNull()
+    expect(reviewBlocker(profile(), input({ status: "rejected" }), NOW)).toBeNull()
+    expect(reviewBlocker(profile(), input({ declaredTotal: d(15) }), NOW)).toBeNull()
   })
 })
 

@@ -276,6 +276,8 @@ export interface WorkBookExperience {
   status: WorkBookStatus
   /** Total previous experience as stated by HR; used only when no periods are entered. */
   declaredTotal?: WorkExperienceDuration
+  /** ISO date the declared total was true on (the HR list's date, or the review date). */
+  declaredAsOf?: string
   periods: WorkBookPeriod[]
   note?: string
   reviewedBy?: string

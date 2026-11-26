@@ -1413,10 +1413,12 @@
           "noteRequired": "State the grounds for the decision.",
           "nothingToConfirm": "Enter a figure or a period to confirm.",
           "notFound": "Employee not found.",
-          "unknown": "Something went wrong."
+          "unknown": "Something went wrong.",
+          "periodsRequired": "Possible double count: enter dated periods to confirm."
         },
         "actualService": "Actual tenure at the company",
-        "actualHint": "Company information and reports only; it does not affect leave or pay."
+        "actualHint": "Company information and reports only; it does not affect leave or pay.",
+        "duplicateWarning": "Possible double count: the HR figure may include the current job. It cannot be confirmed as a total only — enter the work-book periods with dates."
       }
     },
     "termination": {

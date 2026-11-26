@@ -1,7 +1,12 @@
 // Validates and applies HR's work-book decision. Pure: the server action loads
 // and saves; this builds the new record.
 
-import { isValidIsoDate, officialExperience, resolveExperience } from "@/lib/experience/work-experience"
+import {
+  isValidIsoDate,
+  looksLikeCurrentJob,
+  officialExperience,
+  resolveExperience,
+} from "@/lib/experience/work-experience"
 import { resolveAnnualLeaveEntitlement } from "@/lib/leave/leave-policy-resolution-service"
 import type {
   AuditLogEntry,
@@ -37,6 +42,7 @@ export type WorkBookErrorCode =
   | "reviewerRequired"
   | "noteRequired"
   | "nothingToConfirm"
+  | "periodsRequired"
   | "notFound"
   | "unknown"
 
@@ -61,6 +67,31 @@ export function validateWorkBookReview(input: WorkBookReviewInput, today: string
     return "nothingToConfirm"
   }
   return null
+}
+
+const sameTotal = (a: WorkExperienceDuration | undefined, b: WorkExperienceDuration) =>
+  !!a && a.years === b.years && a.months === b.months && a.days === b.days
+
+/** The date the entered total was stated on: unchanged figures keep their original date. */
+function statedDate(existing: EmployeeProfile, total: WorkExperienceDuration, now: Date): string {
+  const book = existing.labourLaw.workBook
+  if (book?.declaredAsOf && sameTotal(book.declaredTotal, total)) return book.declaredAsOf
+  return now.toISOString().slice(0, 10)
+}
+
+/**
+ * A total that looks like it contains the current job cannot be confirmed as a
+ * bare number: HR has to enter the dated periods, from which the overlap with
+ * the current contract is removed.
+ */
+export function reviewBlocker(
+  existing: EmployeeProfile,
+  input: WorkBookReviewInput,
+  now: Date = new Date()
+): WorkBookErrorCode | null {
+  if (input.status !== "confirmed" || input.periods.length > 0) return null
+  const statedOn = new Date(`${statedDate(existing, input.declaredTotal, now)}T00:00:00Z`)
+  return looksLikeCurrentJob(existing, input.declaredTotal, statedOn) ? "periodsRequired" : null
 }
 
 export interface WorkBookReviewOutcome {
@@ -92,6 +123,7 @@ export function applyWorkBookReview(
   const workBook: WorkBookExperience = {
     status: input.status,
     declaredTotal: years + months + days > 0 ? { years, months, days } : undefined,
+    declaredAsOf: years + months + days > 0 ? statedDate(existing, input.declaredTotal, now) : undefined,
     periods,
     note: input.note.trim() || undefined,
     reviewedBy: input.reviewedBy.trim(),

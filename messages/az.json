@@ -1413,10 +1413,12 @@
           "noteRequired": "Qərarın əsasını yazın.",
           "nothingToConfirm": "Təsdiq üçün staj rəqəmi və ya dövr daxil edin.",
           "notFound": "Əməkdaş tapılmadı.",
-          "unknown": "Xəta baş verdi."
+          "unknown": "Xəta baş verdi.",
+          "periodsRequired": "Təkrar şübhəsi var: təsdiq üçün dövrləri tarixlərlə daxil edin."
         },
         "actualService": "Şirkətdə faktiki staj",
-        "actualHint": "Yalnız şirkətdaxili məlumat və hesabatlar üçündür; məzuniyyətə və əmək haqqına təsir etmir."
+        "actualHint": "Yalnız şirkətdaxili məlumat və hesabatlar üçündür; məzuniyyətə və əmək haqqına təsir etmir.",
+        "duplicateWarning": "Təkrar şübhəsi: HR rəqəmi cari işdəki stajı da əhatə edə bilər. Yalnız ümumi rəqəmlə təsdiq mümkün deyil — əmək kitabçasındakı dövrləri tarixlərlə daxil edin."
       }
     },
     "termination": {

@@ -166,28 +166,53 @@ export function resolveExperience(
 
 export type ReviewReason = "bothSources" | "likelyDuplicate" | "informalPeriod" | "bookOnly"
 
+/** How close two figures must be to be read as "the same job counted again". */
+const DUPLICATE_TOLERANCE_DAYS = 100
+
+/**
+ * True when a declared total looks as if it already contains the current job:
+ * it (or what it adds to ƏMAS) matches the current tenure, or it matches ƏMAS
+ * plus the current tenure. Tenure is measured on the date the total was stated,
+ * so the warning does not fade as time passes. A heuristic: it cannot catch
+ * every double count.
+ */
+export function looksLikeCurrentJob(
+  profile: Pick<EmployeeProfile, "labourLaw" | "employment">,
+  declared: WorkExperienceDuration,
+  statedOn: Date
+): boolean {
+  const official = durationToDays(officialExperience(profile.labourLaw))
+  const total = durationToDays(declared)
+  const hired = Date.parse(profile.employment.hireDate)
+  if (Number.isNaN(hired) || total - official <= 3) return false
+  const current = (statedOn.getTime() - hired) / DAY_MS
+  // declared = current; declared = ƏMAS + current (which is also "the excess = current").
+  return [total - current, total - official - current].some(
+    (gap) => Math.abs(gap) <= DUPLICATE_TOLERANCE_DAYS
+  )
+}
+
 /** Why a declared work-book total deserves a closer look. */
 export function reviewReasons(
   profile: Pick<EmployeeProfile, "labourLaw" | "employment">,
   asOf: Date = new Date()
 ): ReviewReason[] {
-  const declared = profile.labourLaw.workBook?.declaredTotal
+  const book = profile.labourLaw.workBook
+  const declared = book?.declaredTotal
   if (!declared) return []
   const official = officialExperience(profile.labourLaw)
   const extra = durationToDays(declared) - durationToDays(official)
   if (extra <= 3) return []
 
   const reasons: ReviewReason[] = [durationToDays(official) > 0 ? "bothSources" : "bookOnly"]
+  const statedOn = book.declaredAsOf ? new Date(`${book.declaredAsOf}T00:00:00Z`) : asOf
+  if (looksLikeCurrentJob(profile, declared, statedOn)) reasons.push("likelyDuplicate")
   const { hireDate, actualStartDate } = profile.employment
   const hired = Date.parse(hireDate)
-  if (!Number.isNaN(hired)) {
-    const currentDays = (asOf.getTime() - hired) / DAY_MS
-    if (Math.abs(extra - currentDays) <= 100) reasons.push("likelyDuplicate")
-    if (actualStartDate) {
-      const started = Date.parse(actualStartDate.length === 4 ? `${actualStartDate}-01-01` : actualStartDate)
-      const gap = (hired - started) / DAY_MS
-      if (gap > 90 && Math.abs(extra - gap) <= 120) reasons.push("informalPeriod")
-    }
+  if (!Number.isNaN(hired) && actualStartDate) {
+    const started = Date.parse(actualStartDate.length === 4 ? `${actualStartDate}-01-01` : actualStartDate)
+    const gap = (hired - started) / DAY_MS
+    if (gap > 90 && Math.abs(extra - gap) <= 120) reasons.push("informalPeriod")
   }
   return reasons
 }

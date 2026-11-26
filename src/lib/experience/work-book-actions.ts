@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import {
   applyWorkBookReview,
+  reviewBlocker,
   validateWorkBookReview,
   type WorkBookErrorCode,
   type WorkBookReviewInput,
@@ -33,6 +34,9 @@ async function run(employeeId: string, input: WorkBookReviewInput, save: boolean
     }
     const existing = await findEmployeeById(employeeId)
     if (!existing) return { success: false, code: "notFound" }
+
+    const blocker = reviewBlocker(existing, input, now)
+    if (blocker) return { success: false, code: blocker }
 
     const outcome = applyWorkBookReview(existing, input, now)
     if (save) await updateEmployee(employeeId, outcome.profile)
