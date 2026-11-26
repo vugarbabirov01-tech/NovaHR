@@ -120,6 +120,8 @@ export interface EmployeeListItem {
   employmentType: EmploymentType
   employmentStatus: EmploymentStatus
   hireDate: string
+  /** Mirrors employment.actualStartDate (information only). */
+  actualStartDate?: string
   /** Surfaced at the list level solely for Smart Filters' "Probation Ending
    * Soon" rule — otherwise unused here, same field employment.probationEndDate
    * already carries on the full profile. */
@@ -149,6 +151,10 @@ export interface EmploymentHistoryEvent {
 export interface EmployeeEmployment {
   employeeNumber: string
   hireDate: string
+  /** When the person actually started working here, if earlier than the official
+   * hire date: "YYYY-MM-DD", or "YYYY" when only the year is known. Information and
+   * reports only - never used for leave or pay. */
+  actualStartDate?: string
   probationEndDate?: string
   employmentType: EmploymentType
   contractType: ContractType
@@ -247,8 +253,33 @@ export interface PreviousEmployment {
   endDate: string
   /** True when ƏMAS counted this period toward previousWorkExperience. */
   counted: boolean
+  /** An earlier contract with this company (not a different employer). */
+  ownCompany?: boolean
   /** Why a period was not counted, when `counted` is false. */
   note?: string
+}
+
+/** HR's review of experience recorded in the employee's work book (əmək kitabçası). */
+export type WorkBookStatus = "pending" | "confirmed" | "rejected"
+
+export interface WorkBookPeriod {
+  id: string
+  organization: string
+  position?: string
+  /** ISO date (YYYY-MM-DD). */
+  startDate: string
+  /** ISO date (YYYY-MM-DD), inclusive. */
+  endDate: string
+}
+
+export interface WorkBookExperience {
+  status: WorkBookStatus
+  /** Total previous experience as stated by HR; used only when no periods are entered. */
+  declaredTotal?: WorkExperienceDuration
+  periods: WorkBookPeriod[]
+  note?: string
+  reviewedBy?: string
+  reviewedAt?: string
 }
 
 export interface EmployeeChild {
@@ -308,7 +339,14 @@ export interface EmployeeLabourLaw {
   // combined total are always derived from employment.hireDate +
   // previousWorkExperience, never persisted. See calculateServiceDuration /
   // addDurations in @/lib/employees.
+  /** The figure leave is calculated from. Derived (see
+   * @/lib/experience/work-experience): ƏMAS experience, raised by work-book
+   * experience only once HR has confirmed it. Never typed in by hand. */
   previousWorkExperience: WorkExperienceDuration
+  /** Official pre-contract experience from ƏMAS. Written only by the ƏMAS import. */
+  officialPreviousExperience?: WorkExperienceDuration
+  /** Work-book experience and HR's decision on it. */
+  workBook?: WorkBookExperience
   /** Itemised previous employers behind previousWorkExperience (ƏMAS). */
   previousEmployments?: PreviousEmployment[]
 
@@ -538,6 +576,7 @@ export function toListItem(
     employmentType: profile.employment.employmentType,
     employmentStatus: profile.employmentStatus,
     hireDate: profile.employment.hireDate,
+    actualStartDate: profile.employment.actualStartDate,
     baseSalary: profile.payroll.baseSalary,
     grossSalary: profile.payroll.grossSalary,
     currency: profile.payroll.currency,

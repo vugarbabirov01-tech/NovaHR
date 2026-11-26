@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import {
   Banknote,
+  ClipboardCheck,
   Download,
   FileText,
   Loader2,
@@ -321,6 +322,10 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
           <Link href="/employees/salary-import" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
             <Banknote className="size-3.5" strokeWidth={1.75} />
             {t("importSalaries")}
+          </Link>
+          <Link href="/employees/experience-review" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+            <ClipboardCheck className="size-3.5" strokeWidth={1.75} />
+            {t("experienceReview")}
           </Link>
           <DropdownMenu>
             <DropdownMenuTrigger render={<Button variant="outline" size="sm" />}>

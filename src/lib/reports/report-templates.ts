@@ -163,11 +163,12 @@ export const REPORT_TEMPLATES: ReportTemplate[] = [
     id: "longestServing",
     category: "tenure",
     dataSource: "EMPLOYEES",
-    columns: ["fullName", "workLocation", "position", "hireDate", "tenureDurationMonths"],
+    // Actual tenure (falls back to the hire date); the official date stays visible beside it.
+    columns: ["fullName", "workLocation", "position", "hireDate", "actualStartDate", "actualTenureMonths"],
     filters: [],
-    sortBy: "tenureDurationMonths",
+    sortBy: "actualTenureMonths",
     sortDirection: "desc",
-    kpis: [{ aggregation: "max", valueField: "tenureDurationMonths" }],
+    kpis: [{ aggregation: "max", valueField: "actualTenureMonths" }],
     chartConfig: null,
   },
   {

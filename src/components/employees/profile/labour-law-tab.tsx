@@ -9,28 +9,22 @@ import { Badge } from "@/components/ui/badge"
 import { InfoField, InfoGrid } from "@/components/common/info-field"
 import { BooleanIndicator } from "@/components/employees/profile/boolean-indicator"
 import {
-  addDurations,
   calculateAgeFromDateOfBirth,
-  calculateServiceDuration,
   isMinorFromDateOfBirth,
   isRetirementAgeFromDateOfBirth,
 } from "@/lib/employees"
 import type { LeaveEntitlementSummary } from "@/lib/leave/entitlement-summary"
-import type { EmployeeProfile, WorkExperienceDuration } from "@/types/employee-profile"
+import { ExperienceCard } from "@/components/employees/profile/experience-card"
+import type { EmployeeProfile } from "@/types/employee-profile"
 
 interface LabourLawTabProps {
   profile: EmployeeProfile
   leaveEntitlement: LeaveEntitlementSummary
 }
 
-/** Read-only display only — never stored. */
-function formatDuration(duration: WorkExperienceDuration, t: (key: string) => string) {
-  return `${duration.years} ${t("durationYears")} ${duration.months} ${t("durationMonths")} ${duration.days} ${t("durationDays")}`
-}
-
 export function LabourLawTab({ profile, leaveEntitlement }: LabourLawTabProps) {
   const t = useTranslations("Employees.profile.labourLaw")
-  const { labourLaw, personal, employment } = profile
+  const { labourLaw, personal } = profile
 
   const minor = isMinorFromDateOfBirth(personal.dateOfBirth)
   const minorAge = calculateAgeFromDateOfBirth(personal.dateOfBirth)
@@ -41,9 +35,6 @@ export function LabourLawTab({ profile, leaveEntitlement }: LabourLawTabProps) {
   const previousEmployments = (labourLaw.previousEmployments ?? []).filter((job) => job.counted).sort((a, b) =>
     a.startDate.localeCompare(b.startDate)
   )
-
-  const companyServiceDuration = calculateServiceDuration(employment.hireDate)
-  const totalWorkExperience = addDurations(labourLaw.previousWorkExperience, companyServiceDuration)
 
   return (
     <div className="flex flex-col gap-4">
@@ -187,21 +178,7 @@ export function LabourLawTab({ profile, leaveEntitlement }: LabourLawTabProps) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("sectionExperience")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <InfoGrid>
-            <InfoField
-              label={t("previousWorkExperience")}
-              value={formatDuration(labourLaw.previousWorkExperience, t)}
-            />
-            <InfoField label={t("companyServiceDuration")} value={formatDuration(companyServiceDuration, t)} />
-            <InfoField label={t("totalWorkExperience")} value={formatDuration(totalWorkExperience, t)} />
-          </InfoGrid>
-        </CardContent>
-      </Card>
+      <ExperienceCard profile={profile} />
 
       <Card>
         <CardHeader>
@@ -219,7 +196,10 @@ export function LabourLawTab({ profile, leaveEntitlement }: LabourLawTabProps) {
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-medium text-foreground">{job.organization}</span>
-                    <Badge variant="default">{t("employmentCounted")}</Badge>
+                    <div className="flex flex-wrap gap-1">
+                      {job.ownCompany ? <Badge variant="outline">{t("ownCompanyPeriod")}</Badge> : null}
+                      <Badge variant="default">{t("employmentCounted")}</Badge>
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
                     {job.position ? <span>{job.position}</span> : null}

@@ -327,49 +327,11 @@ export function LabourLawStep({ data, onChange }: StepProps) {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <p className="text-sm font-medium text-foreground">{t("previousWorkExperience")}</p>
-            <div className="grid max-w-md grid-cols-3 gap-3">
-              <Field label={t("durationYears")} htmlFor="prevExpYears">
-                <Input
-                  id="prevExpYears"
-                  type="number"
-                  min={0}
-                  value={data.previousWorkExperience.years}
-                  onChange={(e) =>
-                    onChange({
-                      previousWorkExperience: { ...data.previousWorkExperience, years: Number(e.target.value) || 0 },
-                    })
-                  }
-                />
-              </Field>
-              <Field label={t("durationMonths")} htmlFor="prevExpMonths">
-                <Input
-                  id="prevExpMonths"
-                  type="number"
-                  min={0}
-                  max={11}
-                  value={data.previousWorkExperience.months}
-                  onChange={(e) =>
-                    onChange({
-                      previousWorkExperience: { ...data.previousWorkExperience, months: Number(e.target.value) || 0 },
-                    })
-                  }
-                />
-              </Field>
-              <Field label={t("durationDays")} htmlFor="prevExpDays">
-                <Input
-                  id="prevExpDays"
-                  type="number"
-                  min={0}
-                  max={29}
-                  value={data.previousWorkExperience.days}
-                  onChange={(e) =>
-                    onChange({
-                      previousWorkExperience: { ...data.previousWorkExperience, days: Number(e.target.value) || 0 },
-                    })
-                  }
-                />
-              </Field>
+            {/* Never typed in: ƏMAS fills it on import, work-book experience is confirmed on the profile. */}
+            <div>
+              <Badge variant="outline">{formatDuration(data.previousWorkExperience, t)}</Badge>
             </div>
+            <p className="text-xs text-muted-foreground">{t("experienceLockedHint")}</p>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

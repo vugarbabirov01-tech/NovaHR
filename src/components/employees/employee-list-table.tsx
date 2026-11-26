@@ -33,6 +33,7 @@ import {
 import { useRouter } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 import { formatMoney } from "@/lib/format-money"
+import { companyStart } from "@/lib/experience/work-experience"
 import {
   Table,
   TableBody,
@@ -64,7 +65,7 @@ import { WorkStatusBadge } from "@/components/employees/work-status-badge"
 import { SmartFilterBadge } from "@/components/employees/smart-filter-badge"
 import { EmployeeQuickActions } from "@/components/employees/EmployeeQuickActions"
 import { EmployeeAvatarPreview } from "@/components/employees/employee-avatar-preview"
-import { employmentTypeMessageKeys, getFullName } from "@/lib/employees"
+import { calculateServiceDuration, employmentTypeMessageKeys, getFullName } from "@/lib/employees"
 import type { SmartFilterDefinition } from "@/lib/employee-smart-filters"
 import type { WorkStatus } from "@/lib/employee-work-status"
 import type { EmployeeGroupBy } from "@/types/employee-filters"
@@ -108,6 +109,7 @@ export function EmployeeListTable({
   const tType = useTranslations("EmploymentType")
   const tCommon = useTranslations("Employees.card")
   const tList = useTranslations("Employees.list")
+  const tExperience = useTranslations("Employees.profile.labourLaw")
   const router = useRouter()
   const locale = useLocale()
 
@@ -129,6 +131,7 @@ export function EmployeeListTable({
     workStatus: t("columnWorkStatus"),
     hireDate: t("columnHireDate"),
     grossSalary: t("columnGrossSalary"),
+    actualTenure: t("columnActualTenure"),
   }
 
   const [sorting, setSorting] = useState<SortingState>([])
@@ -255,6 +258,37 @@ export function EmployeeListTable({
         ),
       },
       {
+        id: "actualTenure",
+        // Days since the actual start, so sorting descending lists the longest-serving first.
+        accessorFn: (row) => {
+          const start = companyStart(row)
+          return start ? Date.now() - Date.parse(start.date) : -1
+        },
+        sortDescFirst: true,
+        enableGrouping: false,
+        header: ({ column }) => (
+          <button
+            type="button"
+            className="flex items-center gap-1"
+            onClick={() => column.toggleSorting(column.getIsSorted() !== "desc")}
+          >
+            {t("columnActualTenure")}
+            <ArrowUpDown className="size-3.5" />
+          </button>
+        ),
+        cell: ({ row }) => {
+          const start = companyStart(row.original)
+          if (!start) return <span className="text-muted-foreground">—</span>
+          const { years, months } = calculateServiceDuration(start.date)
+          return (
+            <span className="tabular-nums" title={start.date}>
+              {start.approximate ? "≈ " : ""}
+              {years} {tExperience("durationYears")} {months} {tExperience("durationMonths")}
+            </span>
+          )
+        },
+      },
+      {
         accessorKey: "grossSalary",
         enableGrouping: false,
         header: t("columnGrossSalary"),
@@ -286,7 +320,7 @@ export function EmployeeListTable({
         ),
       },
     ],
-    [t, tType, tCommon, locale, activeSmartFilter, workStatusByEmployeeId, returnTo]
+    [t, tType, tCommon, tExperience, locale, activeSmartFilter, workStatusByEmployeeId, returnTo]
   )
 
   const table = useReactTable({

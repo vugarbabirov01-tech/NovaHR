@@ -885,7 +885,8 @@
       "emptyDescription": "Axtarış və ya filtrləri dəyişməyi cəhd edin.",
       "bulkDeleteConfirmTitle": "Əməkdaşları silmək",
       "bulkDeleteConfirmDescription": "Seçilmiş {count} əməkdaşı sistemdən tam silmək istədiyinizə əminsiniz? Bu əməliyyat geri qaytarıla bilməz.",
-      "bulkDeleteSuccess": "{count} əməkdaş uğurla silindi."
+      "bulkDeleteSuccess": "{count} əməkdaş uğurla silindi.",
+      "experienceReview": "Staj dəqiqləşdirməsi"
     },
     "smartFilters": {
       "sectionTitle": "HR Xəbərdarlıqları",
@@ -996,7 +997,8 @@
       "groupByManager": "Rəhbər",
       "expandGroup": "Qrupu Aç",
       "collapseGroup": "Qrupu Yığ",
-      "groupMembers": "{count, plural, =0 {Əməkdaş yoxdur} =1 {1 əməkdaş} other {# əməkdaş}}"
+      "groupMembers": "{count, plural, =0 {Əməkdaş yoxdur} =1 {1 əməkdaş} other {# əməkdaş}}",
+      "columnActualTenure": "Faktiki staj"
     },
     "profile": {
       "backToList": "Əməkdaşlara Qayıt",
@@ -1176,7 +1178,9 @@
         "disclaimer": "Bu sahələr yalnız struktur Əmək Məcəlləsi məlumatlarını əks etdirir. Məzuniyyət hüququ və digər hesablamalar gələcək modullar tərəfindən bu məlumatlar əsasında müəyyən ediləcək.",
         "yes": "Bəli",
         "no": "Xeyr",
-        "none": "Yoxdur"
+        "none": "Yoxdur",
+        "experienceLockedHint": "Əvvəlki staj əl ilə dəyişdirilmir: ƏMAS rəqəmi idxalla gəlir, əmək kitabçası stajını HR işçinin profilində təsdiqləyir.",
+        "ownCompanyPeriod": "Şirkətimizdə"
       },
       "leave": {
         "openingBalance": "İlkin Qalıq",
@@ -1353,6 +1357,66 @@
           "notFound": "Qeyd tapılmadı.",
           "unknown": "Xəta baş verdi."
         }
+      },
+      "experience": {
+        "official": "Rəsmi əvvəlki staj (ƏMAS)",
+        "officialLocked": "ƏMAS rəqəmi dəyişdirilə bilməz",
+        "declared": "Əmək kitabçası üzrə ümumi əvvəlki staj",
+        "effective": "Hesablamada işlənən əvvəlki staj",
+        "actualStart": "Faktiki işə başlama",
+        "review": "Dəqiqləşdir",
+        "status": {
+          "pending": "Dəqiqləşdirilməlidir",
+          "confirmed": "Təsdiqlənib",
+          "rejected": "Rədd edilib"
+        },
+        "source": {
+          "official": "Hesablama yalnız ƏMAS stajına əsaslanır.",
+          "workBookPeriods": "ƏMAS stajına əmək kitabçasının təsdiqlənmiş dövrləri əlavə edilib (üst-üstə düşən günlər sayılmır).",
+          "workBookTotal": "Əmək kitabçası üzrə təsdiqlənmiş ümumi rəqəm işlənir (ƏMAS rəqəmi ilə toplanmır)."
+        },
+        "reasons": {
+          "bothSources": "Həm ƏMAS, həm kitabça stajı var",
+          "likelyDuplicate": "Fərq cari işdəki stajla eynidir: təkrar ola bilər",
+          "informalPeriod": "Fərq rəsmiləşməmiş dövrə uyğun gəlir",
+          "bookOnly": "Staj yalnız əmək kitabçasındadır"
+        },
+        "periods": "Əmək kitabçasındakı dövrlər",
+        "organization": "İş yeri",
+        "position": "Vəzifə",
+        "startDate": "Başlama tarixi",
+        "endDate": "Bitmə tarixi",
+        "addPeriod": "Dövr əlavə et",
+        "removePeriod": "Dövrü sil",
+        "periodsHint": "Dövr daxil edilərsə, ümumi rəqəm nəzərə alınmır; ƏMAS dövrləri və cari müqavilə ilə üst-üstə düşən günlər avtomatik çıxılır.",
+        "declaredHint": "Dövr daxil edilməyəndə işlənir: ƏMAS rəqəmi ilə müqayisədə böyük olanı götürülür.",
+        "decision": "Qərar",
+        "note": "Əsas (sənəd, qeyd)",
+        "notePlaceholder": "Əmək kitabçası №, səhifə və s.",
+        "reviewedBy": "Yoxlayan",
+        "leaveDays": "Məzuniyyət günü",
+        "overlapEmas": "{days} gün ƏMAS dövrləri ilə üst-üstə düşür və ikinci dəfə sayılmır.",
+        "overlapCurrent": "{days} gün cari müqavilə dövrünə düşür və ikinci dəfə sayılmır.",
+        "dialogTitle": "Əmək kitabçası stajının dəqiqləşdirilməsi",
+        "dialogHint": "ƏMAS rəqəmi dəyişmir. Yadda saxlamazdan əvvəl nəticəni hesablayın.",
+        "cancel": "Ləğv et",
+        "calculate": "Hesabla",
+        "save": "Yadda saxla",
+        "errors": {
+          "invalidStatus": "Qərar düzgün deyil.",
+          "invalidTotal": "Staj rəqəmi düzgün deyil (ay 0-11, gün 0-30).",
+          "organizationRequired": "Dövr üçün iş yeri yazılmalıdır.",
+          "invalidPeriodDate": "Dövrün tarixi düzgün deyil.",
+          "periodOrder": "Bitmə tarixi başlama tarixindən əvvəl ola bilməz.",
+          "futurePeriod": "Dövr gələcəkdə bitə bilməz.",
+          "reviewerRequired": "Yoxlayanın adı yazılmalıdır.",
+          "noteRequired": "Qərarın əsasını yazın.",
+          "nothingToConfirm": "Təsdiq üçün staj rəqəmi və ya dövr daxil edin.",
+          "notFound": "Əməkdaş tapılmadı.",
+          "unknown": "Xəta baş verdi."
+        },
+        "actualService": "Şirkətdə faktiki staj",
+        "actualHint": "Yalnız şirkətdaxili məlumat və hesabatlar üçündür; məzuniyyətə və əmək haqqına təsir etmir."
       }
     },
     "termination": {
@@ -1820,6 +1884,14 @@
         "validationDatesValid": "Tarixlər etibarlıdır.",
         "validationEligible": "Əməkdaş bu məzuniyyət növünə uyğundur."
       }
+    },
+    "experienceReview": {
+      "title": "Dəqiqləşdirilməli staj",
+      "description": "Əmək kitabçası stajı təsdiq gözləyən əməkdaşlar: {count}. Təsdiqə qədər məzuniyyət yalnız ƏMAS stajı ilə hesablanır.",
+      "empty": "Dəqiqləşdirilməli əməkdaş yoxdur.",
+      "back": "Əməkdaşlar",
+      "employee": "Əməkdaş",
+      "reason": "Səbəb"
     }
   },
   "OrganizationChart": {
@@ -1956,7 +2028,7 @@
       },
       "longestServing": {
         "name": "Ən uzun staja malik işçilər",
-        "description": "İşçilər şirkətdəki stajına görə azalan sırada."
+        "description": "İşçilər şirkətdə faktiki staja görə azalan sırada; rəsmi işə qəbul tarixi də göstərilir."
       },
       "newcomers": {
         "name": "Yeni işçilər və sınaq müddəti",
@@ -2182,7 +2254,9 @@
       "payrollStatus": "Status",
       "payrollEmployeeName": "Əməkdaş",
       "payrollEmployeeDepartment": "Şöbə",
-      "payrollEmployeeCompany": "Şirkət"
+      "payrollEmployeeCompany": "Şirkət",
+      "actualStartDate": "Faktiki işə başlama tarixi",
+      "actualTenureMonths": "Şirkətdə faktiki staj"
     },
     "operators": {
       "thisMonth": "Bu ay",

@@ -1,3 +1,4 @@
+import { resolveExperience, sameDuration } from "@/lib/experience/work-experience"
 import { resolveAnnualLeaveEntitlement } from "@/lib/leave/leave-policy-resolution-service"
 import {
   cleanText,
@@ -9,14 +10,14 @@ import {
   splitFullName,
   type EmasCell,
 } from "@/lib/emas-sync/parse"
-import type { AuditLogEntry, EmployeeProfile, PreviousEmployment } from "@/types/employee-profile"
+import type { AuditLogEntry, EmployeeProfile, PreviousEmployment, WorkExperienceDuration } from "@/types/employee-profile"
 
 /** One row of the "Əvvəlki staj" sheet, keyed by its header text. */
 export type EmasRow = Record<string, EmasCell>
 /** One row of the "Detallı dövrlər" sheet. */
 export type EmasDetailRow = Record<string, EmasCell>
 
-/** The employer's own VÖEN — its contracts are not "previous employment". */
+/** The employer's own VÖEN — its earlier contracts are flagged `ownCompany`. */
 export const OWN_COMPANY_TAX_ID = "1301709881"
 
 export const EMAS_ACTOR = "ƏMAS sinxronu"
@@ -77,7 +78,6 @@ export function buildPreviousEmployments(finCode: string, details: EmasDetailRow
   details.forEach((detail, index) => {
     if (cleanText(detail[DETAIL_COL.fin])?.toUpperCase() !== finCode.toUpperCase()) return
     const taxId = cleanText(detail[DETAIL_COL.taxId])
-    if (taxId === OWN_COMPANY_TAX_ID) return
     const startDate = parseEmasDate(detail[DETAIL_COL.start])
     const endDate = parseEmasDate(detail[DETAIL_COL.end])
     // ƏMAS never guessed a missing date, and neither do we — such a row has
@@ -94,11 +94,14 @@ export function buildPreviousEmployments(finCode: string, details: EmasDetailRow
       startDate,
       endDate,
       counted,
+      ownCompany: taxId === OWN_COMPANY_TAX_ID || undefined,
       note: cleanText(detail[DETAIL_COL.note]),
     })
   })
   return out.sort((a, b) => a.startDate.localeCompare(b.startDate))
 }
+
+const slashed = (d: WorkExperienceDuration | undefined) => (d ? `${d.years}/${d.months}/${d.days}` : undefined)
 
 const show = (value: unknown): string =>
   value === undefined || value === null || value === "" ? "—" : typeof value === "string" ? value : JSON.stringify(value)
@@ -179,19 +182,13 @@ export function computeSync(
   }
 
   const experience = parseExperience(row[COL.experience])
-  const currentExperience = profile.labourLaw.previousWorkExperience
-  if (
-    experience &&
-    (experience.years !== currentExperience?.years ||
-      experience.months !== currentExperience?.months ||
-      experience.days !== currentExperience?.days)
-  ) {
+  if (experience && !sameDuration(experience, profile.labourLaw.officialPreviousExperience)) {
     record(
-      "labourLaw.previousWorkExperience",
-      currentExperience ? `${currentExperience.years}/${currentExperience.months}/${currentExperience.days}` : undefined,
-      `${experience.years}/${experience.months}/${experience.days}`
+      "labourLaw.officialPreviousExperience",
+      slashed(profile.labourLaw.officialPreviousExperience),
+      slashed(experience)
     )
-    profile.labourLaw.previousWorkExperience = experience
+    profile.labourLaw.officialPreviousExperience = experience
   }
 
   const jobs = buildPreviousEmployments(finCode, details)
@@ -225,6 +222,17 @@ export function computeSync(
   if (cleanText(row[COL.martyr])?.startsWith("Bəli") && profile.labourLaw.isMartyrFamilyMember !== true) {
     record("labourLaw.isMartyrFamilyMember", profile.labourLaw.isMartyrFamilyMember, true)
     profile.labourLaw.isMartyrFamilyMember = true
+  }
+
+  // What leave is calculated from: ƏMAS, plus work-book experience HR has confirmed.
+  // Runs after the periods and hire date above are up to date.
+  if (profile.labourLaw.officialPreviousExperience) {
+    const effective = resolveExperience(profile, now).effective
+    const current = profile.labourLaw.previousWorkExperience
+    if (!sameDuration(effective, current)) {
+      record("labourLaw.previousWorkExperience", slashed(current), slashed(effective))
+      profile.labourLaw.previousWorkExperience = effective
+    }
   }
 
   // Leave. The Leave module derives the real entitlement from labour-law

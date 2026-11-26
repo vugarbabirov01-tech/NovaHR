@@ -190,6 +190,18 @@ export const EMPLOYEE_REPORT_FIELDS: ReportFieldDefinition[] = [
     aggregations: ["avg", "min", "max"],
     displayUnit: "durationMonths",
   },
+  /** Company information: counted from the actual start where HR's list records one,
+   * otherwise from the hire date. Never used for leave or pay. */
+  { key: "actualStartDate", dataSource: "EMPLOYEES", category: "employment", type: "date", labelKey: "actualStartDate" },
+  {
+    key: "actualTenureMonths",
+    dataSource: "EMPLOYEES",
+    category: "employment",
+    type: "number",
+    labelKey: "actualTenureMonths",
+    aggregations: ["avg", "min", "max"],
+    displayUnit: "durationMonths",
+  },
   {
     key: "probationEndDate",
     dataSource: "EMPLOYEES",

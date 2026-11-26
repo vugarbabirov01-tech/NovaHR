@@ -21,6 +21,7 @@ import {
 import { deleteDocument, getDocumentsForEntity } from "@/lib/documents/document-service"
 import { DocumentEntityType } from "@/lib/documents/document-entity-types"
 import { generateNextEmployeeNumber, isEmployeeNumberTaken } from "@/lib/employees"
+import { protectExperience, startWithoutExperience } from "@/lib/experience/work-experience"
 import {
   applyEditableFields,
   diffEmployeeFields,
@@ -107,7 +108,8 @@ export async function createEmployeeAction(
       return { success: false, error: "duplicate-id" }
     }
 
-    await createEmployee(finalProfile)
+    // Experience is never typed in: ƏMAS fills it on import, HR confirms the work book.
+    await createEmployee(startWithoutExperience(finalProfile))
 
     // Bust both the list and the profile-detail cache for every locale so
     // the new employee shows up immediately — in the list, card view,
@@ -181,7 +183,8 @@ export async function updateEmployeeAction(
     }
     const changedFields = diffEmployeeFields(existingValues, newValues)
 
-    const updatedProfile = applyEditableFields(existingProfile, newValues)
+    // ƏMAS and work-book data cannot be changed from the edit form, whatever the draft says.
+    const updatedProfile = protectExperience(existingProfile, applyEditableFields(existingProfile, newValues))
 
     await updateEmployee(originalId, updatedProfile)
 

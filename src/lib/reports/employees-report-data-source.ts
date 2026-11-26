@@ -1,4 +1,5 @@
 import { calculateAgeFromDateOfBirth, calculateServiceDuration, getFullLegalName } from "@/lib/employees"
+import { companyStart } from "@/lib/experience/work-experience"
 import { findAllEmployees } from "@/repositories/employee-repository"
 import type { EmployeeProfile } from "@/types/employee-profile"
 import type { ReportRow } from "@/types/reports"
@@ -21,6 +22,10 @@ function flattenEmployee(profile: EmployeeProfile): ReportRow {
   // field's own durationUnit flag — see field-registry.ts).
   const tenure = profile.employment.hireDate ? calculateServiceDuration(profile.employment.hireDate) : null
 
+  // Company information: from the actual start where one is recorded, else the hire date.
+  const start = companyStart(profile.employment)
+  const actualTenure = start ? calculateServiceDuration(start.date) : null
+
   return {
     fullName: getFullLegalName(profile.personal),
     firstName: profile.personal.firstName ?? "",
@@ -39,6 +44,8 @@ function flattenEmployee(profile: EmployeeProfile): ReportRow {
     tenureYears: tenure ? tenure.years : null,
     tenureYearsDecimal: tenure ? Math.round((tenure.years + tenure.months / 12 + tenure.days / 365) * 100) / 100 : null,
     tenureDurationMonths: tenure ? tenure.years * 12 + tenure.months : null,
+    actualStartDate: start?.date ?? "",
+    actualTenureMonths: actualTenure ? actualTenure.years * 12 + actualTenure.months : null,
     probationEndDate: profile.employment.probationEndDate ?? "",
     employmentType: profile.employment.employmentType ?? "",
     contractType: profile.employment.contractType ?? "",

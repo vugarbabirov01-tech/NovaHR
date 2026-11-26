@@ -885,7 +885,8 @@
       "emptyDescription": "Try adjusting your search or filters.",
       "bulkDeleteConfirmTitle": "Delete employees",
       "bulkDeleteConfirmDescription": "Are you sure you want to permanently delete {count} selected employees from the system? This action cannot be undone.",
-      "bulkDeleteSuccess": "{count} employees deleted successfully."
+      "bulkDeleteSuccess": "{count} employees deleted successfully.",
+      "experienceReview": "Experience review"
     },
     "smartFilters": {
       "sectionTitle": "HR Alerts",
@@ -996,7 +997,8 @@
       "groupByManager": "Manager",
       "expandGroup": "Expand group",
       "collapseGroup": "Collapse group",
-      "groupMembers": "{count, plural, =0 {No employees} =1 {1 employee} other {# employees}}"
+      "groupMembers": "{count, plural, =0 {No employees} =1 {1 employee} other {# employees}}",
+      "columnActualTenure": "Actual tenure"
     },
     "profile": {
       "backToList": "Back to Employees",
@@ -1176,7 +1178,9 @@
         "disclaimer": "These fields capture structured Labour Code data only. Leave entitlement and other calculations will be derived from this data by future modules.",
         "yes": "Yes",
         "no": "No",
-        "none": "None"
+        "none": "None",
+        "experienceLockedHint": "Previous experience is not typed in: the ƏMAS figure arrives by import, and HR confirms work-book experience on the employee's profile.",
+        "ownCompanyPeriod": "At this company"
       },
       "leave": {
         "openingBalance": "Opening Balance",
@@ -1353,6 +1357,66 @@
           "notFound": "Record not found.",
           "unknown": "Something went wrong."
         }
+      },
+      "experience": {
+        "official": "Official previous experience (ƏMAS)",
+        "officialLocked": "The ƏMAS figure cannot be edited",
+        "declared": "Total previous experience per work book",
+        "effective": "Previous experience used in calculations",
+        "actualStart": "Actual start of work",
+        "review": "Review",
+        "status": {
+          "pending": "Needs review",
+          "confirmed": "Confirmed",
+          "rejected": "Rejected"
+        },
+        "source": {
+          "official": "Calculations use the ƏMAS experience only.",
+          "workBookPeriods": "Confirmed work-book periods are added to the ƏMAS experience (overlapping days are not counted).",
+          "workBookTotal": "The confirmed work-book total is used (it is not added to the ƏMAS figure)."
+        },
+        "reasons": {
+          "bothSources": "Both ƏMAS and work-book experience",
+          "likelyDuplicate": "The excess equals the current job: possible double count",
+          "informalPeriod": "The excess matches the unregistered period",
+          "bookOnly": "Experience only in the work book"
+        },
+        "periods": "Work-book periods",
+        "organization": "Employer",
+        "position": "Position",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "addPeriod": "Add period",
+        "removePeriod": "Remove period",
+        "periodsHint": "When periods are entered the total is ignored; days overlapping ƏMAS periods or the current contract are removed automatically.",
+        "declaredHint": "Used when no periods are entered: the larger of this and the ƏMAS figure applies.",
+        "decision": "Decision",
+        "note": "Grounds (document, note)",
+        "notePlaceholder": "Work book no., page, etc.",
+        "reviewedBy": "Reviewed by",
+        "leaveDays": "Leave days",
+        "overlapEmas": "{days} days overlap ƏMAS periods and are not counted twice.",
+        "overlapCurrent": "{days} days fall within the current contract and are not counted twice.",
+        "dialogTitle": "Review work-book experience",
+        "dialogHint": "The ƏMAS figure does not change. Calculate the result before saving.",
+        "cancel": "Cancel",
+        "calculate": "Calculate",
+        "save": "Save",
+        "errors": {
+          "invalidStatus": "Invalid decision.",
+          "invalidTotal": "Invalid experience figure (months 0-11, days 0-30).",
+          "organizationRequired": "Each period needs an employer.",
+          "invalidPeriodDate": "Invalid period date.",
+          "periodOrder": "The end date cannot be before the start date.",
+          "futurePeriod": "A period cannot end in the future.",
+          "reviewerRequired": "Enter the reviewer's name.",
+          "noteRequired": "State the grounds for the decision.",
+          "nothingToConfirm": "Enter a figure or a period to confirm.",
+          "notFound": "Employee not found.",
+          "unknown": "Something went wrong."
+        },
+        "actualService": "Actual tenure at the company",
+        "actualHint": "Company information and reports only; it does not affect leave or pay."
       }
     },
     "termination": {
@@ -1820,6 +1884,14 @@
         "validationDatesValid": "Dates are valid.",
         "validationEligible": "Employee is eligible for this leave type."
       }
+    },
+    "experienceReview": {
+      "title": "Experience to review",
+      "description": "Employees whose work-book experience awaits confirmation: {count}. Until then leave uses the ƏMAS experience only.",
+      "empty": "Nothing to review.",
+      "back": "Employees",
+      "employee": "Employee",
+      "reason": "Reason"
     }
   },
   "OrganizationChart": {
@@ -1956,7 +2028,7 @@
       },
       "longestServing": {
         "name": "Longest-serving employees",
-        "description": "Employees ordered by length of service, longest first."
+        "description": "Employees by actual tenure at the company, longest first; the official hire date is shown too."
       },
       "newcomers": {
         "name": "Newcomers and probation",
@@ -2182,7 +2254,9 @@
       "payrollStatus": "Status",
       "payrollEmployeeName": "Employee",
       "payrollEmployeeDepartment": "Department",
-      "payrollEmployeeCompany": "Company"
+      "payrollEmployeeCompany": "Company",
+      "actualStartDate": "Actual start date",
+      "actualTenureMonths": "Actual tenure at the company"
     },
     "operators": {
       "thisMonth": "This month",

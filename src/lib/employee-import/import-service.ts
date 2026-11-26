@@ -1,4 +1,5 @@
 import { wizardDataToProfile, type WizardMasterData } from "@/lib/employee-wizard-mapper"
+import { protectExperience, startWithoutExperience } from "@/lib/experience/work-experience"
 import type { EmployeeWizardData } from "@/types/employee-wizard"
 import type { EmployeeProfile } from "@/types/employee-profile"
 import type { ImportRow, ImportRowResult, ImportSettings, ImportSummary } from "@/lib/employee-import/types"
@@ -61,11 +62,11 @@ export async function importRows(
         masterData
       )
       const keepSalary = settings.salaryStrategy === "keepExisting" && existing.payroll.baseSalary > 0
-      const profile: EmployeeProfile = {
+      const profile: EmployeeProfile = protectExperience(existing, {
         ...incoming,
         id: existing.id,
         payroll: keepSalary ? existing.payroll : incoming.payroll,
-      }
+      })
       await deps.updateEmployeeProfile(existing.id, profile)
       results.push({
         ...row,
@@ -83,7 +84,7 @@ export async function importRows(
     }
 
     const profile = wizardDataToProfile(row.mapped as EmployeeWizardData, masterData)
-    await deps.addEmployeeProfile(profile)
+    await deps.addEmployeeProfile(startWithoutExperience(profile))
 
     results.push({
       ...row,

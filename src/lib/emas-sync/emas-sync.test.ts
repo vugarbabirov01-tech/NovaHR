@@ -147,7 +147,7 @@ describe("computeSync", () => {
     expect(computeSync(first.profile, r, []).changes).toEqual([])
   })
 
-  it("builds previous employments, skipping the own company and undated rows", () => {
+  it("builds previous employments, flagging the own company and skipping undated rows", () => {
     const d = (over: Record<string, string>) => ({
       [DETAIL_COL.fin]: "7C4NMC6",
       [DETAIL_COL.organization]: "ACME",
@@ -164,8 +164,9 @@ describe("computeSync", () => {
       row(),
       [d({}), d({ [DETAIL_COL.taxId]: "1301709881" }), d({ [DETAIL_COL.start]: "—" }), d({ [DETAIL_COL.counted]: "Xeyr", [DETAIL_COL.note]: "Əvəzçilik (əlavə iş yeri)" })]
     )
-    expect(profile.labourLaw.previousEmployments).toHaveLength(2)
-    expect(profile.labourLaw.previousEmployments?.map((j) => j.counted)).toEqual([true, false])
+    expect(profile.labourLaw.previousEmployments).toHaveLength(3)
+    expect(profile.labourLaw.previousEmployments?.filter((j) => j.ownCompany)).toHaveLength(1)
+    expect(profile.labourLaw.previousEmployments?.filter((j) => !j.counted)).toHaveLength(1)
   })
 })
 
