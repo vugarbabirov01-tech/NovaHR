@@ -1,17 +1,15 @@
-import { Suspense } from "react"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { Loader2 } from "lucide-react"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
-import { ProfileHeader } from "@/components/employees/profile/profile-header"
-import { EmployeeProfileTabs } from "@/components/employees/profile/employee-profile-tabs"
+import { ProfileView } from "@/components/employees/profile/profile-view"
 import { findAllEmployees, findEmployeeById } from "@/repositories/employee-repository"
 import { findAllBranches } from "@/repositories/branch-repository"
 import { getFullName, toBranchesById } from "@/lib/employees"
 import { resolveWorkStatus } from "@/lib/employee-work-status"
 import { loadWorkStatusContext } from "@/lib/employee-work-status-loader"
 import { buildManagerChain } from "@/lib/organization/build-tree"
+import { activePenalty } from "@/lib/discipline/discipline-rules"
 import { listDisciplinaryActions } from "@/lib/discipline/discipline-service"
 import { summarizeEntitlement } from "@/lib/leave/entitlement-summary"
 import { resolveAnnualLeaveEntitlement } from "@/lib/leave/leave-policy-resolution-service"
@@ -68,23 +66,15 @@ export default async function EmployeeProfilePage({ params, searchParams }: Prop
   const backHref = returnTo && returnTo.startsWith("/employees") ? returnTo : "/employees"
 
   return (
-    <div className="flex flex-col gap-6">
-      <ProfileHeader profile={employee} workStatus={workStatus} backHref={backHref} />
-      <Suspense
-        fallback={
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="size-6 animate-spin text-muted-foreground" strokeWidth={1.75} />
-          </div>
-        }
-      >
-        <EmployeeProfileTabs
-          profile={employee}
-          managerChain={managerChain}
-          resolvedWorkLocation={resolvedWorkLocation}
-          leaveEntitlement={leaveEntitlement}
-          disciplinaryActions={disciplinaryActions}
-        />
-      </Suspense>
-    </div>
+    <ProfileView
+      profile={employee}
+      workStatus={workStatus}
+      backHref={backHref}
+      penalty={activePenalty(disciplinaryActions, new Date().toISOString().slice(0, 10))}
+      managerChain={managerChain}
+      resolvedWorkLocation={resolvedWorkLocation}
+      leaveEntitlement={leaveEntitlement}
+      disciplinaryActions={disciplinaryActions}
+    />
   )
 }

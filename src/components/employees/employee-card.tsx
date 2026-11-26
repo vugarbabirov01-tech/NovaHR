@@ -12,6 +12,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { DisciplineNotice } from "@/components/employees/discipline-notice"
+import type { ActivePenalty } from "@/lib/discipline/discipline-rules"
 import { WorkStatusBadge } from "@/components/employees/work-status-badge"
 import { SmartFilterBadge } from "@/components/employees/smart-filter-badge"
 import { EmployeeQuickActions } from "@/components/employees/EmployeeQuickActions"
@@ -34,9 +36,11 @@ interface EmployeeCardProps {
    * threaded onto the profile link so its "Back to Employees" returns here
    * instead of resetting to a bare /employees. */
   returnTo?: string
+  /** A disciplinary penalty in force today, if any. */
+  penalty?: ActivePenalty
 }
 
-export function EmployeeCard({ employee, workStatus, activeSmartFilter, returnTo }: EmployeeCardProps) {
+export function EmployeeCard({ employee, workStatus, activeSmartFilter, returnTo, penalty }: EmployeeCardProps) {
   const t = useTranslations("Employees.card")
   const tTable = useTranslations("Employees.table")
   const tCommon = useTranslations("Common")
@@ -76,7 +80,10 @@ export function EmployeeCard({ employee, workStatus, activeSmartFilter, returnTo
              * (filtering, reports, the Profile header) — this is the one
              * surface that only ever renders WorkStatus now. */}
             <WorkStatusBadge status={workStatus} />
-            <span className="text-xs text-muted-foreground tabular-nums">{employee.finCode}</span>
+            <span className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground tabular-nums">{employee.finCode}</span>
+              <DisciplineNotice penalty={penalty} />
+            </span>
           </div>
         </Link>
 

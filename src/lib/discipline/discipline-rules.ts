@@ -1,4 +1,9 @@
-/** Disciplinary measures under the Labour Code (art. 189). Dismissal is a separate flow (termination). */
+/**
+ * Records kept on the Discipline tab. REPRIMAND and SEVERE_REPRIMAND (the severe
+ * reprimand with a final warning) are penalties under Labour Code art. 186.2;
+ * WARNING is a written warning, which art. 186.3 says is not a penalty.
+ * Dismissal is a separate flow (termination); fines are not used.
+ */
 export const DISCIPLINE_TYPES = ["WARNING", "REPRIMAND", "SEVERE_REPRIMAND"] as const
 export type DisciplineType = (typeof DISCIPLINE_TYPES)[number]
 
@@ -41,18 +46,46 @@ export function validateDisciplineInput(input: DisciplineInput, today: string): 
   return null
 }
 
-/**
- * A measure counts as lifted if the employee gets no new one within a year
- * (art. 191): the last day it is in force is one year after it was imposed.
- */
+/** Art. 190.1: a penalty is in force for six months from the day it is imposed. */
+export const DISCIPLINE_FORCE_MONTHS = 6
+
+/** The last day the penalty is in force. */
 export function disciplineExpiryDate(issuedDate: string): string {
   const [year, month, day] = issuedDate.split("-").map(Number)
-  const next = new Date(Date.UTC(year + 1, month - 1, day))
-  // 29 Feb + 1 year rolls into March: clamp back to the end of February.
-  if (next.getUTCMonth() !== month - 1) next.setUTCDate(0)
+  const next = new Date(Date.UTC(year, month - 1 + DISCIPLINE_FORCE_MONTHS, day))
+  // 31 Aug + 6 months would roll into March: clamp back to the end of February.
+  if (next.getUTCDate() !== day) next.setUTCDate(0)
   return next.toISOString().slice(0, 10)
 }
 
 export function isDisciplineInForce(issuedDate: string, today: string): boolean {
   return today <= disciplineExpiryDate(issuedDate)
+}
+
+export function isPenalty(type: string): boolean {
+  return type === "REPRIMAND" || type === "SEVERE_REPRIMAND"
+}
+
+/**
+ * What an employee card shows: a penalty while it is in force, or a written
+ * warning for the same six months. A warning is not a penalty in law; showing
+ * it for six months is a company choice.
+ */
+export interface ActivePenalty {
+  type: string
+  /** Last day in force (yyyy-mm-dd). */
+  until: string
+}
+
+/** The one record to flag for an employee: the most severe still shown, then the one lasting longest.
+ * Any penalty outranks a written warning. */
+export function activePenalty(
+  actions: { type: string; issuedDate: string }[],
+  today: string
+): ActivePenalty | undefined {
+  const rank = (type: string) => DISCIPLINE_TYPES.indexOf(type as DisciplineType)
+  return actions
+    .filter((a) => isDisciplineType(a.type) && a.issuedDate <= today && isDisciplineInForce(a.issuedDate, today))
+    .map((a) => ({ type: a.type, until: disciplineExpiryDate(a.issuedDate) }))
+    .sort((a, b) => rank(b.type) - rank(a.type) || b.until.localeCompare(a.until))[0]
 }

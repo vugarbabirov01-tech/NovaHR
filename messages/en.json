@@ -1321,7 +1321,7 @@
       },
       "discipline": {
         "title": "Disciplinary Measures",
-        "description": "Warnings, reprimands and severe reprimands given to the employee (Labour Code, art. 189).",
+        "description": "A reprimand and a severe reprimand with a final warning (Labour Code, art. 186) are in force for 6 months. A written warning is not a penalty. Records are kept here permanently.",
         "add": "Add measure",
         "empty": "No disciplinary measures on record for this employee.",
         "inForce": "In force",
@@ -1340,13 +1340,13 @@
         "saving": "Saving...",
         "addTitle": "New disciplinary measure",
         "editTitle": "Edit measure",
-        "formHint": "The measure is recorded on the employee's profile. It counts as expired one year after it was imposed.",
+        "formHint": "The record stays on the employee's profile. A penalty is in force for 6 months from the day it is imposed; penalties and written warnings are shown on the employee card during those 6 months.",
         "deleteTitle": "Delete this record?",
         "deleteText": "This disciplinary record will be permanently deleted.",
         "types": {
-          "WARNING": "Warning",
+          "WARNING": "Written warning",
           "REPRIMAND": "Reprimand",
-          "SEVERE_REPRIMAND": "Severe reprimand"
+          "SEVERE_REPRIMAND": "Severe reprimand with final warning"
         },
         "errors": {
           "invalidType": "Invalid measure type.",
@@ -1356,7 +1356,16 @@
           "reasonRequired": "A reason is required.",
           "notFound": "Record not found.",
           "unknown": "Something went wrong."
-        }
+        },
+        "notPenalty": "Not a penalty",
+        "notice": "Disciplinary penalty: {type} · until {date}",
+        "onLeaveWarning": "Note: the employee is on approved leave on this date ({leave}). Under art. 189 of the Labour Code a penalty cannot be imposed during leave.",
+        "shortTypes": {
+          "REPRIMAND": "Reprimand",
+          "SEVERE_REPRIMAND": "Severe reprimand",
+          "WARNING": "Warning"
+        },
+        "warningNotice": "Written warning (not a penalty) · shown until {date}"
       },
       "experience": {
         "official": "Official previous experience (ƏMAS)",

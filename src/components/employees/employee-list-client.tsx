@@ -35,6 +35,7 @@ import {
 import { SearchInput } from "@/components/common/search-input"
 import { EmptyState } from "@/components/common/empty-state"
 import { EmployeeCard } from "@/components/employees/employee-card"
+import type { ActivePenalty } from "@/lib/discipline/discipline-rules"
 import { EmployeeFiltersPanel } from "@/components/employees/employee-filters-panel"
 import { EmployeeListTable } from "@/components/employees/employee-list-table"
 import { ViewToggle } from "@/components/employees/view-toggle"
@@ -98,9 +99,11 @@ interface EmployeeListClientProps {
    * cleanly across the Server->Client boundary. Neither this component nor
    * EmployeeCard/EmployeeListTable ever compute a work status themselves. */
   workStatusByEmployeeId: Record<string, WorkStatus>
+  /** Employees with a disciplinary penalty in force today. */
+  penaltyByEmployeeId: Record<string, ActivePenalty>
 }
 
-export function EmployeeListClient({ employees, workStatusByEmployeeId }: EmployeeListClientProps) {
+export function EmployeeListClient({ employees, workStatusByEmployeeId, penaltyByEmployeeId }: EmployeeListClientProps) {
   const t = useTranslations("Employees.list")
   const tCommon = useTranslations("Common")
   const tStatus = useTranslations("Status")
@@ -385,6 +388,7 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
                 employee={employee}
                 workStatus={workStatusByEmployeeId[employee.id] ?? "AT_WORK"}
                 activeSmartFilter={activeSmartFilter}
+                penalty={penaltyByEmployeeId[employee.id]}
                 returnTo={returnTo}
               />
             ))}
@@ -393,6 +397,7 @@ export function EmployeeListClient({ employees, workStatusByEmployeeId }: Employ
           <EmployeeListTable
             data={filtered}
             workStatusByEmployeeId={workStatusByEmployeeId}
+            penaltyByEmployeeId={penaltyByEmployeeId}
             onSelectionChange={setSelectedIds}
             onBulkDelete={handleBulkDeleteRequest}
             activeSmartFilter={activeSmartFilter}

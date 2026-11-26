@@ -11,6 +11,7 @@ import { toListItem } from "@/types/employee-profile"
 import { resolveWorkStatus, type WorkStatus } from "@/lib/employee-work-status"
 import { loadWorkStatusContext } from "@/lib/employee-work-status-loader"
 import { toBranchesById } from "@/lib/employees"
+import { listActivePenalties } from "@/lib/discipline/discipline-service"
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -42,6 +43,8 @@ export default async function EmployeesPage({ params }: Props) {
     workStatusByEmployeeId[employee.id] = resolveWorkStatus(employee.id, workStatusContext)
   }
 
+  const penaltyByEmployeeId = await listActivePenalties()
+
   return (
     <div className="flex flex-col gap-6">
       <PageTitle title={t("title")} description={t("description")} />
@@ -52,7 +55,11 @@ export default async function EmployeesPage({ params }: Props) {
           </div>
         }
       >
-        <EmployeeListClient employees={employees} workStatusByEmployeeId={workStatusByEmployeeId} />
+        <EmployeeListClient
+          employees={employees}
+          workStatusByEmployeeId={workStatusByEmployeeId}
+          penaltyByEmployeeId={penaltyByEmployeeId}
+        />
       </Suspense>
     </div>
   )

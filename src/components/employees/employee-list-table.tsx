@@ -62,6 +62,8 @@ import {
 import { EmptyState } from "@/components/common/empty-state"
 import { EmploymentStatusBadge } from "@/components/employees/employment-status-badge"
 import { WorkStatusBadge } from "@/components/employees/work-status-badge"
+import { DisciplineNotice } from "@/components/employees/discipline-notice"
+import type { ActivePenalty } from "@/lib/discipline/discipline-rules"
 import { SmartFilterBadge } from "@/components/employees/smart-filter-badge"
 import { EmployeeQuickActions } from "@/components/employees/EmployeeQuickActions"
 import { EmployeeAvatarPreview } from "@/components/employees/employee-avatar-preview"
@@ -76,6 +78,7 @@ interface EmployeeListTableProps {
   /** Resolved once per page load by resolveWorkStatus (see
    * employees/page.tsx) — this component never computes it itself. */
   workStatusByEmployeeId: Record<string, WorkStatus>
+  penaltyByEmployeeId: Record<string, ActivePenalty>
   onSelectionChange?: (ids: string[]) => void
   /** Invoked with the currently-selected employee ids when "Seçilənləri
    * Sil" is clicked — the caller owns the confirmation dialog and the
@@ -100,6 +103,7 @@ const groupColumnIds: Record<Exclude<EmployeeGroupBy, "none">, string> = {
 export function EmployeeListTable({
   data,
   workStatusByEmployeeId,
+  penaltyByEmployeeId,
   onSelectionChange,
   onBulkDelete,
   activeSmartFilter,
@@ -192,7 +196,10 @@ export function EmployeeListTable({
             />
             <div className="flex flex-col gap-0.5">
               {activeSmartFilter ? <SmartFilterBadge filter={activeSmartFilter} /> : null}
-              <span className="font-medium text-foreground">{getFullName(row.original)}</span>
+              <span className="flex items-center gap-1.5 font-medium text-foreground">
+                {getFullName(row.original)}
+                <DisciplineNotice penalty={penaltyByEmployeeId[row.original.id]} compact />
+              </span>
               <span className="text-xs text-muted-foreground">{row.original.position}</span>
             </div>
           </div>
@@ -320,7 +327,7 @@ export function EmployeeListTable({
         ),
       },
     ],
-    [t, tType, tCommon, tExperience, locale, activeSmartFilter, workStatusByEmployeeId, returnTo]
+    [t, tType, tCommon, tExperience, locale, activeSmartFilter, workStatusByEmployeeId, penaltyByEmployeeId, returnTo]
   )
 
   const table = useReactTable({

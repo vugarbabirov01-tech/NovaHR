@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
 import { Gavel, Pencil, Plus, Trash2 } from "lucide-react"
 
@@ -15,10 +15,16 @@ import { EmptyState } from "@/components/common/empty-state"
 import { useRouter } from "@/i18n/navigation"
 import {
   addDisciplinaryActionAction,
+  checkDisciplineDateAction,
   deleteDisciplinaryActionAction,
   updateDisciplinaryActionAction,
 } from "@/lib/discipline/discipline-actions"
-import { DISCIPLINE_TYPES, disciplineExpiryDate, isDisciplineInForce } from "@/lib/discipline/discipline-rules"
+import {
+  DISCIPLINE_TYPES,
+  disciplineExpiryDate,
+  isDisciplineInForce,
+  isPenalty,
+} from "@/lib/discipline/discipline-rules"
 import type { DisciplinaryActionView } from "@/lib/discipline/discipline-service"
 import { formatShortDate } from "@/lib/utils"
 
@@ -39,6 +45,21 @@ export function DisciplineTab({ employeeId, actions }: DisciplineTabProps) {
   const [deleting, setDeleting] = useState<DisciplinaryActionView | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [pending, startTransition] = useTransition()
+
+  const [leave, setLeave] = useState<{ date: string; name: string } | null>(null)
+  const formOpen = editing !== null
+
+  // Art. 189.2: warn (without blocking) if the employee was on approved leave that day.
+  useEffect(() => {
+    if (!formOpen || !form.issuedDate) return
+    let current = true
+    void checkDisciplineDateAction(employeeId, form.issuedDate).then((name) => {
+      if (current) setLeave(name ? { date: form.issuedDate, name } : null)
+    })
+    return () => {
+      current = false
+    }
+  }, [employeeId, formOpen, form.issuedDate])
 
   const date = (iso: string) => formatShortDate(new Date(iso), monthsShort)
   const set = (key: keyof ReturnType<typeof emptyForm>) => (value: string) => setForm((f) => ({ ...f, [key]: value }))
@@ -111,7 +132,11 @@ export function DisciplineTab({ employeeId, actions }: DisciplineTabProps) {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-foreground">{t(`types.${action.type}` as never)}</span>
-                      <Badge variant={inForce ? "default" : "secondary"}>{inForce ? t("inForce") : t("expired")}</Badge>
+                      {isPenalty(action.type) ? (
+                        <Badge variant={inForce ? "default" : "secondary"}>{inForce ? t("inForce") : t("expired")}</Badge>
+                      ) : (
+                        <Badge variant="outline">{t("notPenalty")}</Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="icon-sm" aria-label={t("edit")} onClick={() => openEdit(action)}>
@@ -129,8 +154,10 @@ export function DisciplineTab({ employeeId, actions }: DisciplineTabProps) {
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    {t("issued")}: {date(action.issuedDate)} · {t("violation")}: {date(action.violationDate)} · {t("validUntil")}:{" "}
-                    {date(disciplineExpiryDate(action.issuedDate))}
+                    {t("issued")}: {date(action.issuedDate)} · {t("violation")}: {date(action.violationDate)}
+                    {isPenalty(action.type)
+                      ? ` · ${t("validUntil")}: ${date(disciplineExpiryDate(action.issuedDate))}`
+                      : ""}
                   </p>
                 </li>
               )
@@ -176,6 +203,11 @@ export function DisciplineTab({ employeeId, actions }: DisciplineTabProps) {
                 <Input type="date" max={today()} value={form.issuedDate} onChange={(e) => set("issuedDate")(e.target.value)} required />
               </label>
             </div>
+            {leave && leave.date === form.issuedDate && isPenalty(form.type) && (
+              <p role="alert" className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-300">
+                {t("onLeaveWarning", { leave: leave.name })}
+              </p>
+            )}
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
               {t("reason")}
               <Textarea rows={3} value={form.reason} onChange={(e) => set("reason")(e.target.value)} required />

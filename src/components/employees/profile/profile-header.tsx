@@ -2,6 +2,8 @@
 
 import { useTranslations } from "next-intl"
 import { ArrowLeft, Mail, Pencil, Phone } from "lucide-react"
+import { DisciplineNotice } from "@/components/employees/discipline-notice"
+import type { ActivePenalty } from "@/lib/discipline/discipline-rules"
 
 import { Link } from "@/i18n/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -32,9 +34,11 @@ interface ProfileHeaderProps {
    * Profile → Edit → Save → Profile → back-to-list chain keeps the same
    * list URL alive end to end — not just this one List → Profile leg. */
   backHref: string
+  /** A disciplinary penalty in force today, if any. */
+  penalty?: ActivePenalty
 }
 
-export function ProfileHeader({ profile, workStatus, backHref }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, workStatus, backHref, penalty }: ProfileHeaderProps) {
   const t = useTranslations("Employees.profile")
   const tQuickActions = useTranslations("Employees.quickActions")
   // "Soyad Ad Ata adı" — the Profile header's own display order (see
@@ -68,6 +72,7 @@ export function ProfileHeader({ profile, workStatus, backHref }: ProfileHeaderPr
               </h1>
               <EmploymentStatusBadge status={profile.employmentStatus} />
               <WorkStatusBadge status={workStatus} />
+              <DisciplineNotice penalty={penalty} />
             </div>
             <p className="text-sm text-muted-foreground">
               {profile.employment.position}

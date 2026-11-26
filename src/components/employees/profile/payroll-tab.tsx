@@ -1,11 +1,12 @@
 "use client"
 
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { InfoField, InfoGrid } from "@/components/common/info-field"
 import { EmptyState } from "@/components/common/empty-state"
 import { Wallet } from "lucide-react"
+import { formatMoney } from "@/lib/format-money"
 import type { EmployeeProfile } from "@/types/employee-profile"
 
 interface PayrollTabProps {
@@ -15,11 +16,10 @@ interface PayrollTabProps {
 export function PayrollTab({ profile }: PayrollTabProps) {
   const t = useTranslations("Employees.profile.payroll")
   const tTabs = useTranslations("Employees.profile.tabs")
-  const locale = useLocale()
   const { payroll } = profile
 
-  const formatMoney = (amount: number) =>
-    new Intl.NumberFormat(locale, { style: "currency", currency: payroll.currency }).format(amount)
+  // Deterministic on server and browser: Intl's "az" currency output differs between them.
+  const money = (amount: number) => formatMoney(amount, payroll.currency)
 
   const totalCompensation =
     payroll.baseSalary + payroll.bonus + payroll.allowances.reduce((sum, a) => sum + a.amount, 0)
@@ -34,14 +34,14 @@ export function PayrollTab({ profile }: PayrollTabProps) {
           <InfoGrid>
             <InfoField label={t("bank")} value={payroll.bankName} />
             <InfoField label={t("bankAccountNumber")} value={payroll.bankAccountNumber} />
-            <InfoField label={t("salary")} value={formatMoney(payroll.baseSalary)} />
+            <InfoField label={t("salary")} value={money(payroll.baseSalary)} />
             <InfoField
               label={t("grossSalary")}
-              value={payroll.grossSalary != null ? formatMoney(payroll.grossSalary) : undefined}
+              value={payroll.grossSalary != null ? money(payroll.grossSalary) : undefined}
             />
             <InfoField label={t("currency")} value={payroll.currency} />
-            <InfoField label={t("bonus")} value={formatMoney(payroll.bonus)} />
-            <InfoField label={t("compensation")} value={formatMoney(totalCompensation)} />
+            <InfoField label={t("bonus")} value={money(payroll.bonus)} />
+            <InfoField label={t("compensation")} value={money(totalCompensation)} />
           </InfoGrid>
         </CardContent>
       </Card>
@@ -62,7 +62,7 @@ export function PayrollTab({ profile }: PayrollTabProps) {
                 >
                   <span className="text-foreground">{allowance.label}</span>
                   <span className="font-medium text-foreground tabular-nums">
-                    {formatMoney(allowance.amount)}
+                    {money(allowance.amount)}
                   </span>
                 </li>
               ))}

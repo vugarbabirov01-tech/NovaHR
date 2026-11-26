@@ -1321,7 +1321,7 @@
       },
       "discipline": {
         "title": "İntizam Tənbehləri",
-        "description": "İşçiyə verilmiş xəbərdarlıq, töhmət və ağır töhmətlər (Əmək Məcəlləsi, md. 189).",
+        "description": "Töhmət və sonuncu xəbərdarlıqla şiddətli töhmət (Əmək Məcəlləsi, md. 186) 6 ay qüvvədədir. Yazılı xəbərdarlıq intizam tənbehi sayılmır. Qeydlər burada daimi saxlanılır.",
         "add": "Tənbeh əlavə et",
         "empty": "Bu işçiyə intizam tənbehi verilməyib.",
         "inForce": "Qüvvədədir",
@@ -1340,13 +1340,13 @@
         "saving": "Saxlanılır...",
         "addTitle": "Yeni intizam tənbehi",
         "editTitle": "Tənbehi redaktə et",
-        "formHint": "Tənbeh qeydə alınır və işçinin profilində saxlanılır. Tənbehdən 1 il keçdikdə müddəti bitmiş sayılır.",
+        "formHint": "Qeyd işçinin profilində daimi saxlanılır. İntizam tənbehi verildiyi gündən 6 ay qüvvədədir; tənbeh və yazılı xəbərdarlıq bu 6 ay ərzində işçinin kartında göstərilir.",
         "deleteTitle": "Qeyd silinsin?",
         "deleteText": "Bu intizam tənbehi qeydi birdəfəlik silinəcək.",
         "types": {
-          "WARNING": "Xəbərdarlıq",
+          "WARNING": "Yazılı xəbərdarlıq",
           "REPRIMAND": "Töhmət",
-          "SEVERE_REPRIMAND": "Ağır töhmət"
+          "SEVERE_REPRIMAND": "Sonuncu xəbərdarlıqla şiddətli töhmət"
         },
         "errors": {
           "invalidType": "Tənbeh növü düzgün deyil.",
@@ -1356,7 +1356,16 @@
           "reasonRequired": "Səbəb daxil edilməlidir.",
           "notFound": "Qeyd tapılmadı.",
           "unknown": "Xəta baş verdi."
-        }
+        },
+        "notPenalty": "Tənbeh sayılmır",
+        "notice": "İntizam tənbehi: {type} · {date}-dək",
+        "onLeaveWarning": "Diqqət: işçi bu tarixdə təsdiqlənmiş məzuniyyətdədir ({leave}). Əmək Məcəlləsinin 189-cu maddəsinə görə məzuniyyət dövründə intizam tənbehi verilə bilməz.",
+        "shortTypes": {
+          "REPRIMAND": "Töhmət",
+          "SEVERE_REPRIMAND": "Şiddətli töhmət",
+          "WARNING": "Xəbərdarlıq"
+        },
+        "warningNotice": "Yazılı xəbərdarlıq (tənbeh sayılmır) · {date}-dək göstərilir"
       },
       "experience": {
         "official": "Rəsmi əvvəlki staj (ƏMAS)",
