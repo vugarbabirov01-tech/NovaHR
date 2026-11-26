@@ -115,30 +115,37 @@ export function resolveAnnualLeaveEntitlement(
   const isMinor = isMinorFromDateOfBirth(personal.dateOfBirth)
   const age = calculateAgeFromDateOfBirth(personal.dateOfBirth, asOfDate)
 
+  // Special-status bases. Someone who qualifies for more than one (for example a
+  // veteran with a disability) gets the single largest figure, never a sum.
+  const special: EntitlementComponent[] = []
   if (isMinor) {
     const days = age < 16 ? AZ_LABOUR_CODE_LEAVE_RULES.MINOR_LEAVE_DAYS.under16 : AZ_LABOUR_CODE_LEAVE_RULES.MINOR_LEAVE_DAYS.age16to18
-    components.push({
+    special.push({
       source: "statutory",
       article: "Art. 119.1",
       days,
       description: age < 16 ? "Employee under 16" : "Employee aged 16-18",
     })
-    usesSpecialStatusBase = true
-  } else if (labourLaw.hasDisability) {
-    components.push({
+  }
+  if (labourLaw.hasDisability) {
+    special.push({
       source: "statutory",
       article: "Art. 119.2",
       days: AZ_LABOUR_CODE_LEAVE_RULES.DISABLED_EMPLOYEE_LEAVE_DAYS,
       description: "Disabled employee (any group/cause/duration)",
     })
-    usesSpecialStatusBase = true
-  } else if (labourLaw.veteranStatus || labourLaw.stateDecorationName) {
-    components.push({
+  }
+  if (labourLaw.veteranStatus || labourLaw.stateDecorationName) {
+    special.push({
       source: "statutory",
       article: "Art. 120",
       days: AZ_LABOUR_CODE_LEAVE_RULES.SPECIAL_SERVICE_LEAVE_DAYS,
       description: `Special service status: ${labourLaw.veteranStatus ?? labourLaw.stateDecorationName}`,
     })
+  }
+
+  if (special.length > 0) {
+    components.push(special.reduce((best, next) => (next.days > best.days ? next : best)))
     usesSpecialStatusBase = true
   } else {
     const isExtended = labourLaw.professionalCategory
